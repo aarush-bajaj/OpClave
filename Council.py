@@ -7,17 +7,16 @@ import sys
 import time
 import threading
 import concurrent.futures
-import requests
 
-load_dotenv(dotenv_path="/Users/aarushbajaj/Desktop/Council/.env")
+load_dotenv()
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 grok_client = OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
-sarvam_api_key = os.getenv("SARVAM_API_KEY")
 
 SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+API_TIMEOUT = 60  # seconds before any single API call is abandoned
 
 
 class Progress:
@@ -104,8 +103,9 @@ def ask_gpt(question, progress):
         try:
             response = openai_client.chat.completions.create(
                 model="gpt-5.2-2025-12-11",
-                max_completion_tokens=100000,
-                messages=[{"role": "user", "content": question}]
+                max_completion_tokens=2000,
+                messages=[{"role": "user", "content": question}],
+                timeout=API_TIMEOUT,
             )
             progress.mark_done("GPT")
             return response.choices[0].message.content, response.usage.completion_tokens
@@ -123,8 +123,9 @@ def ask_claude(question, progress):
         try:
             with anthropic_client.messages.stream(
                 model="claude-haiku-4-5-20251001",
-                max_tokens=100000,
-                messages=[{"role": "user", "content": question}]
+                max_tokens=2000,
+                messages=[{"role": "user", "content": question}],
+                timeout=API_TIMEOUT,
             ) as stream:
                 final_message = stream.get_final_message()
             progress.mark_done("Claude")
@@ -143,8 +144,8 @@ def ask_gemini(question, progress):
     for attempt in range(3):
         try:
             response = gemini_client.models.generate_content(
-                model="gemini-3.1-pro-preview",
-                config={"maxOutputTokens": 100000},
+                model="gemini-3-flash-preview",
+                config={"maxOutputTokens": 2000},
                 contents=question
             )
             progress.mark_done("Gemini")
@@ -164,8 +165,9 @@ def ask_grok(question, progress):
         try:
             response = grok_client.chat.completions.create(
                 model="grok-4.20-0309-non-reasoning",
-                max_tokens=100000,
-                messages=[{"role": "user", "content": question}]
+                max_tokens=2000,
+                messages=[{"role": "user", "content": question}],
+                timeout=API_TIMEOUT,
             )
             progress.mark_done("Grok")
             return response.choices[0].message.content, response.usage.completion_tokens
@@ -177,46 +179,30 @@ def ask_grok(question, progress):
                 raise
 
 
-def ask_sarvam(question, progress):
-    progress.mark_running("Sarvam")
-    for attempt in range(3):
-        try:
-            response = requests.post(
-                "https://api.sarvam.ai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {sarvam_api_key}", "Content-Type": "application/json"},
-                json={"model": "sarvam-105b", "messages": [{"role": "user", "content": question}], "max_tokens": 100000}
-            )
-            response.raise_for_status()
-            data = response.json()
-            message = data["choices"][0]["message"]
-            tokens = data.get("usage", {}).get("completion_tokens", 0)
-            progress.mark_done("Sarvam")
-            return message.get("content") or message.get("reasoning_content") or str(message), tokens
-        except Exception as e:
-            if is_overloaded(e) and attempt < 2:
-                time.sleep(2 ** attempt)
-            else:
-                progress.mark_error("Sarvam")
-                raise
-
-
 user_question = input("Enter your question: ").strip()
 
 print("\nQuerying models in parallel:")
-progress = Progress(["GPT", "Claude", "Gemini", "Grok", "Sarvam"]).start()
+progress = Progress(["GPT", "Claude", "Gemini", "Grok"]).start()
 
 with concurrent.futures.ThreadPoolExecutor() as executor:
     gpt_future = executor.submit(ask_gpt, user_question, progress)
     claude_future = executor.submit(ask_claude, user_question, progress)
     gemini_future = executor.submit(ask_gemini, user_question, progress)
     grok_future = executor.submit(ask_grok, user_question, progress)
-    sarvam_future = executor.submit(ask_sarvam, user_question, progress)
 
-    gpt_response, gpt_tokens = gpt_future.result()
-    claude_response, claude_tokens = claude_future.result()
-    gemini_response, gemini_tokens = gemini_future.result()
-    grok_response, grok_tokens = grok_future.result()
-    sarvam_response, sarvam_tokens = sarvam_future.result()
+    def collect(future, label, prog):
+        try:
+            return future.result(timeout=API_TIMEOUT + 10)
+        except concurrent.futures.TimeoutError:
+            prog.mark_error(label)
+            return f"[{label} timed out]", 0
+        except Exception:
+            return f"[{label} error]", 0
+
+    gpt_response, gpt_tokens = collect(gpt_future, "GPT", progress)
+    claude_response, claude_tokens = collect(claude_future, "Claude", progress)
+    gemini_response, gemini_tokens = collect(gemini_future, "Gemini", progress)
+    grok_response, grok_tokens = collect(grok_future, "Grok", progress)
 
 progress.stop()
 
@@ -225,7 +211,6 @@ print(f"  GPT:    {gpt_tokens:,}")
 print(f"  Claude: {claude_tokens:,}")
 print(f"  Gemini: {gemini_tokens:,}")
 print(f"  Grok:   {grok_tokens:,}")
-print(f"  Sarvam: {sarvam_tokens:,}")
 
 with open("gpt_response.txt", "w", encoding="utf-8") as f:
     f.write(gpt_response)
@@ -235,10 +220,7 @@ with open("gemini_response.txt", "w", encoding="utf-8") as f:
     f.write(gemini_response)
 with open("grok_response.txt", "w", encoding="utf-8") as f:
     f.write(grok_response)
-with open("sarvam_response.txt", "w", encoding="utf-8") as f:
-    f.write(sarvam_response)
-
-synthesis_prompt = f"""You are synthesizing responses from five different people.
+synthesis_prompt = f"""You are synthesizing responses from four different people.
 
 Original question: {user_question}
 
@@ -246,7 +228,6 @@ Jackfruit response: {gpt_response}
 Passionfruit response: {claude_response}
 Grapefruit response: {gemini_response}
 Strawberry response: {grok_response}
-Apple response: {sarvam_response}
 
 Your task:
 1. Identify where they agree (high confidence)
@@ -267,8 +248,9 @@ for attempt in range(3):
     try:
         with anthropic_client.messages.stream(
             model="claude-sonnet-4-6",
-            max_tokens=16000,
-            messages=[{"role": "user", "content": synthesis_prompt}]
+            max_tokens=6000,
+            messages=[{"role": "user", "content": synthesis_prompt}],
+            timeout=API_TIMEOUT * 2,
         ) as stream:
             synth_message = stream.get_final_message()
         break
@@ -296,5 +278,4 @@ print("  • gpt_response.txt")
 print("  • claude_response.txt")
 print("  • gemini_response.txt")
 print("  • grok_response.txt")
-print("  • sarvam_response.txt")
 print("  • council_final_answer.txt")
