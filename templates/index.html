@@ -413,6 +413,7 @@
   let msgCounter = 0;
   let activeSSE = null;
   let isLoading = false;
+  let activeStreams = {};
 
   const TABS = ['Council', 'GPT', 'Claude', 'Gemini', 'Grok'];
   const TAB_LABELS = {
@@ -461,7 +462,7 @@
     addUserMessage(question);
     const id = msgCounter++;
     createAssistantMessage(id);
-    scrollToBottom();
+    scrollToBottom(true);
 
     if (activeSSE) activeSSE.close();
     activeSSE = new EventSource(`/stream?question=${encodeURIComponent(question)}`);
@@ -529,7 +530,7 @@
     });
 
     messagesEl.appendChild(div);
-    scrollToBottom();
+    scrollToBottom(true);
   }
 
   // ── SSE event handler ─────────────────────────────
@@ -553,11 +554,21 @@
       case 'synthesis_start':
         setDotStatus(id, 'Council', 'loading');
         setPlaceholderText(id, 'Council', 'Synthesizing…');
+        activeStreams[id] = '';
+        break;
+
+      case 'council_chunk':
+        if (activeStreams[id] === undefined) activeStreams[id] = '';
+        activeStreams[id] += event.chunk;
+        setStreamingContent(id, 'Council', activeStreams[id]);
         break;
 
       case 'council_done':
         setDotStatus(id, 'Council', 'done');
-        setContent(id, 'Council', event.response);
+        if (activeStreams[id] !== undefined) {
+          setContent(id, 'Council', activeStreams[id]);
+          delete activeStreams[id];
+        }
         break;
 
       case 'council_error':
@@ -608,6 +619,16 @@
     }
   }
 
+  function setStreamingContent(id, model, markdown) {
+    const ph = document.getElementById(`placeholder-${id}-${model}`);
+    const content = document.getElementById(`content-${id}-${model}`);
+    if (ph) ph.style.display = 'none';
+    if (content) {
+      content.style.display = 'block';
+      content.innerHTML = marked.parse(markdown || '');
+    }
+  }
+
   function setError(id, model, error) {
     const ph = document.getElementById(`placeholder-${id}-${model}`);
     const content = document.getElementById(`content-${id}-${model}`);
@@ -619,10 +640,16 @@
   }
 
   // ── Utils ─────────────────────────────────────────
-  function scrollToBottom() {
-    requestAnimationFrame(() => {
-      chatArea.scrollTop = chatArea.scrollHeight;
-    });
+  function isNearBottom() {
+    return chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight < 100;
+  }
+
+  function scrollToBottom(force = false) {
+    if (force || isNearBottom()) {
+      requestAnimationFrame(() => {
+        chatArea.scrollTop = chatArea.scrollHeight;
+      });
+    }
   }
 
   function escapeHtml(str) {

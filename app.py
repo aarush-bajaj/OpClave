@@ -20,27 +20,63 @@ gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 grok_client = OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
 
 
-def truncate(text, max_chars=1500):
+def truncate(text, max_chars=5000):
     if not text:
         return "No response"
     return text[:max_chars] + "..." if len(text) > max_chars else text
 
 
-def ask_gpt(question):
+def estimate_max_tokens(question):
+    """
+    Heuristic to pick an appropriate token ceiling based on question complexity.
+    Tiers:
+      simple   (~1 sentence factual)  → 400
+      medium   (explanation/summary)  → 1200
+      detailed (analysis/comparison)  → 2500
+      heavy    (code/essay/long list) → 4000
+    """
+    q = question.lower()
+    words = len(question.split())
+
+    heavy_keywords = [
+        'write', 'implement', 'code', 'build', 'create', 'essay', 'script',
+        'program', 'function', 'algorithm', 'step by step', 'in detail',
+        'comprehensive', 'full', 'complete', 'entire', 'tutorial',
+    ]
+    detailed_keywords = [
+        'explain', 'compare', 'analyse', 'analyze', 'difference', 'pros and cons',
+        'advantages', 'disadvantages', 'how does', 'why does', 'describe',
+        'elaborate', 'overview', 'summarize', 'list', 'examples',
+    ]
+    simple_keywords = [
+        'what is', 'who is', 'when did', 'where is', 'define', 'yes or no',
+        'true or false', 'how many', 'how much',
+    ]
+
+    if any(kw in q for kw in heavy_keywords) or words > 60:
+        return 4000
+    if any(kw in q for kw in detailed_keywords) or words > 25:
+        return 2500
+    if any(kw in q for kw in simple_keywords) or words <= 10:
+        return 400
+    return 1200
+
+
+def ask_gpt(question, max_tokens):
     response = openai_client.chat.completions.create(
         model="gpt-5.2-2025-12-11",
-        max_completion_tokens=2000,
+        max_completion_tokens=max_tokens,
         messages=[{"role": "user", "content": question}]
     )
     return response.choices[0].message.content
 
 
-def ask_claude(question):
+def ask_claude(question, max_tokens):
     for attempt in range(3):
         try:
             with anthropic_client.messages.stream(
                 model="claude-haiku-4-5-20251001",
-                max_tokens=2000,
+                max_tokens=max_tokens,
                 messages=[{"role": "user", "content": question}]
             ) as stream:
                 return stream.get_final_text()
@@ -51,19 +87,19 @@ def ask_claude(question):
                 raise
 
 
-def ask_gemini(question):
+def ask_gemini(question, max_tokens):
     response = gemini_client.models.generate_content(
         model="gemini-3.1-pro-preview",
-        config={"maxOutputTokens": 2000},
+        config={"maxOutputTokens": max_tokens},
         contents=question
     )
     return response.text
 
 
-def ask_grok(question):
+def ask_grok(question, max_tokens):
     response = grok_client.chat.completions.create(
         model="grok-4.20-0309-non-reasoning",
-        max_tokens=2000,
+        max_tokens=max_tokens,
         messages=[{"role": "user", "content": question}]
     )
     return response.choices[0].message.content
@@ -83,6 +119,10 @@ def stream():
         return Response(err(), mimetype='text/event-stream')
 
     def generate():
+        model_tokens = estimate_max_tokens(question)
+        # Synthesis needs to cover all four responses, so give it a bit more headroom
+        synthesis_tokens = min(model_tokens * 2, 4000)
+
         event_queue = queue.Queue()
         results = {}
         lock = threading.Lock()
@@ -90,7 +130,7 @@ def stream():
         def run_model(name, func):
             event_queue.put({'type': 'progress', 'model': name, 'status': 'running'})
             try:
-                result = func(question)
+                result = func(question, model_tokens)
                 with lock:
                     results[name] = result
                 event_queue.put({'type': 'model_done', 'model': name, 'response': result})
@@ -142,22 +182,22 @@ Provide a final synthesized response."""
         yield f"data: {json.dumps({'type': 'synthesis_start'})}\n\n"
 
         try:
-            council_response = None
             for attempt in range(3):
                 try:
                     with anthropic_client.messages.stream(
                         model="claude-sonnet-4-6",
-                        max_tokens=4000,
+                        max_tokens=synthesis_tokens,
                         messages=[{"role": "user", "content": synthesis_prompt}]
                     ) as stream_obj:
-                        council_response = stream_obj.get_final_text()
+                        for text_chunk in stream_obj.text_stream:
+                            yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
                     break
                 except Exception as e:
                     if "overloaded" in str(e).lower() and attempt < 2:
                         time.sleep(2 ** attempt)
                     else:
                         raise
-            yield f"data: {json.dumps({'type': 'council_done', 'response': council_response})}\n\n"
+            yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'council_error', 'error': str(e)})}\n\n"
 
