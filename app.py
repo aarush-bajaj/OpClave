@@ -8,7 +8,7 @@ import json
 import queue
 import threading
 import concurrent.futures
-import requests
+import time
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'))
 
@@ -18,31 +18,35 @@ openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 grok_client = OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
-sarvam_api_key = os.getenv("SARVAM_API_KEY")
+
+
+def truncate(text, max_chars=1500):
+    if not text:
+        return "No response"
+    return text[:max_chars] + "..." if len(text) > max_chars else text
 
 
 def ask_gpt(question):
     response = openai_client.chat.completions.create(
         model="gpt-5.2-2025-12-11",
-        max_completion_tokens=100000,
+        max_completion_tokens=2000,
         messages=[{"role": "user", "content": question}]
     )
     return response.choices[0].message.content
 
 
 def ask_claude(question):
-    import time
-    for attempt in range(5):
+    for attempt in range(3):
         try:
             with anthropic_client.messages.stream(
-                model="claude-sonnet-4-6",
-                max_tokens=4000,
+                model="claude-haiku-4-5-20251001",
+                max_tokens=2000,
                 messages=[{"role": "user", "content": question}]
             ) as stream:
                 return stream.get_final_text()
         except Exception as e:
-            if "overloaded" in str(e).lower() and attempt < 4:
-                time.sleep(10 * (attempt + 1))
+            if "overloaded" in str(e).lower() and attempt < 2:
+                time.sleep(5 * (attempt + 1))
             else:
                 raise
 
@@ -50,7 +54,7 @@ def ask_claude(question):
 def ask_gemini(question):
     response = gemini_client.models.generate_content(
         model="gemini-3.1-pro-preview",
-        config={"maxOutputTokens": 100000},
+        config={"maxOutputTokens": 2000},
         contents=question
     )
     return response.text
@@ -59,21 +63,10 @@ def ask_gemini(question):
 def ask_grok(question):
     response = grok_client.chat.completions.create(
         model="grok-4.20-0309-non-reasoning",
-        max_tokens=100000,
+        max_tokens=2000,
         messages=[{"role": "user", "content": question}]
     )
     return response.choices[0].message.content
-
-
-def ask_sarvam(question):
-    response = requests.post(
-        "https://api.sarvam.ai/v1/chat/completions",
-        headers={"Authorization": f"Bearer {sarvam_api_key}", "Content-Type": "application/json"},
-        json={"model": "sarvam-105b", "messages": [{"role": "user", "content": question}], "max_tokens": 100000}
-    )
-    response.raise_for_status()
-    message = response.json()["choices"][0]["message"]
-    return message.get("content") or message.get("reasoning_content") or str(message)
 
 
 @app.route('/')
@@ -111,17 +104,16 @@ def stream():
             ('Claude', ask_claude),
             ('Gemini', ask_gemini),
             ('Grok', ask_grok),
-            ('Sarvam', ask_sarvam),
         ]
 
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
         for name, func in models:
             executor.submit(run_model, name, func)
 
         completed = 0
         while completed < len(models):
             try:
-                event = event_queue.get(timeout=180)
+                event = event_queue.get(timeout=120)
                 if event['type'] in ('model_done', 'model_error'):
                     completed += 1
                 yield f"data: {json.dumps(event)}\n\n"
@@ -130,15 +122,14 @@ def stream():
 
         executor.shutdown(wait=False)
 
-        synthesis_prompt = f"""You are synthesizing responses from five different AI models.
+        synthesis_prompt = f"""You are synthesizing responses from four different AI models.
 
 Original question: {question}
 
-Jackfruit response: {results.get('GPT', 'No response')}
-Passionfruit response: {results.get('Claude', 'No response')}
-Grapefruit response: {results.get('Gemini', 'No response')}
-Strawberry response: {results.get('Grok', 'No response')}
-Apple response: {results.get('Sarvam', 'No response')}
+Jackfruit response: {truncate(results.get('GPT'))}
+Passionfruit response: {truncate(results.get('Claude'))}
+Grapefruit response: {truncate(results.get('Gemini'))}
+Strawberry response: {truncate(results.get('Grok'))}
 
 Your task:
 1. Identify where they agree (high confidence)
@@ -151,13 +142,12 @@ Provide a final synthesized response."""
         yield f"data: {json.dumps({'type': 'synthesis_start'})}\n\n"
 
         try:
-            import time
             council_response = None
             for attempt in range(3):
                 try:
                     with anthropic_client.messages.stream(
                         model="claude-sonnet-4-6",
-                        max_tokens=16000,
+                        max_tokens=4000,
                         messages=[{"role": "user", "content": synthesis_prompt}]
                     ) as stream_obj:
                         council_response = stream_obj.get_final_text()
