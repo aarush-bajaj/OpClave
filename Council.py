@@ -220,14 +220,20 @@ with open("gemini_response.txt", "w", encoding="utf-8") as f:
     f.write(gemini_response)
 with open("grok_response.txt", "w", encoding="utf-8") as f:
     f.write(grok_response)
+def truncate(text, max_chars=1500):
+    if len(text) <= max_chars:
+        return text
+    cut = text.rfind(' ', 0, max_chars)
+    return text[:cut if cut > 0 else max_chars] + " …[truncated]"
+
 synthesis_prompt = f"""You are synthesizing responses from four different people.
 
 Original question: {user_question}
 
-Jackfruit response: {gpt_response}
-Passionfruit response: {claude_response}
-Grapefruit response: {gemini_response}
-Strawberry response: {grok_response}
+Jackfruit response: {truncate(gpt_response)}
+Passionfruit response: {truncate(claude_response)}
+Grapefruit response: {truncate(gemini_response)}
+Strawberry response: {truncate(grok_response)}
 
 Your task:
 1. Identify where they agree (high confidence)

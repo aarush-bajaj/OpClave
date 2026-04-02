@@ -371,7 +371,7 @@
   <div id="header">
     <span class="logo">⚖️</span>
     <h1>Council AI</h1>
-    <span class="subtitle">GPT · Claude · Gemini · Grok · Sarvam</span>
+    <span class="subtitle">GPT · Claude · Gemini · Grok</span>
   </div>
 
   <!-- Chat -->
@@ -379,7 +379,7 @@
     <div id="empty-state">
       <div class="big-logo">⚖️</div>
       <h2>The Council awaits</h2>
-      <p>Ask a question and get answers from 5 AI models, synthesized into one.</p>
+      <p>Ask a question and get answers from 4 AI models, synthesized into one.</p>
       <div class="chips">
         <span class="chip" onclick="fillInput(this)">Explain quantum entanglement simply</span>
         <span class="chip" onclick="fillInput(this)">What are the best practices for REST API design?</span>
@@ -414,14 +414,13 @@
   let activeSSE = null;
   let isLoading = false;
 
-  const TABS = ['Council', 'GPT', 'Claude', 'Gemini', 'Grok', 'Sarvam'];
+  const TABS = ['Council', 'GPT', 'Claude', 'Gemini', 'Grok'];
   const TAB_LABELS = {
     Council: '⚖ Council',
     GPT: 'GPT',
     Claude: 'Claude',
     Gemini: 'Gemini',
     Grok: 'Grok',
-    Sarvam: 'Sarvam',
   };
 
   // ── Input auto-resize ─────────────────────────────
