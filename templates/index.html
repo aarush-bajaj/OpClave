@@ -1121,7 +1121,7 @@
     if (ph) ph.style.display = 'none';
     if (content) {
       content.style.display = 'block';
-      content.appendChild(document.createTextNode(chunk));
+      content.innerHTML = marked.parse(activeStreams[id] || '');
     }
   }
 
