@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
+from mangum import Mangum
 from pydantic import BaseModel
 from openai import OpenAI
 from anthropic import Anthropic
@@ -295,3 +296,8 @@ Provide a final synthesized response."""
             "Connection": "keep-alive",
         },
     )
+
+
+# Vercel entry point — wraps the ASGI app so Vercel recognises this as a
+# valid Python Serverless Function.
+handler = Mangum(app)
