@@ -332,6 +332,64 @@
       text-transform: uppercase;
     }
 
+    /* ── Help icon & tooltip ─────────────────────── */
+    .help-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid var(--text-dim);
+      color: var(--text-dim);
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: default;
+      flex-shrink: 0;
+      position: relative;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .help-icon .tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      width: 220px;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-muted);
+      text-align: left;
+      line-height: 1.5;
+      pointer-events: none;
+      z-index: 100;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      white-space: normal;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .help-icon .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--border);
+    }
+
+    .help-icon:hover .tooltip {
+      display: block;
+    }
+
     /* shared pill base */
     .model-toggle, .synth-pill {
       display: inline-flex;
@@ -644,6 +702,7 @@
       <div id="input-toolbar">
         <div class="toolbar-group">
           <span class="synth-label">Council</span>
+          <span class="help-icon">?<span class="tooltip">Choose which AI models are queried. Active models each give an independent answer, and their responses are all included in the final synthesis. Deselect any model you'd like to exclude.</span></span>
           <button class="model-toggle active" data-model="gpt" onclick="toggleModel(this)">GPT</button>
           <button class="model-toggle active" data-model="claude" onclick="toggleModel(this)">Claude</button>
           <button class="model-toggle active" data-model="gemini" onclick="toggleModel(this)">Gemini</button>
@@ -652,6 +711,7 @@
         <div class="toolbar-divider"></div>
         <div class="toolbar-group">
           <span class="synth-label">Lead</span>
+          <span class="help-icon">?<span class="tooltip">The Lead model reads all council answers and writes the final synthesized response. It can be any model, even one not in the council.</span></span>
           <button class="synth-pill active" data-model="claude" onclick="selectSynthesizer(this)">Claude</button>
           <button class="synth-pill" data-model="gpt" onclick="selectSynthesizer(this)">GPT</button>
           <button class="synth-pill" data-model="gemini" onclick="selectSynthesizer(this)">Gemini</button>
