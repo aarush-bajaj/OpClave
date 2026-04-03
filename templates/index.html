@@ -1058,7 +1058,7 @@
       case 'council_chunk':
         if (activeStreams[id] === undefined) activeStreams[id] = '';
         activeStreams[id] += event.chunk;
-        setStreamingContent(id, 'Council', activeStreams[id]);
+        setStreamingContent(id, 'Council', event.chunk);
         break;
 
       case 'council_done':
@@ -1115,13 +1115,13 @@
     }
   }
 
-  function setStreamingContent(id, model, markdown) {
+  function setStreamingContent(id, model, chunk) {
     const ph = document.getElementById(`placeholder-${id}-${model}`);
     const content = document.getElementById(`content-${id}-${model}`);
     if (ph) ph.style.display = 'none';
     if (content) {
       content.style.display = 'block';
-      content.innerHTML = marked.parse(markdown || '');
+      content.appendChild(document.createTextNode(chunk));
     }
   }
 
