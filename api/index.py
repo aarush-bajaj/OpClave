@@ -214,7 +214,7 @@ def stream(req: StreamRequest):
         def run_model(name, func):
             event_queue.put({'type': 'progress', 'model': name, 'status': 'running'})
             try:
-                result = func(question, model_tokens)
+                result = func(question, model_tokens, history)
                 print(f"[DEBUG] {name} response length: {len(result) if result else 0} chars", flush=True)
                 with lock:
                     results[name] = result
