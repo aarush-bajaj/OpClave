@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Bash(python3 -c ':*)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
+    ]
+  }
+}

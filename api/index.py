@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from mangum import Mangum
 from pydantic import BaseModel
 from openai import OpenAI
@@ -18,6 +18,11 @@ _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(dotenv_path=os.path.join(_root, '.env'))
 
 app = FastAPI()
+
+
+@app.get("/assets/logo.png")
+def serve_logo():
+    return FileResponse(os.path.join(_root, "templates", "assets", "logo.png"), media_type="image/png")
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
