@@ -8,7 +8,11 @@
       "Bash(git -C /Users/aarushbajaj/Downloads/Council status)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council log --oneline -5)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council show f92ea64 --stat)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council show 8cfe1fb --stat)",
+      "Bash(git rm:*)"
     ],
     "additionalDirectories": [
       "\\tmp"
