@@ -265,7 +265,7 @@
   <div id="sidebar" class="flex flex-col w-[240px] shrink-0 border-r dark:border-[#3f3f3f] border-gray-200 dark:bg-[#171717] bg-white overflow-hidden">
     <div class="p-3 shrink-0">
       <button id="new-thread-btn" onclick="createNewThread()"
-        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg border dark:border-[#3f3f3f] border-gray-200 dark:text-gray-300 text-gray-600 dark:hover:bg-[#2f2f2f] hover:bg-gray-50 transition-colors text-sm font-medium font-sans cursor-pointer">
+        class="w-full flex items-center gap-2 px-3 py-2 rounded-lg border dark:border-[#3f3f3f] border-gray-200 dark:text-gray-300 text-gray-600 dark:hover:bg-[#2f2f2f] hover:bg-gray-50 transition-colors text-sm font-medium font-sans cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none">
         <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
@@ -421,6 +421,7 @@
   const emptyState = document.getElementById('empty-state');
   const inputEl = document.getElementById('input');
   const sendBtn = document.getElementById('send-btn');
+  const newThreadBtn = document.getElementById('new-thread-btn');
 
   const MAX_PROMPTS = 15;
   const CIRCUMFERENCE = 2 * Math.PI * 10; // r=10 → ~62.83
@@ -589,6 +590,7 @@
     inputEl.value = '';
     inputEl.style.height = 'auto';
     sendBtn.disabled = true;
+    newThreadBtn.disabled = true;
     isLoading = true;
 
     promptCount++;
@@ -652,6 +654,7 @@
             }
             isLoading = false;
             sendBtn.disabled = !inputEl.value.trim();
+            newThreadBtn.disabled = false;
             if (!isAdminMode && promptCount >= MAX_PROMPTS) {
               setTimeout(() => ctxModalOverlay.classList.add('visible'), 600);
             }
@@ -662,6 +665,7 @@
       if (err.name !== 'AbortError') {
         isLoading = false;
         sendBtn.disabled = !inputEl.value.trim();
+        newThreadBtn.disabled = false;
       }
     });
   }
@@ -883,6 +887,7 @@
     emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
     isLoading = false;
     sendBtn.disabled = !inputEl.value.trim();
+    newThreadBtn.disabled = false;
     renderThreadList();
     saveToLocalStorage();
     scrollToBottom(true);
