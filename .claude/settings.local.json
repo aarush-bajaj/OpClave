@@ -17,7 +17,9 @@
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: remove functions block from vercel.json\")",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council push)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council add templates/index.html)",
-      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: isolate conversation threads - global msgCounter, abort SSE on switch\")"
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: isolate conversation threads - global msgCounter, abort SSE on switch\")",
+      "Bash(python3)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"feat: mobile optimization - sidebar drawer, tighter layout on small screens\")"
     ],
     "additionalDirectories": [
       "\\tmp"
