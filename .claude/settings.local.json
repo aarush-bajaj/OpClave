@@ -12,7 +12,10 @@
       "Bash(git -C /Users/aarushbajaj/Downloads/Council log --oneline -5)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council show f92ea64 --stat)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council show 8cfe1fb --stat)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council add vercel.json)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: remove functions block from vercel.json\")",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council push)"
     ],
     "additionalDirectories": [
       "\\tmp"
