@@ -15,7 +15,9 @@
       "Bash(git rm:*)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council add vercel.json)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: remove functions block from vercel.json\")",
-      "Bash(git -C /Users/aarushbajaj/Downloads/Council push)"
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council push)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council add templates/index.html)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: isolate conversation threads - global msgCounter, abort SSE on switch\")"
     ],
     "additionalDirectories": [
       "\\tmp"
