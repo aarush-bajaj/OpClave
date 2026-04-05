@@ -847,19 +847,18 @@
     if (!currentThreadId || !threads[currentThreadId]) return;
     threads[currentThreadId].history = [...conversationHistory];
     threads[currentThreadId].promptCount = promptCount;
-    threads[currentThreadId].msgCounter = msgCounter;
     threads[currentThreadId].messagesHTML = messagesEl.innerHTML;
     saveToLocalStorage();
   }
 
   function switchThread(id) {
     if (currentThreadId === id) return;
+    if (activeSSE) { activeSSE.abort(); activeSSE = null; isLoading = false; }
     saveCurrentThread();
     currentThreadId = id;
     const t = threads[id];
     conversationHistory = [...(t.history || [])];
     promptCount = t.promptCount || 0;
-    msgCounter = t.msgCounter || 0;
     messagesEl.innerHTML = t.messagesHTML || '';
     updateRing(promptCount);
     emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
@@ -875,7 +874,7 @@
     saveCurrentThread();
     const id = generateThreadId();
     const num = threadOrder.length + 1;
-    threads[id] = { id, name: 'New Thread', history: [], promptCount: 0, msgCounter: 0, messagesHTML: '' };
+    threads[id] = { id, name: 'New Thread', history: [], promptCount: 0, messagesHTML: '' };
     threadOrder.unshift(id);
     // Use a temp var trick to bypass the early-return in switchThread
     currentThreadId = null;
