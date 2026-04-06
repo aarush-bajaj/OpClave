@@ -595,6 +595,7 @@
 
     promptCount++;
     updateRing(promptCount);
+    saveGlobalPromptCount();
 
     // Auto-name thread on first message
     if (currentThreadId && conversationHistory.length === 0) {
@@ -876,7 +877,6 @@
   function saveCurrentThread() {
     if (!currentThreadId || !threads[currentThreadId]) return;
     threads[currentThreadId].history = [...conversationHistory];
-    threads[currentThreadId].promptCount = promptCount;
     threads[currentThreadId].messagesHTML = messagesEl.innerHTML;
     saveToLocalStorage();
   }
@@ -888,7 +888,6 @@
     currentThreadId = id;
     const t = threads[id];
     conversationHistory = [...(t.history || [])];
-    promptCount = t.promptCount || 0;
     messagesEl.innerHTML = t.messagesHTML || '';
     updateRing(promptCount);
     emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
@@ -906,7 +905,7 @@
     saveCurrentThread();
     const id = generateThreadId();
     const num = threadOrder.length + 1;
-    threads[id] = { id, name: 'New Thread', history: [], promptCount: 0, messagesHTML: '' };
+    threads[id] = { id, name: 'New Thread', history: [], messagesHTML: '' };
     threadOrder.unshift(id);
     // Use a temp var trick to bypass the early-return in switchThread
     currentThreadId = null;
@@ -1001,6 +1000,26 @@
     } catch(e) {}
   }
 
+  function saveGlobalPromptCount() {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem('council-prompt-date', today);
+    localStorage.setItem('council-prompt-count', String(promptCount));
+  }
+
+  function loadGlobalPromptCount() {
+    const today = new Date().toISOString().slice(0, 10);
+    const savedDate = localStorage.getItem('council-prompt-date');
+    if (savedDate === today) {
+      promptCount = parseInt(localStorage.getItem('council-prompt-count') || '0', 10);
+    } else {
+      promptCount = 0;
+    }
+    updateRing(promptCount);
+    if (!isAdminMode && promptCount >= MAX_PROMPTS) {
+      ctxModalOverlay.classList.add('visible');
+    }
+  }
+
   function loadFromLocalStorage() {
     try {
       const t = localStorage.getItem('council-threads');
@@ -1040,6 +1059,7 @@
   }
 
   // ── Initialize threads ───────────────────────────
+  loadGlobalPromptCount();
   loadFromLocalStorage();
 
   inputEl.focus();
