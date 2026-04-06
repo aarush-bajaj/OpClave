@@ -292,7 +292,7 @@ def stream(req: StreamRequest):
 
         executor.shutdown(wait=False)
 
-        model_aliases = {'GPT': 'CGPT', 'Claude': 'Clde', 'Gemini': 'GMNI', 'Grok': 'GRK'}
+        model_aliases = {'GPT': 'CGPT', 'Claude': 'CLDE', 'Gemini': 'GMNI', 'Grok': 'GRK'}
         active_responses = '\n\n'.join(
             f"{model_aliases[name]} response: {truncate(results.get(name))}"
             for name, _, key in all_models if key in requested_models
