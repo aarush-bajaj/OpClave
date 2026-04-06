@@ -23,7 +23,9 @@
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: disable new thread button while response is generating\")",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council add api/index.py templates/index.html)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"feat: global 15-prompt/day rate limit via Upstash Redis\")",
-      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: persist daily prompt count across page reloads via localStorage\")"
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: persist daily prompt count across page reloads via localStorage\")",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council add api/index.py)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: replace fruit aliases with model initials in synthesis prompt\")"
     ],
     "additionalDirectories": [
       "\\tmp"
