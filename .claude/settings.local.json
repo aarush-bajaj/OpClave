@@ -20,7 +20,9 @@
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: isolate conversation threads - global msgCounter, abort SSE on switch\")",
       "Bash(python3)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"feat: mobile optimization - sidebar drawer, tighter layout on small screens\")",
-      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: disable new thread button while response is generating\")"
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: disable new thread button while response is generating\")",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council add api/index.py templates/index.html)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"feat: global 15-prompt/day rate limit via Upstash Redis\")"
     ],
     "additionalDirectories": [
       "\\tmp"
