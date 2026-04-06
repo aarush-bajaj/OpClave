@@ -343,7 +343,7 @@
     <div id="ctx-modal" class="dark:bg-[#2f2f2f] bg-white border dark:border-[#3f3f3f] border-gray-200 rounded-xl px-10 py-9 max-w-sm w-full mx-4 text-center flex flex-col items-center gap-3.5">
       <div class="text-4xl">⌛</div>
       <h2 class="text-lg font-semibold">Context limit reached</h2>
-      <p class="dark:text-gray-400 text-gray-500 text-sm leading-relaxed">Thank you for trying Council AI!<br>This session has reached its 15-prompt limit.</p>
+      <p class="dark:text-gray-400 text-gray-500 text-sm leading-relaxed">Thank you for trying Council AI!<br>The daily limit of 15 prompts has been reached. Check back tomorrow!</p>
     </div>
   </div>
 
@@ -767,6 +767,13 @@
       case 'council_error':
         setDotStatus(id, 'Council', 'error');
         setError(id, 'Council', event.error);
+        break;
+
+      case 'rate_limited':
+        isLoading = false;
+        sendBtn.disabled = !inputEl.value.trim();
+        newThreadBtn.disabled = false;
+        ctxModalOverlay.classList.add('visible');
         break;
 
       case 'complete':

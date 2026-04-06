@@ -12,12 +12,44 @@ import queue
 import threading
 import concurrent.futures
 import time
+import urllib.request
+import urllib.parse
+from datetime import datetime, timezone
 from typing import List
 
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(dotenv_path=os.path.join(_root, '.env'))
 
 app = FastAPI()
+
+DAILY_LIMIT = 15
+_UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL", "")
+_UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
+
+
+def _redis(command: list) -> object:
+    """Call Upstash Redis REST API. Returns parsed JSON result field."""
+    if not _UPSTASH_URL or not _UPSTASH_TOKEN:
+        return None
+    path = "/".join(urllib.parse.quote(str(c), safe="") for c in command)
+    req = urllib.request.Request(
+        f"{_UPSTASH_URL}/{path}",
+        headers={"Authorization": f"Bearer {_UPSTASH_TOKEN}"},
+    )
+    with urllib.request.urlopen(req, timeout=3) as r:
+        return json.loads(r.read())["result"]
+
+
+def check_and_increment_global_limit() -> tuple[bool, int]:
+    """Returns (allowed, current_count). Increments counter; sets 24h TTL on first use."""
+    try:
+        key = f"council:prompts:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        count = _redis(["INCR", key])
+        if count == 1:
+            _redis(["EXPIRE", key, 86400])
+        return (count <= DAILY_LIMIT, int(count))
+    except Exception:
+        return (True, 0)  # fail open so an Upstash outage doesn't break the site
 
 
 @app.get("/assets/logo.png")
@@ -204,6 +236,12 @@ def stream(req: StreamRequest):
         def err():
             yield 'data: {"type":"error","message":"No question provided"}\n\n'
         return StreamingResponse(err(), media_type="text/event-stream")
+
+    allowed, count = check_and_increment_global_limit()
+    if not allowed:
+        def rate_limited():
+            yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":DAILY_LIMIT})}\n\n'
+        return StreamingResponse(rate_limited(), media_type="text/event-stream")
 
     def generate():
         model_tokens = estimate_max_tokens(question)
