@@ -14,8 +14,11 @@ import concurrent.futures
 import time
 import urllib.request
 import urllib.parse
+import smtplib
+import email.mime.text
+import email.mime.multipart
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(dotenv_path=os.path.join(_root, '.env'))
@@ -208,13 +211,16 @@ def synthesize_with_grok(prompt, max_tokens, history=None):
             yield delta
 
 
-# ── Request model ─────────────────────────────────────────────────────────────
+# ── Request models ────────────────────────────────────────────────────────────
 
 class StreamRequest(BaseModel):
     question: str = ""
     synthesizer: str = "claude"
     models: List[str] = ["gpt", "claude", "gemini", "grok"]
     history: List[dict] = []
+
+class FeedbackRequest(BaseModel):
+    message: str = ""
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -223,6 +229,35 @@ class StreamRequest(BaseModel):
 def index():
     with open(os.path.join(_root, "templates", "index.html"), encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
+
+@app.post("/feedback")
+def feedback(req: FeedbackRequest):
+    message = req.message.strip()
+    if not message:
+        return {"ok": False, "error": "No message provided"}
+
+    gmail_user = "councilaiclb@gmail.com"
+    gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
+
+    if not gmail_pass:
+        return {"ok": False, "error": "Email not configured"}
+
+    try:
+        msg = email.mime.multipart.MIMEMultipart()
+        msg["From"] = gmail_user
+        msg["To"] = gmail_user
+        msg["Subject"] = "Council AI — Feedback"
+        body = f"Feedback received:\n\n{message}\n\n---\nSent via Council AI"
+        msg.attach(email.mime.text.MIMEText(body, "plain"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(gmail_user, gmail_pass)
+            server.sendmail(gmail_user, gmail_user, msg.as_string())
+
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 
 @app.post("/stream")

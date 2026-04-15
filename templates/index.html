@@ -86,6 +86,20 @@
     #ctx-modal-overlay, #admin-modal-overlay, #about-modal-overlay { display: none; }
     #ctx-modal-overlay.visible, #admin-modal-overlay.visible, #about-modal-overlay.visible { display: flex; }
 
+    /* Feedback modal */
+    #feedback-modal-overlay { display: none; }
+    #feedback-modal-overlay.visible { display: flex; }
+    #feedback-textarea {
+      width: 100%; resize: none; outline: none; border: 1px solid;
+      border-radius: 10px; padding: 10px 12px; font-size: 14px;
+      font-family: inherit; line-height: 1.6; min-height: 100px;
+      transition: border-color 0.15s;
+    }
+    .dark #feedback-textarea { background: #1a1a1a; border-color: #3f3f3f; color: #ececec; }
+    #feedback-textarea { background: #fff; border-color: #e5e7eb; color: #111827; }
+    .dark #feedback-textarea:focus { border-color: #555; }
+    #feedback-textarea:focus { border-color: #9ca3af; }
+
     /* About modal */
     .about-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0 4px; }
     .about-table th { text-align: left; padding: 5px 10px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -393,6 +407,27 @@
     </div>
   </div>
 
+  <!-- Feedback modal -->
+  <div id="feedback-modal-overlay" class="fixed inset-0 dark:bg-black/60 bg-black/40 z-[100] items-center justify-content p-4" style="align-items:center;justify-content:center;display:none;">
+    <div class="dark:bg-[#1e1e1e] bg-white border dark:border-[#3f3f3f] border-gray-200 rounded-2xl px-6 py-6 max-w-md w-full mx-auto flex flex-col gap-4 shadow-2xl" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between">
+        <h2 class="text-[16px] font-semibold tracking-tight">Share feedback</h2>
+        <button onclick="closeFeedbackModal()" class="p-1 rounded-lg dark:text-gray-500 text-gray-400 dark:hover:bg-[#2f2f2f] hover:bg-gray-100 transition-colors">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <p class="dark:text-gray-400 text-gray-500 text-sm">What should be improved? Any bugs, ideas, or general thoughts.</p>
+      <textarea id="feedback-textarea" placeholder="Your feedback…" maxlength="2000"></textarea>
+      <div class="flex items-center justify-between gap-3">
+        <span id="feedback-status" class="text-sm dark:text-gray-500 text-gray-400"></span>
+        <button id="feedback-submit-btn" onclick="submitFeedback()"
+          class="px-5 py-2 rounded-full bg-[#19c37d] text-black text-sm font-semibold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed font-sans cursor-pointer">
+          Send
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Context limit modal -->
   <div id="ctx-modal-overlay" class="fixed inset-0 dark:bg-black/60 bg-black/40 z-[100] items-center justify-center">
     <div id="ctx-modal" class="dark:bg-[#2f2f2f] bg-white border dark:border-[#3f3f3f] border-gray-200 rounded-xl px-10 py-9 max-w-sm w-full mx-4 text-center flex flex-col items-center gap-3.5">
@@ -462,7 +497,13 @@
           class="w-8 h-8 rounded-lg border-0 bg-[#19c37d] text-black text-base flex items-center justify-center shrink-0 transition-all font-bold leading-none">↑</button>
       </div>
     </div>
-    <p class="text-center text-[11px] dark:text-gray-600 text-gray-400 mt-2 hidden sm:block">Enter to send · Shift+Enter for new line</p>
+    <div class="flex items-center justify-center gap-3 mt-2">
+      <p class="text-[11px] dark:text-gray-600 text-gray-400 hidden sm:block">Enter to send · Shift+Enter for new line</p>
+      <button id="feedback-btn" onclick="openFeedbackModal()" style="display:none"
+        class="text-[11px] dark:text-gray-600 text-gray-400 dark:hover:text-gray-300 hover:text-gray-600 transition-colors cursor-pointer bg-transparent border-0 font-sans underline underline-offset-2">
+        Give feedback
+      </button>
+    </div>
   </div>
 
   </div><!-- /#main -->
@@ -655,6 +696,7 @@
     promptCount++;
     updateRing(promptCount);
     saveGlobalPromptCount();
+    document.getElementById('feedback-btn').style.display = '';
 
     // Auto-name thread on first message
     if (currentThreadId && conversationHistory.length === 0) {
@@ -1059,6 +1101,50 @@
     } catch(e) {}
   }
 
+  // ── Feedback ──────────────────────────────────────
+  function openFeedbackModal() {
+    const overlay = document.getElementById('feedback-modal-overlay');
+    overlay.style.display = 'flex';
+    document.getElementById('feedback-status').textContent = '';
+    document.getElementById('feedback-textarea').value = '';
+    document.getElementById('feedback-submit-btn').disabled = false;
+    setTimeout(() => document.getElementById('feedback-textarea').focus(), 50);
+  }
+
+  function closeFeedbackModal() {
+    document.getElementById('feedback-modal-overlay').style.display = 'none';
+  }
+
+  async function submitFeedback() {
+    const message = document.getElementById('feedback-textarea').value.trim();
+    if (!message) return;
+    const btn = document.getElementById('feedback-submit-btn');
+    const status = document.getElementById('feedback-status');
+    btn.disabled = true;
+    status.textContent = 'Sending…';
+    try {
+      const res = await fetch('/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        status.textContent = 'Sent — thank you!';
+        status.style.color = '#19c37d';
+        setTimeout(closeFeedbackModal, 1400);
+      } else {
+        status.textContent = 'Failed to send. Try again.';
+        status.style.color = '#f87171';
+        btn.disabled = false;
+      }
+    } catch {
+      status.textContent = 'Failed to send. Try again.';
+      status.style.color = '#f87171';
+      btn.disabled = false;
+    }
+  }
+
   function saveGlobalPromptCount() {
     const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem('council-prompt-date', today);
@@ -1074,6 +1160,9 @@
       promptCount = 0;
     }
     updateRing(promptCount);
+    if (promptCount > 0) {
+      document.getElementById('feedback-btn').style.display = '';
+    }
     if (!isAdminMode && promptCount >= MAX_PROMPTS) {
       ctxModalOverlay.classList.add('visible');
     }
