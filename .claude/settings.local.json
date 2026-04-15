@@ -41,7 +41,9 @@
       "Bash(curl -s -X POST http://localhost:8000/feedback -H 'Content-Type: application/json' -d '{\"message\": \"test from local\"}')",
       "Bash(nc -zv smtp.gmail.com 465)",
       "Bash(nc -zv smtp.gmail.com 587)",
-      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: use SMTP port 587 with STARTTLS for Gmail\")"
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: use SMTP port 587 with STARTTLS for Gmail\")",
+      "Bash(python3 -c ' *)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"feat: replace feedback link with floating pill button\")"
     ],
     "additionalDirectories": [
       "\\tmp"
