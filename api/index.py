@@ -249,7 +249,9 @@ def feedback(req: FeedbackRequest):
         msg.attach(email.mime.text.MIMEText(
             f"Feedback received:\n\n{message}\n\n---\nSent via Council AI", "plain"
         ))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.ehlo()
+            server.starttls()
             server.login(sender, gmail_pass)
             server.sendmail(sender, sender, msg.as_string())
         return {"ok": True}
