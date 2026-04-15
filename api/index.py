@@ -235,28 +235,23 @@ def feedback(req: FeedbackRequest):
     if not message:
         return {"ok": False, "error": "No message provided"}
 
-    resend_key = os.getenv("RESEND_API_KEY", "")
-    if not resend_key:
+    gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
+    if not gmail_pass:
         return {"ok": False, "error": "Email not configured"}
 
     try:
-        payload = json.dumps({
-            "from": "Council AI <onboarding@resend.dev>",
-            "to": ["councilaiclb@gmail.com"],
-            "subject": "Council AI — Feedback",
-            "text": f"Feedback received:\n\n{message}\n\n---\nSent via Council AI",
-        }).encode()
-        req_obj = urllib.request.Request(
-            "https://api.resend.com/emails",
-            data=payload,
-            headers={
-                "Authorization": f"Bearer {resend_key}",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-        with urllib.request.urlopen(req_obj, timeout=10) as r:
-            r.read()
+        import smtplib, email.mime.text, email.mime.multipart
+        sender = "aarushbajajus@gmail.com"
+        msg = email.mime.multipart.MIMEMultipart()
+        msg["From"] = sender
+        msg["To"] = sender
+        msg["Subject"] = "Council AI — Feedback"
+        msg.attach(email.mime.text.MIMEText(
+            f"Feedback received:\n\n{message}\n\n---\nSent via Council AI", "plain"
+        ))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender, gmail_pass)
+            server.sendmail(sender, sender, msg.as_string())
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
