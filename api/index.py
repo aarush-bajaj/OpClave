@@ -14,11 +14,9 @@ import concurrent.futures
 import time
 import urllib.request
 import urllib.parse
-import smtplib
-import email.mime.text
-import email.mime.multipart
+
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(dotenv_path=os.path.join(_root, '.env'))
@@ -237,24 +235,28 @@ def feedback(req: FeedbackRequest):
     if not message:
         return {"ok": False, "error": "No message provided"}
 
-    gmail_user = "councilaiclb@gmail.com"
-    gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
-
-    if not gmail_pass:
+    resend_key = os.getenv("RESEND_API_KEY", "")
+    if not resend_key:
         return {"ok": False, "error": "Email not configured"}
 
     try:
-        msg = email.mime.multipart.MIMEMultipart()
-        msg["From"] = gmail_user
-        msg["To"] = gmail_user
-        msg["Subject"] = "Council AI — Feedback"
-        body = f"Feedback received:\n\n{message}\n\n---\nSent via Council AI"
-        msg.attach(email.mime.text.MIMEText(body, "plain"))
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, gmail_user, msg.as_string())
-
+        payload = json.dumps({
+            "from": "Council AI <onboarding@resend.dev>",
+            "to": ["councilaiclb@gmail.com"],
+            "subject": "Council AI — Feedback",
+            "text": f"Feedback received:\n\n{message}\n\n---\nSent via Council AI",
+        }).encode()
+        req_obj = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {resend_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urllib.request.urlopen(req_obj, timeout=10) as r:
+            r.read()
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
