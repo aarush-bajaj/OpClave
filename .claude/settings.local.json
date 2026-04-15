@@ -27,7 +27,21 @@
       "Bash(git -C /Users/aarushbajaj/Downloads/Council add api/index.py)",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: replace fruit aliases with model initials in synthesis prompt\")",
       "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"feat: fix CLDE alias, add ? about modal explaining Council AI\")",
-      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"copy: update about modal description\")"
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"copy: update about modal description\")",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"feat: add feedback form that emails councilaiclb@gmail.com\")",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council pull --rebase)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council stash)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council stash pop)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: swap Gmail SMTP for Resend API, remove unused imports\")",
+      "Bash(curl -s -X POST http://localhost:8000/feedback -H 'Content-Type: application/json' -d '{\"message\": \"test\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: revert feedback to Gmail SMTP, send to aarushbajajus@gmail.com\")",
+      "Bash(lsof -ti:8000)",
+      "Bash(xargs kill:*)",
+      "Bash(curl -s -X POST http://localhost:8000/feedback -H 'Content-Type: application/json' -d '{\"message\": \"test from local\"}')",
+      "Bash(nc -zv smtp.gmail.com 465)",
+      "Bash(nc -zv smtp.gmail.com 587)",
+      "Bash(git -C /Users/aarushbajaj/Downloads/Council commit -m \"fix: use SMTP port 587 with STARTTLS for Gmail\")"
     ],
     "additionalDirectories": [
       "\\tmp"
