@@ -528,7 +528,6 @@
 
   const MAX_PROMPTS = 15;
   const CIRCUMFERENCE = 2 * Math.PI * 10; // r=10 → ~62.83
-  const ADMIN_CODE = 'balasubramanyam7969';
 
   let isAdminMode = false;
   const adminOverlay = document.getElementById('admin-modal-overlay');
@@ -671,21 +670,32 @@
   }
 
   // ── Submit ────────────────────────────────────────
-  function submitQuestion() {
+  async function submitQuestion() {
     const question = inputEl.value.trim();
     if (!question || isLoading) return;
 
-    if (question === ADMIN_CODE) {
-      inputEl.value = '';
-      inputEl.style.height = 'auto';
-      sendBtn.disabled = true;
-      isAdminMode = true;
-      promptCount = 0;
-      updateRing(0);
-      ctxModalOverlay.classList.remove('visible');
-      adminOverlay.classList.add('visible');
-      launchConfetti();
-      return;
+    // Verify admin code server-side so the secret is never in the page source
+    try {
+      const res = await fetch('/verify-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: question }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+        sendBtn.disabled = true;
+        isAdminMode = true;
+        promptCount = 0;
+        updateRing(0);
+        ctxModalOverlay.classList.remove('visible');
+        adminOverlay.classList.add('visible');
+        launchConfetti();
+        return;
+      }
+    } catch (_) {
+      // network error — fall through and treat as a normal question
     }
 
     if (!isAdminMode && promptCount >= MAX_PROMPTS) {

@@ -14,6 +14,7 @@ import concurrent.futures
 import time
 import urllib.request
 import urllib.parse
+import hmac
 
 from datetime import datetime, timezone
 from typing import List
@@ -220,6 +221,9 @@ class StreamRequest(BaseModel):
 class FeedbackRequest(BaseModel):
     message: str = ""
 
+class AdminVerifyRequest(BaseModel):
+    code: str = ""
+
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -227,6 +231,15 @@ class FeedbackRequest(BaseModel):
 def index():
     with open(os.path.join(_root, "templates", "index.html"), encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
+
+@app.post("/verify-admin")
+def verify_admin(req: AdminVerifyRequest):
+    secret = os.getenv("ADMIN_CODE", "")
+    if not secret:
+        return {"valid": False}
+    match = hmac.compare_digest(req.code.encode(), secret.encode())
+    return {"valid": match}
 
 
 @app.post("/feedback")
