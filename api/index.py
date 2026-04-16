@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from mangum import Mangum
 from pydantic import BaseModel
@@ -40,6 +40,22 @@ def _redis(command: list) -> object:
     )
     with urllib.request.urlopen(req, timeout=3) as r:
         return json.loads(r.read())["result"]
+
+
+FEEDBACK_LIMIT = 3          # max submissions per IP per hour
+FEEDBACK_WINDOW = 3600      # seconds
+
+def check_feedback_rate_limit(ip: str) -> bool:
+    """Returns True if the request is allowed, False if the IP is over the limit."""
+    try:
+        hour = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H')
+        key = f"council:feedback:{ip}:{hour}"
+        count = _redis(["INCR", key])
+        if count == 1:
+            _redis(["EXPIRE", key, FEEDBACK_WINDOW])
+        return count <= FEEDBACK_LIMIT
+    except Exception:
+        return True  # fail open — an Upstash outage shouldn't block feedback
 
 
 def check_and_increment_global_limit() -> tuple[bool, int]:
@@ -243,10 +259,16 @@ def verify_admin(req: AdminVerifyRequest):
 
 
 @app.post("/feedback")
-def feedback(req: FeedbackRequest):
+def feedback(req: FeedbackRequest, request: Request):
     message = req.message.strip()
     if not message:
         return {"ok": False, "error": "No message provided"}
+
+    # Rate-limit by IP: max 3 submissions per hour
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    if not check_feedback_rate_limit(ip):
+        return {"ok": False, "rate_limited": True, "error": "Too many submissions. Please wait before sending again."}
 
     gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
     if not gmail_pass:

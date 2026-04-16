@@ -1150,6 +1150,10 @@
         status.textContent = 'Sent — thank you!';
         status.style.color = '#19c37d';
         setTimeout(closeFeedbackModal, 1400);
+      } else if (data.rate_limited) {
+        status.textContent = 'Too many submissions — please wait a while before trying again.';
+        status.style.color = '#f87171';
+        // keep button disabled; no point retrying immediately
       } else {
         status.textContent = 'Failed to send. Try again.';
         status.style.color = '#f87171';
