@@ -283,6 +283,45 @@
     .dark .md-content hr { border-top: 1px solid #3f3f3f; }
     .md-content hr { border-top: 1px solid #e5e7eb; }
     .md-content strong { font-weight: 600; }
+
+    /* Image mode toggle button */
+    #img-mode-btn {
+      width: 32px; height: 32px; border-radius: 8px; border: 1px solid transparent;
+      background: transparent; font-size: 14px; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0; cursor: pointer; transition: all 0.15s;
+      line-height: 1;
+    }
+    .dark #img-mode-btn { color: #8e8ea0; border-color: #3f3f3f; }
+    #img-mode-btn { color: #6b7280; border-color: #d1d5db; }
+    #img-mode-btn.active { background: #19c37d; color: #000; border-color: #19c37d; }
+    .dark #img-mode-btn:not(.active):hover { background: #2f2f2f; color: #ececec; }
+    #img-mode-btn:not(.active):hover { background: #f3f4f6; color: #111827; }
+
+    /* Imagen image grid */
+    .imagen-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px; padding: 4px 0;
+    }
+    .imagen-img {
+      width: 100%; aspect-ratio: 1/1; object-fit: cover;
+      border-radius: 10px; cursor: zoom-in; transition: opacity 0.2s;
+    }
+    .imagen-img:hover { opacity: 0.88; }
+    .imagen-prompt {
+      font-size: 12px; margin-bottom: 10px; padding: 8px 10px;
+      border-radius: 8px; line-height: 1.5;
+    }
+    .dark .imagen-prompt { background: #1a1a1a; color: #8e8ea0; border: 1px solid #3f3f3f; }
+    .imagen-prompt { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+
+    /* Lightbox */
+    #lightbox-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+      cursor: zoom-out;
+    }
+    #lightbox-overlay.visible { display: flex; }
+    #lightbox-img { max-width: 90vw; max-height: 90vh; border-radius: 12px; }
   </style>
 </head>
 <body class="h-full dark:bg-[#212121] bg-gray-50 dark:text-gray-100 text-gray-900 font-sans text-[15px] leading-relaxed">
@@ -493,10 +532,16 @@
       <div id="input-bottom" class="flex items-end gap-2">
         <textarea id="input" rows="1" placeholder="Ask the Council…"
           class="flex-1 bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] font-sans resize-none max-h-[200px] min-h-[24px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
+        <button id="img-mode-btn" title="Image generation mode" onclick="toggleImageMode()">✦</button>
         <button id="send-btn" disabled title="Send"
           class="w-8 h-8 rounded-lg border-0 bg-[#19c37d] text-black text-base flex items-center justify-center shrink-0 transition-all font-bold leading-none">↑</button>
       </div>
     </div>
+
+  <!-- Lightbox for generated images -->
+  <div id="lightbox-overlay" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="Generated image" />
+  </div>
 
   <!-- Floating feedback button -->
   <div id="feedback-btn" style="display:none" class="fixed bottom-5 right-5 z-40">
@@ -598,6 +643,7 @@
   let activeStreams = {};
   let selectedSynthesizer = 'claude';
   let enabledModels = new Set(['gpt', 'claude', 'gemini', 'grok']);
+  let imageMode = false;
   let promptCount = 0;
   let conversationHistory = []; // [{role:'user'|'assistant', content:'...'}]
 
@@ -635,6 +681,20 @@
     document.querySelectorAll('.synth-pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     selectedSynthesizer = btn.dataset.model;
+  }
+
+  function toggleImageMode() {
+    imageMode = !imageMode;
+    document.getElementById('img-mode-btn').classList.toggle('active', imageMode);
+  }
+
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-overlay').classList.add('visible');
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox-overlay').classList.remove('visible');
   }
 
   const TAB_LABELS = {
@@ -729,8 +789,10 @@
 
     addUserMessage(question, turn);
     const id = msgCounter++;
-    const turnModels = [...enabledModels];
-    createAssistantMessage(id, turn, turnModels);
+    const turnModels = imageMode
+      ? [...new Set([...enabledModels, 'gemini'])]
+      : [...enabledModels];
+    createAssistantMessage(id, turn, turnModels, imageMode);
     scrollToBottom(true);
 
     if (activeSSE) { activeSSE.abort(); activeSSE = null; }
@@ -748,6 +810,7 @@
         synthesizer: selectedSynthesizer,
         models: turnModels,
         history: historyToSend,
+        image_mode: imageMode,
       }),
       signal: controller.signal,
     }).then(async (res) => {
@@ -797,7 +860,7 @@
     container.appendChild(div);
   }
 
-  function createAssistantMessage(id, container, turnModels) {
+  function createAssistantMessage(id, container, turnModels, imageModeOn) {
     const tabs = ['Council', ...turnModels.map(m => MODEL_TAB[m])];
 
     const div = document.createElement('div');
@@ -821,7 +884,8 @@
       dot.id = `dot-${id}-${tab}`;
 
       btn.appendChild(dot);
-      btn.appendChild(document.createTextNode(TAB_LABELS[tab]));
+      const tabLabel = (imageModeOn && tab === 'Gemini') ? '✦ Gemini' : TAB_LABELS[tab];
+      btn.appendChild(document.createTextNode(tabLabel));
       tabBar.appendChild(btn);
     });
 
@@ -832,11 +896,18 @@
       pane.className = 'tab-pane' + (i === 0 ? ' active' : '');
       pane.id = `pane-${id}-${tab}`;
 
+      const placeholderText = tab === 'Council'
+        ? 'Waiting for all models…'
+        : (imageModeOn && tab === 'Gemini' ? 'Generating visuals…' : 'Waiting…');
+      const dotClass = (imageModeOn && tab === 'Gemini') ? 'loading' : 'pending';
       pane.innerHTML = `<div class="pane-placeholder" id="placeholder-${id}-${tab}">
         <div class="pane-spinner"></div>
-        <span>${tab === 'Council' ? 'Waiting for all models…' : 'Waiting…'}</span>
+        <span>${placeholderText}</span>
       </div>
       <div class="md-content" id="content-${id}-${tab}" style="display:none"></div>`;
+      if (imageModeOn && tab === 'Gemini') {
+        setTimeout(() => setDotStatus(id, 'Gemini', 'loading'), 0);
+      }
 
       div.appendChild(pane);
     });
@@ -886,6 +957,20 @@
       case 'council_error':
         setDotStatus(id, 'Council', 'error');
         setError(id, 'Council', event.error);
+        break;
+
+      case 'imagen_start':
+        setPlaceholderText(id, 'Gemini', 'Generating images…');
+        break;
+
+      case 'images_ready':
+        setDotStatus(id, 'Gemini', 'done');
+        setImagesContent(id, 'Gemini', event.images, event.enriched_prompt);
+        break;
+
+      case 'imagen_error':
+        setDotStatus(id, 'Gemini', 'error');
+        setError(id, 'Gemini', event.error);
         break;
 
       case 'rate_limited':
@@ -955,6 +1040,22 @@
     if (content) {
       content.style.display = 'block';
       content.innerHTML = `<div class="pane-error">Error: ${escapeHtml(error)}</div>`;
+    }
+  }
+
+  function setImagesContent(id, model, images, enrichedPrompt) {
+    const ph = document.getElementById(`placeholder-${id}-${model}`);
+    const content = document.getElementById(`content-${id}-${model}`);
+    if (ph) ph.style.display = 'none';
+    if (content) {
+      content.style.display = 'block';
+      const promptHtml = enrichedPrompt
+        ? `<div class="imagen-prompt"><strong>Prompt:</strong> ${escapeHtml(enrichedPrompt)}</div>`
+        : '';
+      const imgsHtml = images.map(b64 =>
+        `<img src="data:image/jpeg;base64,${b64}" class="imagen-img" onclick="openLightbox(this.src)" alt="Generated image" />`
+      ).join('');
+      content.innerHTML = `${promptHtml}<div class="imagen-grid">${imgsHtml}</div>`;
     }
   }
 

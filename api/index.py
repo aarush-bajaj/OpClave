@@ -15,6 +15,8 @@ import time
 import urllib.request
 import urllib.parse
 import hmac
+import base64
+from google.genai import types
 
 from datetime import datetime, timezone
 from typing import List
@@ -226,6 +228,47 @@ def synthesize_with_grok(prompt, max_tokens, history=None):
             yield delta
 
 
+# ── Image generation helpers ──────────────────────────────────────────────────
+
+def enrich_prompt_for_imagen(question, responses):
+    """Builds a precise Imagen prompt from question + text-model creative direction."""
+    parts = [f"Original request: {question}"]
+    for name, text in responses.items():
+        if text:
+            parts.append(f"{name}'s creative direction: {truncate(text, 800)}")
+    combined = "\n\n".join(parts)
+    meta_prompt = (
+        f"{combined}\n\nWrite ONE precise image generation prompt for Google Imagen. "
+        "Include: subject, composition, art style, color palette, lighting, mood, and "
+        "quality specs. Output ONLY the prompt text, no preamble."
+    )
+    try:
+        with anthropic_client.messages.stream(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=350,
+            messages=[{"role": "user", "content": meta_prompt}],
+        ) as s:
+            return s.get_final_text().strip()
+    except Exception:
+        return question
+
+
+def call_gemini_imagen(prompt):
+    """Calls Imagen and returns up to 4 base64-encoded JPEG strings."""
+    response = gemini_client.models.generate_images(
+        model="imagen-3.0-generate-002",
+        prompt=prompt,
+        config=types.GenerateImagesConfig(
+            number_of_images=4,
+            aspect_ratio="1:1",
+        ),
+    )
+    images = []
+    for gi in response.generated_images:
+        images.append(base64.b64encode(gi.image.image_data).decode("utf-8"))
+    return images
+
+
 # ── Request models ────────────────────────────────────────────────────────────
 
 class StreamRequest(BaseModel):
@@ -233,6 +276,7 @@ class StreamRequest(BaseModel):
     synthesizer: str = "claude"
     models: List[str] = ["gpt", "claude", "gemini", "grok"]
     history: List[dict] = []
+    image_mode: bool = False
 
 class FeedbackRequest(BaseModel):
     message: str = ""
@@ -300,6 +344,7 @@ def stream(req: StreamRequest):
     synthesizer = req.synthesizer.lower()
     requested_models = set(req.models)
     history = req.history
+    image_mode = req.image_mode
 
     if not question:
         def err():
@@ -343,9 +388,11 @@ def stream(req: StreamRequest):
             ('Gemini', ask_gemini, 'gemini'),
             ('Grok',   ask_grok,   'grok'),
         ]
-        models = [(name, func) for name, func, key in all_models if key in requested_models]
+        # In image mode Gemini generates images; exclude it from text queries
+        text_keys = requested_models - {'gemini'} if image_mode else requested_models
+        models = [(name, func) for name, func, key in all_models if key in text_keys]
 
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(models))
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=max(len(models), 1))
         for name, func in models:
             executor.submit(run_model, name, func)
 
@@ -364,10 +411,25 @@ def stream(req: StreamRequest):
         model_aliases = {'GPT': 'CGPT', 'Claude': 'CLDE', 'Gemini': 'GMNI', 'Grok': 'GRK'}
         active_responses = '\n\n'.join(
             f"{model_aliases[name]} response: {truncate(results.get(name))}"
-            for name, _, key in all_models if key in requested_models
+            for name, _, key in all_models if key in text_keys
         )
-        n = len(requested_models)
-        synthesis_prompt = f"""You are synthesizing responses from {n} AI model{'s' if n != 1 else ''}.
+        n = len(text_keys)
+        if image_mode:
+            synthesis_prompt = f"""You are synthesizing creative direction from {n} AI model{'s' if n != 1 else ''} for an image generation task.
+
+Original user request: {question}
+
+{active_responses}
+
+Your task:
+1. Summarize the visual direction the models agreed on (style, colors, composition, mood)
+2. Note any interesting differences in their creative suggestions
+3. Inform the user that **4 image variants are being generated in the Gemini tab** based on their combined suggestions
+4. Invite them to check the Gemini tab to browse the visuals
+
+Keep your response concise — the visuals speak for themselves."""
+        else:
+            synthesis_prompt = f"""You are synthesizing responses from {n} AI model{'s' if n != 1 else ''}.
 
 Original question: {question}
 
@@ -390,12 +452,22 @@ Provide a final synthesized response."""
                 'gemini': synthesize_with_gemini,
                 'grok': synthesize_with_grok,
             }
-            synth_fn = synth_map.get(synthesizer, synthesize_with_claude)
+            actual_synth = 'claude' if (image_mode and synthesizer == 'gemini') else synthesizer
+            synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
             for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history):
                 yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
             yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'council_error', 'error': str(e)})}\n\n"
+
+        if image_mode and 'gemini' in requested_models:
+            yield f"data: {json.dumps({'type': 'imagen_start'})}\n\n"
+            try:
+                enriched = enrich_prompt_for_imagen(question, results)
+                images = call_gemini_imagen(enriched)
+                yield f"data: {json.dumps({'type': 'images_ready', 'images': images, 'enriched_prompt': enriched})}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'imagen_error', 'error': str(e)})}\n\n"
 
         yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
