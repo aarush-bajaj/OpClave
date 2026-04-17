@@ -314,6 +314,20 @@
     .dark .imagen-prompt { background: #1a1a1a; color: #8e8ea0; border: 1px solid #3f3f3f; }
     .imagen-prompt { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
 
+    /* Image generation panel */
+    .image-panel {
+      margin-top: 12px; border-radius: 12px; overflow: hidden; border: 1px solid;
+    }
+    .dark .image-panel { border-color: #3f3f3f; background: #1a1a1a; }
+    .image-panel { border-color: #e5e7eb; background: #f9fafb; }
+    .image-panel-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-bottom: 1px solid; font-size: 13px; font-weight: 500;
+    }
+    .dark .image-panel-header { border-color: #3f3f3f; color: #8e8ea0; }
+    .image-panel-header { border-color: #e5e7eb; color: #6b7280; }
+    .image-panel-body { padding: 12px; }
+
     /* Lightbox */
     #lightbox-overlay {
       display: none; position: fixed; inset: 0; z-index: 1000;
@@ -532,7 +546,7 @@
       <div id="input-bottom" class="flex items-end gap-2">
         <textarea id="input" rows="1" placeholder="Ask the Council…"
           class="flex-1 bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] font-sans resize-none max-h-[200px] min-h-[24px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
-        <button id="img-mode-btn" title="Image generation mode" onclick="toggleImageMode()">✦</button>
+        <button id="img-mode-btn" onclick="toggleImageMode()">✦</button><span class="help-icon" style="margin-right:2px">?<span class="tooltip" style="min-width:220px">Toggle image mode: GPT, Claude, and Grok each suggest creative direction, then Gemini generates 4 image variants from their combined ideas.</span></span>
         <button id="send-btn" disabled title="Send"
           class="w-8 h-8 rounded-lg border-0 bg-[#19c37d] text-black text-base flex items-center justify-center shrink-0 transition-all font-bold leading-none">↑</button>
       </div>
@@ -861,7 +875,9 @@
   }
 
   function createAssistantMessage(id, container, turnModels, imageModeOn) {
-    const tabs = ['Council', ...turnModels.map(m => MODEL_TAB[m])];
+    // In image mode, Gemini output goes to the image panel — not a tab
+    const tabModels = imageModeOn ? turnModels.filter(m => m !== 'gemini') : turnModels;
+    const tabs = ['Council', ...tabModels.map(m => MODEL_TAB[m])];
 
     const div = document.createElement('div');
     div.className = 'msg-assistant';
@@ -896,21 +912,35 @@
       pane.className = 'tab-pane' + (i === 0 ? ' active' : '');
       pane.id = `pane-${id}-${tab}`;
 
-      const placeholderText = tab === 'Council'
-        ? 'Waiting for all models…'
-        : (imageModeOn && tab === 'Gemini' ? 'Generating visuals…' : 'Waiting…');
-      const dotClass = (imageModeOn && tab === 'Gemini') ? 'loading' : 'pending';
+      const placeholderText = tab === 'Council' ? 'Waiting for all models…' : 'Waiting…';
       pane.innerHTML = `<div class="pane-placeholder" id="placeholder-${id}-${tab}">
         <div class="pane-spinner"></div>
         <span>${placeholderText}</span>
       </div>
       <div class="md-content" id="content-${id}-${tab}" style="display:none"></div>`;
-      if (imageModeOn && tab === 'Gemini') {
-        setTimeout(() => setDotStatus(id, 'Gemini', 'loading'), 0);
-      }
 
       div.appendChild(pane);
     });
+
+    // In image mode: add a dedicated image panel below the tabs
+    if (imageModeOn) {
+      const panel = document.createElement('div');
+      panel.className = 'image-panel';
+      panel.id = `image-panel-${id}`;
+      panel.innerHTML = `
+        <div class="image-panel-header">
+          <span class="tab-dot loading" id="dot-${id}-Gemini"></span>
+          <span id="image-panel-status-${id}">✦ Gemini is generating visuals…</span>
+        </div>
+        <div class="image-panel-body">
+          <div class="pane-placeholder" id="placeholder-${id}-Gemini">
+            <div class="pane-spinner"></div>
+            <span>Synthesizing creative direction from all models…</span>
+          </div>
+          <div id="content-${id}-Gemini" style="display:none"></div>
+        </div>`;
+      div.appendChild(panel);
+    }
 
     container.appendChild(div);
     scrollToBottom(true);
@@ -959,19 +989,28 @@
         setError(id, 'Council', event.error);
         break;
 
-      case 'imagen_start':
-        setPlaceholderText(id, 'Gemini', 'Generating images…');
+      case 'imagen_start': {
+        setPlaceholderText(id, 'Gemini', 'Generating 4 image variants…');
+        const statusEl = document.getElementById(`image-panel-status-${id}`);
+        if (statusEl) statusEl.textContent = '✦ Gemini is generating images…';
         break;
+      }
 
-      case 'images_ready':
+      case 'images_ready': {
         setDotStatus(id, 'Gemini', 'done');
         setImagesContent(id, 'Gemini', event.images, event.enriched_prompt);
+        const statusDone = document.getElementById(`image-panel-status-${id}`);
+        if (statusDone) statusDone.textContent = '✦ Gemini Visuals';
         break;
+      }
 
-      case 'imagen_error':
+      case 'imagen_error': {
         setDotStatus(id, 'Gemini', 'error');
         setError(id, 'Gemini', event.error);
+        const statusErr = document.getElementById(`image-panel-status-${id}`);
+        if (statusErr) statusErr.textContent = '✦ Gemini — generation failed';
         break;
+      }
 
       case 'rate_limited':
         isLoading = false;
