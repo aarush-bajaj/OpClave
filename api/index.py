@@ -254,19 +254,24 @@ def enrich_prompt_for_imagen(question, responses):
 
 
 def call_gemini_imagen(prompt):
-    """Calls Imagen and returns up to 4 base64-encoded JPEG strings."""
-    response = gemini_client.models.generate_images(
-        model="imagen-3.0-generate-002",
-        prompt=prompt,
-        config=types.GenerateImagesConfig(
-            number_of_images=4,
-            aspect_ratio="1:1",
-        ),
-    )
-    images = []
-    for gi in response.generated_images:
-        images.append(base64.b64encode(gi.image.image_data).decode("utf-8"))
-    return images
+    """Calls Gemini image generation 4 times in parallel, returns base64-encoded image strings."""
+    def generate_one(_):
+        response = gemini_client.models.generate_content(
+            model="gemini-3.1-flash-image-preview",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_modalities=["IMAGE", "TEXT"],
+            ),
+        )
+        for part in response.candidates[0].content.parts:
+            if part.inline_data:
+                return base64.b64encode(part.inline_data.data).decode("utf-8")
+        return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as ex:
+        futures = [ex.submit(generate_one, i) for i in range(4)]
+        images = [f.result() for f in futures]
+    return [img for img in images if img]
 
 
 # ── Request models ────────────────────────────────────────────────────────────
