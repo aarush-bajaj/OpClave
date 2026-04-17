@@ -542,11 +542,16 @@
           <button class="synth-pill" data-model="gemini" onclick="selectSynthesizer(this)">Gemini</button>
           <button class="synth-pill" data-model="grok" onclick="selectSynthesizer(this)">Grok</button>
         </div>
+        <div class="w-px h-4 dark:bg-[#3f3f3f] bg-gray-200 mx-1.5 shrink-0"></div>
+        <div class="flex items-center gap-1 shrink-0">
+          <span class="text-[11px] dark:text-gray-600 text-gray-400 shrink-0 tracking-wide uppercase">Visuals</span>
+          <span class="help-icon">?<span class="tooltip" style="min-width:220px">Toggle image mode: GPT, Claude, and Grok suggest creative direction, then Gemini generates 4 image variants from their combined ideas.</span></span>
+          <button id="img-mode-btn" onclick="toggleImageMode()">✦</button>
+        </div>
       </div>
       <div id="input-bottom" class="flex items-end gap-2">
         <textarea id="input" rows="1" placeholder="Ask the Council…"
           class="flex-1 bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] font-sans resize-none max-h-[200px] min-h-[24px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
-        <button id="img-mode-btn" onclick="toggleImageMode()">✦</button><span class="help-icon" style="margin-right:2px">?<span class="tooltip" style="min-width:220px">Toggle image mode: GPT, Claude, and Grok each suggest creative direction, then Gemini generates 4 image variants from their combined ideas.</span></span>
         <button id="send-btn" disabled title="Send"
           class="w-8 h-8 rounded-lg border-0 bg-[#19c37d] text-black text-base flex items-center justify-center shrink-0 transition-all font-bold leading-none">↑</button>
       </div>
