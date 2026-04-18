@@ -336,6 +336,50 @@
     }
     #lightbox-overlay.visible { display: flex; }
     #lightbox-img { max-width: 90vw; max-height: 90vh; border-radius: 12px; }
+
+    /* Attached file labels in user message bubble */
+    .msg-attachments { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; margin-bottom: 5px; }
+    .msg-attach-pill {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px; border-radius: 20px; font-size: 11px; font-family: inherit;
+      border: 1px solid;
+    }
+    .dark .msg-attach-pill { background: #2f2f2f; border-color: #3f3f3f; color: #8e8ea0; }
+    .msg-attach-pill { background: #e9ecef; border-color: #d1d5db; color: #6b7280; }
+
+    /* Attachment pills */
+    #attachment-pills { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 2px 2px; }
+    #attachment-pills.hidden { display: none; }
+    .attach-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 6px 2px 8px; border-radius: 20px; border: 1px solid;
+      font-size: 12px; font-family: inherit; max-width: 220px;
+    }
+    .dark .attach-pill { background: #2f2f2f; border-color: #3f3f3f; color: #8e8ea0; }
+    .attach-pill { background: #f3f4f6; border-color: #d1d5db; color: #6b7280; }
+    .attach-pill.error { border-color: #f87171; color: #f87171; }
+    .dark .attach-pill.error { background: rgba(248,113,113,0.08); }
+    .attach-pill.extracting { opacity: 0.6; }
+    .attach-pill-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+    .attach-pill-remove {
+      background: none; border: none; cursor: pointer; padding: 0 1px; line-height: 1;
+      font-size: 14px; flex-shrink: 0; font-family: inherit;
+    }
+    .dark .attach-pill-remove { color: #565869; }
+    .attach-pill-remove { color: #9ca3af; }
+    .dark .attach-pill-remove:hover { color: #ececec; }
+    .attach-pill-remove:hover { color: #111827; }
+
+    /* Attach (paperclip) button */
+    #attach-btn {
+      background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .dark #attach-btn { color: #565869; }
+    #attach-btn { color: #9ca3af; }
+    .dark #attach-btn:hover { color: #8e8ea0; background: #3a3a3a; }
+    #attach-btn:hover { color: #6b7280; background: #f3f4f6; }
   </style>
 </head>
 <body class="h-full dark:bg-[#212121] bg-gray-50 dark:text-gray-100 text-gray-900 font-sans text-[15px] leading-relaxed">
@@ -521,6 +565,7 @@
   </div>
 
   <!-- Input area -->
+  <input type="file" id="file-input" accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" multiple style="display:none" onchange="handleFileSelect(event)">
   <div id="input-area" class="px-2 sm:px-6 pt-2 pb-3 sm:pb-4 shrink-0">
     <div id="input-wrap"
       class="max-w-[760px] mx-auto dark:bg-[#2f2f2f] bg-white border dark:border-[#3f3f3f] border-gray-200 rounded-xl flex flex-col p-2.5 pl-4 transition-colors dark:focus-within:border-[#555] focus-within:border-gray-400">
@@ -549,7 +594,13 @@
           <button id="img-mode-btn" onclick="toggleImageMode()">✦</button>
         </div>
       </div>
+      <div id="attachment-pills" class="hidden"></div>
       <div id="input-bottom" class="flex items-end gap-2">
+        <button id="attach-btn" title="Attach file" onclick="document.getElementById('file-input').click()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </button>
         <textarea id="input" rows="1" placeholder="Ask the Council…"
           class="flex-1 bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] font-sans resize-none max-h-[200px] min-h-[24px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
         <button id="send-btn" disabled title="Send"
@@ -724,11 +775,86 @@
     Grok: 'Grok',
   };
 
+  // ── Attachment state ──────────────────────────────
+  let attachedFiles = [];
+  let attachIdCounter = 0;
+
+  function updateSendBtn() {
+    const hasContent = !!inputEl.value.trim() || attachedFiles.some(a => a.status === 'done');
+    const isExtracting = attachedFiles.some(a => a.status === 'extracting' || a.status === 'pending');
+    sendBtn.disabled = !hasContent || isLoading || isExtracting;
+  }
+
+  function renderPills() {
+    const container = document.getElementById('attachment-pills');
+    if (attachedFiles.length === 0) {
+      container.classList.add('hidden');
+      container.innerHTML = '';
+      return;
+    }
+    container.classList.remove('hidden');
+    container.innerHTML = '';
+    for (const a of attachedFiles) {
+      const pill = document.createElement('div');
+      let cls = 'attach-pill';
+      if (a.status === 'error') cls += ' error';
+      if (a.status === 'extracting' || a.status === 'pending') cls += ' extracting';
+      pill.className = cls;
+      const label = a.status === 'extracting' ? '⏳ ' : a.status === 'error' ? '✕ ' : '';
+      pill.innerHTML = `<span class="attach-pill-name" title="${escapeHtml(a.error || a.file.name)}">${label}${escapeHtml(a.file.name)}</span><button class="attach-pill-remove" onclick="removeAttachment(${a.id})">×</button>`;
+      container.appendChild(pill);
+    }
+  }
+
+  function removeAttachment(id) {
+    attachedFiles = attachedFiles.filter(a => a.id !== id);
+    renderPills();
+    updateSendBtn();
+  }
+
+  async function extractFile(id, file) {
+    const entry = attachedFiles.find(a => a.id === id);
+    if (!entry) return;
+    entry.status = 'extracting';
+    renderPills();
+    updateSendBtn();
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const res = await fetch('/extract-file', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.error) {
+        entry.status = 'error';
+        entry.error = data.error;
+      } else {
+        entry.status = 'done';
+        entry.result = data;
+      }
+    } catch (err) {
+      entry.status = 'error';
+      entry.error = 'Extraction failed';
+    }
+    renderPills();
+    updateSendBtn();
+  }
+
+  function handleFileSelect(e) {
+    const files = [...e.target.files];
+    e.target.value = '';
+    for (const file of files) {
+      const id = attachIdCounter++;
+      attachedFiles.push({ id, file, status: 'pending', result: null, error: null });
+      extractFile(id, file);
+    }
+    renderPills();
+    updateSendBtn();
+  }
+
   // ── Input auto-resize ─────────────────────────────
   inputEl.addEventListener('input', () => {
     inputEl.style.height = 'auto';
     inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
-    sendBtn.disabled = !inputEl.value.trim() || isLoading;
+    updateSendBtn();
   });
 
   inputEl.addEventListener('keydown', (e) => {
@@ -751,7 +877,8 @@
   // ── Submit ────────────────────────────────────────
   async function submitQuestion() {
     const question = inputEl.value.trim();
-    if (!question || isLoading) return;
+    const doneAttachments = attachedFiles.filter(a => a.status === 'done');
+    if ((!question && doneAttachments.length === 0) || isLoading) return;
 
     // Verify admin code server-side so the secret is never in the page source
     try {
@@ -788,6 +915,13 @@
     sendBtn.disabled = true;
     newThreadBtn.disabled = true;
     isLoading = true;
+    const attachmentsPayload = doneAttachments.map(a => ({
+      type: a.result.type,
+      content: a.result.content,
+      filename: a.file.name,
+    }));
+    attachedFiles = [];
+    renderPills();
 
     promptCount++;
     updateRing(promptCount);
@@ -806,7 +940,7 @@
     turn.className = 'turn';
     messagesEl.appendChild(turn);
 
-    addUserMessage(question, turn);
+    addUserMessage(question, turn, attachmentsPayload.map(a => a.filename));
     const id = msgCounter++;
     const turnModels = imageMode
       ? [...new Set([...enabledModels, 'gemini'])]
@@ -830,6 +964,7 @@
         models: turnModels,
         history: historyToSend,
         image_mode: imageMode,
+        attachments: attachmentsPayload,
       }),
       signal: controller.signal,
     }).then(async (res) => {
@@ -854,7 +989,7 @@
               conversationHistory.push({ role: 'assistant', content: councilAnswer });
             }
             isLoading = false;
-            sendBtn.disabled = !inputEl.value.trim();
+            updateSendBtn();
             newThreadBtn.disabled = false;
             if (!isAdminMode && promptCount >= MAX_PROMPTS) {
               setTimeout(() => ctxModalOverlay.classList.add('visible'), 600);
@@ -865,17 +1000,20 @@
     }).catch((err) => {
       if (err.name !== 'AbortError') {
         isLoading = false;
-        sendBtn.disabled = !inputEl.value.trim();
+        updateSendBtn();
         newThreadBtn.disabled = false;
       }
     });
   }
 
   // ── Message builders ──────────────────────────────
-  function addUserMessage(text, container) {
+  function addUserMessage(text, container, filenames = []) {
     const div = document.createElement('div');
     div.className = 'msg-user';
-    div.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
+    const pillsHtml = filenames.length
+      ? `<div class="msg-attachments">${filenames.map(f => `<span class="msg-attach-pill">📎 ${escapeHtml(f)}</span>`).join('')}</div>`
+      : '';
+    div.innerHTML = `${pillsHtml}<div class="bubble">${escapeHtml(text)}</div>`;
     container.appendChild(div);
   }
 
@@ -1019,7 +1157,7 @@
 
       case 'rate_limited':
         isLoading = false;
-        sendBtn.disabled = !inputEl.value.trim();
+        updateSendBtn();
         newThreadBtn.disabled = false;
         ctxModalOverlay.classList.add('visible');
         break;
@@ -1124,9 +1262,7 @@
       .replace(/"/g, '&quot;');
   }
 
-  inputEl.addEventListener('input', () => {
-    sendBtn.disabled = !inputEl.value.trim() || isLoading;
-  });
+  inputEl.addEventListener('input', updateSendBtn);
 
   // ── Thread management ─────────────────────────────
   let threads = {};
@@ -1155,7 +1291,7 @@
     updateRing(promptCount);
     emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
     isLoading = false;
-    sendBtn.disabled = !inputEl.value.trim();
+    updateSendBtn();
     newThreadBtn.disabled = false;
     renderThreadList();
     saveToLocalStorage();

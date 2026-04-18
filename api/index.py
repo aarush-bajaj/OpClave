@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from mangum import Mangum
 from pydantic import BaseModel
@@ -7,6 +7,7 @@ from anthropic import Anthropic
 from google import genai
 from dotenv import load_dotenv
 import os
+import io
 import json
 import queue
 import threading
@@ -276,12 +277,18 @@ def call_gemini_imagen(prompt):
 
 # ── Request models ────────────────────────────────────────────────────────────
 
+class Attachment(BaseModel):
+    type: str  # 'text' | 'image'
+    content: str
+    filename: str
+
 class StreamRequest(BaseModel):
     question: str = ""
     synthesizer: str = "claude"
     models: List[str] = ["gpt", "claude", "gemini", "grok"]
     history: List[dict] = []
     image_mode: bool = False
+    attachments: List[Attachment] = []
 
 class FeedbackRequest(BaseModel):
     message: str = ""
@@ -290,12 +297,79 @@ class AdminVerifyRequest(BaseModel):
     code: str = ""
 
 
+# ── Attachment helpers ────────────────────────────────────────────────────────
+
+def build_attachment_context(attachments: list) -> str:
+    if not attachments:
+        return ""
+    lines = ["The user has attached the following file(s) for context:\n"]
+    for att in attachments:
+        lines.append(f"--- {att.filename} ---")
+        lines.append(att.content)
+        lines.append("---\n")
+    return "\n".join(lines)
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.get("/")
 def index():
     with open(os.path.join(_root, "templates", "index.html"), encoding="utf-8") as f:
         return HTMLResponse(f.read())
+
+
+@app.post("/extract-file")
+async def extract_file(file: UploadFile = File(...)):
+    MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+    ALLOWED_EXTS = {'.pdf', '.txt', '.md', '.png', '.jpg', '.jpeg', '.webp'}
+    IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.webp'}
+    IMAGE_MIME = {'.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp'}
+
+    filename = file.filename or "upload"
+    ext = os.path.splitext(filename)[1].lower()
+
+    if ext not in ALLOWED_EXTS:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {ext}")
+
+    data = await file.read()
+    if len(data) > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="File exceeds 10 MB limit")
+
+    if ext in IMAGE_EXTS:
+        print(f"[EXTRACT] {filename}: image → Claude vision", flush=True)
+        try:
+            b64 = base64.b64encode(data).decode("utf-8")
+            msg = anthropic_client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=1000,
+                messages=[{
+                    "role": "user",
+                    "content": [
+                        {"type": "image", "source": {"type": "base64", "media_type": IMAGE_MIME[ext], "data": b64}},
+                        {"type": "text", "text": "Describe this image in full detail, including any text, diagrams, equations, charts, or visual content you can see. Be thorough — this description will be used as context by other AI models."},
+                    ],
+                }],
+            )
+            return {"type": "image", "content": msg.content[0].text}
+        except Exception as e:
+            return {"error": f"Image extraction failed: {str(e)}"}
+
+    elif ext == ".pdf":
+        print(f"[EXTRACT] {filename}: PDF → local extraction", flush=True)
+        try:
+            import PyPDF2
+            reader = PyPDF2.PdfReader(io.BytesIO(data))
+            text = "".join(page.extract_text() or "" for page in reader.pages)
+            return {"type": "text", "content": text}
+        except Exception as e:
+            return {"error": f"PDF extraction failed: {str(e)}"}
+
+    else:  # .txt, .md
+        print(f"[EXTRACT] {filename}: text → local read", flush=True)
+        try:
+            return {"type": "text", "content": data.decode("utf-8", errors="replace")}
+        except Exception as e:
+            return {"error": f"Text extraction failed: {str(e)}"}
 
 
 @app.post("/verify-admin")
@@ -350,8 +424,9 @@ def stream(req: StreamRequest):
     requested_models = set(req.models)
     history = req.history
     image_mode = req.image_mode
+    attachments = req.attachments
 
-    if not question:
+    if not question and not attachments:
         def err():
             yield 'data: {"type":"error","message":"No question provided"}\n\n'
         return StreamingResponse(err(), media_type="text/event-stream")
@@ -362,10 +437,14 @@ def stream(req: StreamRequest):
             yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":DAILY_LIMIT})}\n\n'
         return StreamingResponse(rate_limited(), media_type="text/event-stream")
 
+    attachment_ctx = build_attachment_context(attachments)
+    effective_question = question or "Please review the attached file(s)."
+    augmented_question = f"{attachment_ctx}\n{effective_question}" if attachment_ctx else effective_question
+
     def generate():
-        model_tokens = estimate_max_tokens(question)
+        model_tokens = estimate_max_tokens(effective_question)
         synthesis_tokens = min(max(model_tokens * 2, 3000), 6000)
-        print(f"[DEBUG] Question: {repr(question[:80])}", flush=True)
+        print(f"[DEBUG] Question: {repr(effective_question[:80])}", flush=True)
         print(f"[DEBUG] model_tokens={model_tokens}  synthesis_tokens={synthesis_tokens}", flush=True)
         print(f"[DEBUG] Active models: {requested_models}  Synthesizer: {synthesizer}", flush=True)
 
@@ -376,7 +455,7 @@ def stream(req: StreamRequest):
         def run_model(name, func):
             event_queue.put({'type': 'progress', 'model': name, 'status': 'running'})
             try:
-                result = func(question, model_tokens, history)
+                result = func(augmented_question, model_tokens, history)
                 print(f"[DEBUG] {name} response length: {len(result) if result else 0} chars", flush=True)
                 with lock:
                     results[name] = result
@@ -422,7 +501,7 @@ def stream(req: StreamRequest):
         if image_mode:
             synthesis_prompt = f"""You are synthesizing creative direction from {n} AI model{'s' if n != 1 else ''} for an image generation task.
 
-Original user request: {question}
+Original user request: {augmented_question}
 
 {active_responses}
 
@@ -436,7 +515,7 @@ Keep your response concise — the visuals speak for themselves."""
         else:
             synthesis_prompt = f"""You are synthesizing responses from {n} AI model{'s' if n != 1 else ''}.
 
-Original question: {question}
+Original question: {augmented_question}
 
 {active_responses}
 
