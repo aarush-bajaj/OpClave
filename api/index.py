@@ -77,6 +77,10 @@ def check_and_increment_global_limit() -> tuple[bool, int]:
 def serve_logo():
     return FileResponse(os.path.join(_root, "templates", "assets", "logo.png"), media_type="image/png")
 
+@app.get("/assets/BrandLogo.png")
+def serve_brand_logo():
+    return FileResponse(os.path.join(_root, "templates", "assets", "BrandLogo.png"), media_type="image/png")
+
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -474,9 +478,9 @@ def feedback(req: FeedbackRequest, request: Request):
         msg = email.mime.multipart.MIMEMultipart()
         msg["From"] = sender
         msg["To"] = sender
-        msg["Subject"] = "Council AI — Feedback"
+        msg["Subject"] = "Opclave — Feedback"
         msg.attach(email.mime.text.MIMEText(
-            f"Feedback received:\n\n{message}\n\n---\nSent via Council AI", "plain"
+            f"Feedback received:\n\n{message}\n\n---\nSent via Opclave", "plain"
         ))
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.ehlo()
