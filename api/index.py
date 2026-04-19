@@ -101,7 +101,6 @@ def _cost(model: str, input_tok: int, output_tok: int) -> float:
 _LOG_KEY  = "council:logs"
 _LOG_MAX  = 1000   # keep the most recent N entries in Redis
 _LOG_PATH = os.path.join(_root, "logs", "queries.jsonl")  # local fallback
-os.makedirs(os.path.dirname(_LOG_PATH), exist_ok=True)
 _log_lock = threading.Lock()
 
 
@@ -130,10 +129,14 @@ def _write_log(entry: dict):
             return
     except Exception as e:
         print(f"[LOG] Redis write failed, falling back to file: {e}", flush=True)
-    # Local file fallback
-    with _log_lock:
-        with open(_LOG_PATH, "a", encoding="utf-8") as f:
-            f.write(line + "\n")
+    # Local file fallback (skipped on read-only filesystems like Vercel)
+    try:
+        os.makedirs(os.path.dirname(_LOG_PATH), exist_ok=True)
+        with _log_lock:
+            with open(_LOG_PATH, "a", encoding="utf-8") as f:
+                f.write(line + "\n")
+    except OSError:
+        pass
 
 
 def truncate(text, max_chars=5000):
