@@ -20,7 +20,7 @@ import base64
 from google.genai import types
 
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(dotenv_path=os.path.join(_root, '.env'))
@@ -82,6 +82,59 @@ anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 grok_client = OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
 
+# ── Cost table (USD per 1M tokens) ───────────────────────────────────────────
+# Update input/output prices here when provider pricing changes.
+_PRICING = {
+    "claude-haiku-4-5-20251001":      {"in": 0.80,  "out": 4.00},
+    "claude-sonnet-4-6":              {"in": 3.00,  "out": 15.00},
+    # Fill in below when pricing is confirmed for these models
+    "gpt-5.2-2025-12-11":             {"in": 0.0,   "out": 0.0},
+    "gemini-3.1-pro-preview":         {"in": 0.0,   "out": 0.0},
+    "gemini-3.1-flash-image-preview": {"in": 0.0,   "out": 0.0},
+    "grok-4.20-0309-non-reasoning":   {"in": 0.0,   "out": 0.0},
+}
+
+def _cost(model: str, input_tok: int, output_tok: int) -> float:
+    p = _PRICING.get(model, {"in": 0.0, "out": 0.0})
+    return (input_tok * p["in"] + output_tok * p["out"]) / 1_000_000
+
+_LOG_KEY  = "council:logs"
+_LOG_MAX  = 1000   # keep the most recent N entries in Redis
+_LOG_PATH = os.path.join(_root, "logs", "queries.jsonl")  # local fallback
+os.makedirs(os.path.dirname(_LOG_PATH), exist_ok=True)
+_log_lock = threading.Lock()
+
+
+def _redis_post(command: list) -> object:
+    """POST a command to Upstash (better for large values than the GET path API)."""
+    if not _UPSTASH_URL or not _UPSTASH_TOKEN:
+        return None
+    data = json.dumps(command).encode()
+    req = urllib.request.Request(
+        _UPSTASH_URL,
+        data=data,
+        headers={"Authorization": f"Bearer {_UPSTASH_TOKEN}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=5) as r:
+        return json.loads(r.read())["result"]
+
+
+def _write_log(entry: dict):
+    line = json.dumps(entry)
+    # Write to Redis if available (works in production)
+    try:
+        if _UPSTASH_URL and _UPSTASH_TOKEN:
+            _redis_post(["RPUSH", _LOG_KEY, line])
+            _redis(["LTRIM", _LOG_KEY, -_LOG_MAX, -1])
+            return
+    except Exception as e:
+        print(f"[LOG] Redis write failed, falling back to file: {e}", flush=True)
+    # Local file fallback
+    with _log_lock:
+        with open(_LOG_PATH, "a", encoding="utf-8") as f:
+            f.write(line + "\n")
+
 
 def truncate(text, max_chars=5000):
     if not text:
@@ -121,7 +174,10 @@ def ask_gpt(question, max_tokens, history=None):
         max_completion_tokens=max_tokens,
         messages=messages,
     )
-    return response.choices[0].message.content
+    usage = {"model": "gpt-5.2-2025-12-11",
+             "input_tokens": response.usage.prompt_tokens,
+             "output_tokens": response.usage.completion_tokens}
+    return response.choices[0].message.content, usage
 
 
 def ask_claude(question, max_tokens, history=None):
@@ -133,7 +189,12 @@ def ask_claude(question, max_tokens, history=None):
                 max_tokens=max_tokens,
                 messages=messages,
             ) as stream:
-                return stream.get_final_text()
+                text = stream.get_final_text()
+                u = stream.get_final_message().usage
+                usage = {"model": "claude-haiku-4-5-20251001",
+                         "input_tokens": u.input_tokens,
+                         "output_tokens": u.output_tokens}
+                return text, usage
         except Exception as e:
             if "overloaded" in str(e).lower() and attempt < 2:
                 time.sleep(5 * (attempt + 1))
@@ -152,7 +213,11 @@ def ask_gemini(question, max_tokens, history=None):
         config={"maxOutputTokens": max_tokens},
         contents=contents,
     )
-    return response.text
+    meta = response.usage_metadata
+    usage = {"model": "gemini-3.1-pro-preview",
+             "input_tokens": getattr(meta, "prompt_token_count", 0) or 0,
+             "output_tokens": getattr(meta, "candidates_token_count", 0) or 0}
+    return response.text, usage
 
 
 def ask_grok(question, max_tokens, history=None):
@@ -162,7 +227,10 @@ def ask_grok(question, max_tokens, history=None):
         max_tokens=max_tokens,
         messages=messages,
     )
-    return response.choices[0].message.content
+    usage = {"model": "grok-4.20-0309-non-reasoning",
+             "input_tokens": response.usage.prompt_tokens,
+             "output_tokens": response.usage.completion_tokens}
+    return response.choices[0].message.content, usage
 
 
 # ── Synthesis generators ──────────────────────────────────────────────────────
@@ -417,6 +485,48 @@ def feedback(req: FeedbackRequest, request: Request):
         return {"ok": False, "error": str(e)}
 
 
+@app.get("/logs")
+def get_logs():
+    # Try Redis first
+    try:
+        if _UPSTASH_URL and _UPSTASH_TOKEN:
+            raw = _redis(["LRANGE", _LOG_KEY, 0, -1])
+            entries = []
+            for item in (raw or []):
+                try:
+                    entries.append(json.loads(item))
+                except Exception:
+                    pass
+            return list(reversed(entries))  # newest first
+    except Exception as e:
+        print(f"[LOG] Redis read failed: {e}", flush=True)
+    # Fall back to local file
+    if not os.path.exists(_LOG_PATH):
+        return []
+    entries = []
+    with open(_LOG_PATH, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+    return list(reversed(entries))
+
+
+@app.delete("/logs")
+def clear_logs():
+    try:
+        if _UPSTASH_URL and _UPSTASH_TOKEN:
+            _redis(["DEL", _LOG_KEY])
+    except Exception:
+        pass
+    if os.path.exists(_LOG_PATH):
+        open(_LOG_PATH, "w").close()
+    return {"ok": True}
+
+
 @app.post("/stream")
 def stream(req: StreamRequest):
     question = req.question.strip()
@@ -450,20 +560,23 @@ def stream(req: StreamRequest):
 
         event_queue = queue.Queue()
         results = {}
+        usages = {}
         lock = threading.Lock()
 
         def run_model(name, func):
             event_queue.put({'type': 'progress', 'model': name, 'status': 'running'})
             try:
-                result = func(augmented_question, model_tokens, history)
+                result, usage = func(augmented_question, model_tokens, history)
                 print(f"[DEBUG] {name} response length: {len(result) if result else 0} chars", flush=True)
                 with lock:
                     results[name] = result
+                    usages[name] = usage
                 event_queue.put({'type': 'model_done', 'model': name, 'response': result})
             except Exception as e:
                 print(f"[DEBUG] {name} error: {type(e).__name__}: {str(e)}", flush=True)
                 with lock:
                     results[name] = None
+                    usages[name] = None
                 event_queue.put({'type': 'model_error', 'model': name, 'error': str(e)})
 
         all_models = [
@@ -529,6 +642,13 @@ Provide a final synthesized response."""
 
         yield f"data: {json.dumps({'type': 'synthesis_start'})}\n\n"
 
+        synth_model_id = {
+            'claude': 'claude-sonnet-4-6',
+            'gpt':    'gpt-5.2-2025-12-11',
+            'gemini': 'gemini-3.1-pro-preview',
+            'grok':   'grok-4.20-0309-non-reasoning',
+        }
+        council_text = ''
         try:
             synth_map = {
                 'claude': synthesize_with_claude,
@@ -539,6 +659,7 @@ Provide a final synthesized response."""
             actual_synth = 'claude' if (image_mode and synthesizer == 'gemini') else synthesizer
             synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
             for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history):
+                council_text += text_chunk
                 yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
             yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
         except Exception as e:
@@ -554,6 +675,41 @@ Provide a final synthesized response."""
                 yield f"data: {json.dumps({'type': 'imagen_error', 'error': str(e)})}\n\n"
 
         yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+
+        # ── Write query log ───────────────────────────────────────────────────
+        try:
+            synth_in  = max(1, len(synthesis_prompt) // 4)
+            synth_out = max(1, len(council_text) // 4)
+            synth_mid = synth_model_id.get(actual_synth, 'claude-sonnet-4-6')
+            synth_cost = _cost(synth_mid, synth_in, synth_out)
+
+            model_log = {}
+            total_cost = synth_cost
+            for name, u in usages.items():
+                if u:
+                    c = _cost(u["model"], u["input_tokens"], u["output_tokens"])
+                    total_cost += c
+                    model_log[name] = {**u, "cost_usd": round(c, 8)}
+
+            _write_log({
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "question_preview": effective_question[:120],
+                "models_used": list(requested_models),
+                "synthesizer": actual_synth,
+                "image_mode": image_mode,
+                "attachments": len(attachments),
+                "models": model_log,
+                "synthesizer_usage": {
+                    "model": synth_mid,
+                    "input_tokens": synth_in,
+                    "output_tokens": synth_out,
+                    "cost_usd": round(synth_cost, 8),
+                    "note": "token counts estimated from text length",
+                },
+                "total_cost_usd": round(total_cost, 8),
+            })
+        except Exception as log_err:
+            print(f"[LOG] Failed to write query log: {log_err}", flush=True)
 
     return StreamingResponse(
         generate(),

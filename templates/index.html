@@ -753,9 +753,29 @@
     selectedSynthesizer = btn.dataset.model;
   }
 
+  const IMAGE_PROMPT_PREFIX = 'Create an image of: ';
+
   function toggleImageMode() {
     imageMode = !imageMode;
     document.getElementById('img-mode-btn').classList.toggle('active', imageMode);
+
+    if (imageMode) {
+      if (!inputEl.value.trim()) {
+        inputEl.value = IMAGE_PROMPT_PREFIX;
+        inputEl.style.height = 'auto';
+        inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
+        inputEl.focus();
+        inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+      }
+      inputEl.placeholder = 'Describe the image you want to create…';
+    } else {
+      if (inputEl.value === IMAGE_PROMPT_PREFIX) {
+        inputEl.value = '';
+        inputEl.style.height = 'auto';
+      }
+      inputEl.placeholder = 'Ask the Council…';
+    }
+    updateSendBtn();
   }
 
   function openLightbox(src) {
