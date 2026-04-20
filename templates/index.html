@@ -154,6 +154,46 @@
     .scrollbar-none { scrollbar-width: none; }
     .scrollbar-none::-webkit-scrollbar { display: none; }
 
+    /* ── Mobile / low-resolution optimizations ────────────────────── */
+    @media (max-width: 639px) {
+      /* Toolbar: hide section labels, make row scrollable */
+      .toolbar-label { display: none !important; }
+      #input-toolbar {
+        overflow-x: auto; scrollbar-width: none; justify-content: flex-start; gap: 6px;
+        padding-left: 8px; padding-right: 8px;
+      }
+      #input-toolbar::-webkit-scrollbar { display: none; }
+      .model-toggle, .synth-pill { padding: 2px 7px; font-size: 11px; }
+      #img-mode-btn { width: 28px; height: 28px; font-size: 13px; }
+
+      /* Tooltip: prevent viewport overflow */
+      .help-icon .tooltip {
+        left: 0; transform: none; max-width: calc(100vw - 32px);
+      }
+
+      /* Prompt chips: single scrollable row instead of wrapping */
+      #empty-state .flex.flex-wrap { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; padding-bottom: 4px; }
+      #empty-state .flex.flex-wrap::-webkit-scrollbar { display: none; }
+      .prompt-chip { white-space: nowrap; flex-shrink: 0; }
+
+      /* Input area: tighter padding */
+      #input-area { padding-left: 8px !important; padding-right: 8px !important; padding-bottom: 12px !important; }
+      #input-wrap { padding: 8px 8px 8px 12px !important; border-radius: 12px !important; }
+
+      /* Header: tighter */
+      #header { padding-left: 10px !important; padding-right: 10px !important; }
+
+      /* Empty state headline: tighter top margin */
+      #empty-state { margin-top: 32px !important; padding-left: 12px !important; padding-right: 12px !important; }
+    }
+
+    /* ── Narrow desktop / tablet (640–900px) ─────────────────────── */
+    @media (min-width: 640px) and (max-width: 900px) {
+      .toolbar-label { display: none !important; }
+      #input-toolbar { overflow-x: auto; scrollbar-width: none; justify-content: flex-start; gap: 6px; }
+      #input-toolbar::-webkit-scrollbar { display: none; }
+    }
+
     /* ── Toolbar border ───────────────────────────────────────────── */
     .dark #input-toolbar { border-color: var(--line) !important; }
 
@@ -764,7 +804,7 @@
       </div>
 
       <div class="dark:bg-[#111] bg-gray-50 rounded-xl p-4 text-sm dark:text-gray-400 text-gray-600 leading-relaxed">
-        <span class="font-semibold dark:text-gray-200 text-gray-800">The OpClave response</span> always starts by analysing where all models agree and disagree, then synthesises the most accurate and complete answer from the combined output.
+        <span class="font-semibold dark:text-gray-200 text-gray-800">The OpClave response</span> always starts by analyzing where all models agree and disagree, then synthesizes the most accurate and complete answer from the combined output.
       </div>
     </div>
   </div>
@@ -812,7 +852,7 @@
 
       <!-- Subtitle -->
       <p class="dark:text-gray-500 text-gray-500 text-sm max-w-[340px] mx-auto leading-relaxed mb-8">
-        Ask once. Get independent answers from four AI models<br>— synthesized into one.
+        Ask once. Get independent answers from four AI models, synthesized into one.
       </p>
 
       <!-- Model row: GPT · CLAUDE · GEMINI · GROK → SYNTHESIS -->
@@ -864,7 +904,7 @@
       class="max-w-[760px] mx-auto dark:bg-[#111114] bg-white border dark:border-[rgba(255,255,255,0.06)] border-gray-200 rounded-[14px] flex flex-col p-2.5 pl-4 transition-colors dark:focus-within:border-[#2e2e2e] focus-within:border-gray-400">
       <div id="input-toolbar" class="flex items-center justify-between px-3 py-2.5 border-b dark:border-[#1e1e1e] border-gray-200 mb-2">
         <div class="flex items-center gap-1.5 shrink-0">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Council</span>
+          <span class="toolbar-label" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Council</span>
           <span class="help-icon">?<span class="tooltip">Choose which AI models are queried. Active models each give an independent answer, and their responses are all included in the final synthesis. Deselect any model you'd like to exclude.</span></span>
           <button class="model-toggle active" data-model="gpt" onclick="toggleModel(this)">GPT</button>
           <button class="model-toggle active" data-model="claude" onclick="toggleModel(this)">Claude</button>
@@ -873,7 +913,7 @@
         </div>
         <div class="w-px h-4 dark:bg-[#3f3f3f] bg-gray-200 shrink-0"></div>
         <div class="flex items-center gap-1.5 shrink-0">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Lead</span>
+          <span class="toolbar-label" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Lead</span>
           <span class="help-icon">?<span class="tooltip">The Lead model reads all council answers and writes the final synthesized response. It can be any model, even one not in the council.</span></span>
           <button class="synth-pill active" data-model="claude" onclick="selectSynthesizer(this)">Claude</button>
           <button class="synth-pill" data-model="gpt" onclick="selectSynthesizer(this)">GPT</button>
@@ -882,7 +922,7 @@
         </div>
         <div class="w-px h-4 dark:bg-[#3f3f3f] bg-gray-200 shrink-0"></div>
         <div class="flex items-center gap-1.5 shrink-0">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Visuals</span>
+          <span class="toolbar-label" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Visuals</span>
           <span class="help-icon">?<span class="tooltip" style="min-width:220px">Toggle image mode: GPT, Claude, and Grok suggest creative direction, then Gemini generates 4 image variants from their combined ideas.</span></span>
           <button id="img-mode-btn" onclick="toggleImageMode()">✦</button>
         </div>
@@ -1758,11 +1798,11 @@
       });
       const data = await res.json();
       if (data.ok) {
-        status.textContent = 'Sent — thank you!';
+        status.textContent = 'Sent. Thank you!';
         status.style.color = '#c9a77a';
         setTimeout(closeFeedbackModal, 1400);
       } else if (data.rate_limited) {
-        status.textContent = 'Too many submissions — please wait a while before trying again.';
+        status.textContent = 'Too many submissions. Please wait a while before trying again.';
         status.style.color = '#f87171';
         // keep button disabled; no point retrying immediately
       } else {
