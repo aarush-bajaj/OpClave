@@ -81,6 +81,10 @@ def serve_logo():
 def serve_brand_logo():
     return FileResponse(os.path.join(_root, "templates", "assets", "BrandLogo.png"), media_type="image/png")
 
+@app.get("/assets/tailwind.css")
+def serve_tailwind():
+    return FileResponse(os.path.join(_root, "templates", "assets", "tailwind.css"), media_type="text/css")
+
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))

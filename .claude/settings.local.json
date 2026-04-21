@@ -50,7 +50,9 @@
       "Bash(kill -9 17130 17184 37615)",
       "Bash(sed -n '20,40p' /Users/aarushbajaj/Downloads/Council/templates/index.html)",
       "Bash(sed -n '200,250p' /Users/aarushbajaj/Downloads/Council/templates/index.html)",
-      "Bash(awk 'NR>=1 && NR<=20' /Users/aarushbajaj/Downloads/Council/templates/index.html)"
+      "Bash(awk 'NR>=1 && NR<=20' /Users/aarushbajaj/Downloads/Council/templates/index.html)",
+      "Bash(npm --version)",
+      "Bash(python3 -)"
     ],
     "additionalDirectories": [
       "\\tmp"

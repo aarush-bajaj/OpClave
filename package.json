@@ -1,0 +1,12 @@
+{
+  "name": "council",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/tailwind.css -o ./templates/assets/tailwind.css --minify",
+    "dev:css": "tailwindcss -i ./src/tailwind.css -o ./templates/assets/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}
