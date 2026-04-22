@@ -104,7 +104,7 @@
       </p>
 
       <p class="dark:text-gray-400 text-gray-600 text-sm leading-relaxed">
-        When you ask a question, your prompt is sent simultaneously and independently to every model in the council. Each gives its own uninfluenced answer. A lead model (your choice) then reads all of those responses and synthesises them into a single output, identifying where the models agree (high confidence), where they disagree (uncertainty), and producing a final answer with far more context than any single model could alone.
+        When you ask a question, your prompt is sent simultaneously and independently to every model in Voyance. Each gives its own uninfluenced answer. A lead model (your choice) then reads all of those responses and synthesises them into a single output, identifying where the models agree (high confidence), where they disagree (uncertainty), and producing a final answer with far more context than any single model could alone.
       </p>
 
       <div>
@@ -165,7 +165,7 @@
       <!-- Editorial serif headline -->
       <h2 class="display-serif dark:text-white text-gray-900 mb-4"
           style="font-size: clamp(42px, 7vw, 68px);">
-        Ask the <em>council.</em>
+        Ask <em>Voyance.</em>
       </h2>
 
       <!-- Subtitle -->
@@ -238,7 +238,7 @@
       class="max-w-[760px] mx-auto dark:bg-[#111114] bg-white border dark:border-[rgba(255,255,255,0.06)] border-gray-200 rounded-[14px] flex flex-col p-2.5 pl-4 transition-colors dark:focus-within:border-[#2e2e2e] focus-within:border-gray-400">
       <div id="input-toolbar" class="flex items-center justify-between px-3 py-2.5 border-b dark:border-[#1e1e1e] border-gray-200 mb-2">
         <div class="flex items-center gap-1.5 shrink-0">
-          <span class="toolbar-label" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Council</span>
+          <span class="toolbar-label" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Voyance</span>
           <span class="help-icon">?<span class="tooltip">Choose which AI models are queried. Active models each give an independent answer, and their responses are all included in the final synthesis. Deselect any model you'd like to exclude.</span></span>
           <button class="model-toggle active" data-model="gpt" onclick="toggleModel(this)">GPT</button>
           <button class="model-toggle active" data-model="claude" onclick="toggleModel(this)">Claude</button>
@@ -248,7 +248,7 @@
         <div class="w-px h-4 dark:bg-[#3f3f3f] bg-gray-200 shrink-0"></div>
         <div class="flex items-center gap-1.5 shrink-0">
           <span class="toolbar-label" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:#55555a;margin-right:2px;white-space:nowrap">Lead</span>
-          <span class="help-icon">?<span class="tooltip">The Lead model reads all council answers and writes the final synthesized response. It can be any model, even one not in the council.</span></span>
+          <span class="help-icon">?<span class="tooltip">The Lead model reads all Voyance answers and writes the final synthesized response. It can be any model, even one not in Voyance.</span></span>
           <button class="synth-pill active" data-model="claude" onclick="selectSynthesizer(this)">Claude</button>
           <button class="synth-pill" data-model="gpt" onclick="selectSynthesizer(this)">GPT</button>
           <button class="synth-pill" data-model="gemini" onclick="selectSynthesizer(this)">Gemini</button>
@@ -268,7 +268,7 @@
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
         </button>
-        <textarea id="input" rows="1" placeholder="Ask the council…"
+        <textarea id="input" rows="1" placeholder="Ask Voyance…"
           class="flex-1 bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[24px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
         <button id="send-btn" disabled title="Send"
           class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 leading-none">↑</button>
@@ -419,7 +419,7 @@
         inputEl.value = '';
         inputEl.style.height = 'auto';
       }
-      inputEl.placeholder = 'Ask the council…';
+      inputEl.placeholder = 'Ask Voyance…';
     }
     updateSendBtn();
   }
@@ -434,7 +434,7 @@
   }
 
   const TAB_LABELS = {
-    Council: 'OpClave',
+    Voyance: 'OpClave',
     GPT: 'GPT',
     Claude: 'Claude',
     Gemini: 'Gemini',
@@ -717,7 +717,7 @@
   function createAssistantMessage(id, container, turnModels, imageModeOn) {
     // In image mode, Gemini output goes to the image panel — not a tab
     const tabModels = imageModeOn ? turnModels.filter(m => m !== 'gemini') : turnModels;
-    const tabs = ['Council', ...tabModels.map(m => MODEL_TAB[m])];
+    const tabs = ['Voyance', ...tabModels.map(m => MODEL_TAB[m])];
 
     const div = document.createElement('div');
     div.className = 'msg-assistant';
@@ -752,7 +752,7 @@
       pane.className = 'tab-pane' + (i === 0 ? ' active' : '');
       pane.id = `pane-${id}-${tab}`;
 
-      const placeholderText = tab === 'Council' ? 'Waiting for all models…' : 'Waiting…';
+      const placeholderText = tab === 'Voyance' ? 'Waiting for all models…' : 'Waiting…';
       pane.innerHTML = `<div class="pane-placeholder" id="placeholder-${id}-${tab}">
         <div class="pane-spinner"></div>
         <span>${placeholderText}</span>
@@ -805,28 +805,28 @@
         break;
 
       case 'synthesis_start':
-        setDotStatus(id, 'Council', 'loading');
-        setPlaceholderText(id, 'Council', 'Synthesizing…');
+        setDotStatus(id, 'Voyance', 'loading');
+        setPlaceholderText(id, 'Voyance', 'Synthesizing…');
         activeStreams[id] = '';
         break;
 
       case 'council_chunk':
         if (activeStreams[id] === undefined) activeStreams[id] = '';
         activeStreams[id] += event.chunk;
-        setStreamingContent(id, 'Council', event.chunk);
+        setStreamingContent(id, 'Voyance', event.chunk);
         break;
 
       case 'council_done':
-        setDotStatus(id, 'Council', 'done');
+        setDotStatus(id, 'Voyance', 'done');
         if (activeStreams[id] !== undefined) {
-          setContent(id, 'Council', activeStreams[id]);
+          setContent(id, 'Voyance', activeStreams[id]);
           delete activeStreams[id];
         }
         break;
 
       case 'council_error':
-        setDotStatus(id, 'Council', 'error');
-        setError(id, 'Council', event.error);
+        setDotStatus(id, 'Voyance', 'error');
+        setError(id, 'Voyance', event.error);
         break;
 
       case 'imagen_start': {
