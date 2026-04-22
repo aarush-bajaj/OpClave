@@ -6,6 +6,7 @@
     { "source": "/feedback",    "destination": "/api/index" },
     { "source": "/verify-admin","destination": "/api/index" },
     { "source": "/logs",        "destination": "/api/index" },
-    { "source": "/app",         "destination": "/api/index" }
+    { "source": "/app",         "destination": "/api/index" },
+    { "source": "/(.*)",        "destination": "/api/index" }
   ]
 }
