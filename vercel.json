@@ -12,6 +12,6 @@
     { "src": "/verify-admin", "dest": "/api/index" },
     { "src": "/logs", "dest": "/api/index" },
     { "src": "/app", "dest": "/api/index" },
-    { "src": "/", "dest": "/public/landing.html" }
+    { "src": "/", "dest": "/public/index.html" }
   ]
 }
