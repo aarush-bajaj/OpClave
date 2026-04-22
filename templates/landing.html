@@ -16,9 +16,9 @@
       --bg-raised: #111114;
       --line: rgba(255, 255, 255, 0.06);
       --line-hover: rgba(255, 255, 255, 0.12);
-      --text: #ededed;
-      --text-dim: #8a8a90;
-      --text-faint: #55555a;
+      --text: #ffffff;
+      --text-dim: #b8b8c0;
+      --text-faint: #78787e;
       --accent: #c9a77a;
       --accent-soft: rgba(201, 167, 122, 0.12);
       --serif: 'Fraunces', serif;
@@ -115,31 +115,35 @@
     }
     .nav-cta:hover { background: var(--accent-soft); }
 
-    /* Hero */
-    .hero {
+    /* ── Hero ── */
+    .splash {
       position: relative;
+      min-height: calc(100vh - 56px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       padding: 100px 24px 88px;
       text-align: center;
       overflow: hidden;
     }
-    .hero::before {
+    .splash::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 50%;
+      top: 0; left: 50%;
       transform: translateX(-50%);
-      width: 700px;
-      height: 500px;
+      width: 700px; height: 500px;
       background: radial-gradient(ellipse at 50% 30%, rgba(201, 167, 122, 0.04) 0%, transparent 65%);
       pointer-events: none;
     }
 
-    .hero-inner {
+    .splash-inner {
       max-width: 560px;
       margin: 0 auto;
       position: relative;
     }
-    .hero h1 {
+
+    .splash-wordmark {
       font-family: var(--serif);
       font-weight: 300;
       font-size: 52px;
@@ -149,18 +153,151 @@
       color: var(--text);
       margin-bottom: 20px;
     }
-    .hero h1 em {
+    .splash-wordmark em {
       font-style: italic;
       color: var(--accent);
     }
-    .hero-subtitle {
+
+    .splash-tagline {
       font-family: var(--sans);
       font-weight: 300;
       font-size: 14px;
       color: var(--text-dim);
       max-width: 380px;
-      margin: 0 auto 36px;
+      margin: 0 auto 28px;
       line-height: 1.65;
+    }
+
+    .splash-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .splash-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 18px 24px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    }
+
+    .splash-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .splash-card--primary {
+      border-color: rgba(201, 167, 122, 0.3);
+      background: rgba(201, 167, 122, 0.04);
+    }
+    .splash-card--primary::before {
+      background: radial-gradient(ellipse at 20% 50%, rgba(201, 167, 122, 0.12) 0%, transparent 60%);
+    }
+    .splash-card--primary:hover {
+      border-color: rgba(201, 167, 122, 0.65);
+      background: rgba(201, 167, 122, 0.07);
+      box-shadow: 0 0 32px rgba(201, 167, 122, 0.14), inset 0 0 24px rgba(201, 167, 122, 0.04);
+    }
+    .splash-card--primary:hover::before { opacity: 1; }
+
+    .splash-card--secondary::before {
+      background: radial-gradient(ellipse at 20% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+    }
+    .splash-card--secondary:hover {
+      border-color: rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.025);
+      box-shadow: 0 0 24px rgba(255, 255, 255, 0.04);
+    }
+    .splash-card--secondary:hover::before { opacity: 1; }
+
+    .card-text { display: flex; flex-direction: column; gap: 3px; }
+
+    .card-label {
+      font-family: var(--sans);
+      font-weight: 400;
+      font-size: 14px;
+      color: var(--text-dim);
+      transition: color 0.25s ease;
+    }
+    .splash-card--primary .card-label { color: var(--accent); }
+    .splash-card--primary:hover .card-label { color: var(--accent); }
+    .splash-card--secondary:hover .card-label { color: var(--text); }
+
+    .card-sub {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      transition: color 0.25s ease;
+    }
+    .splash-card--primary .card-sub { color: rgba(201, 167, 122, 0.5); }
+
+    .card-arrow {
+      font-size: 16px;
+      color: var(--text-faint);
+      line-height: 1;
+      flex-shrink: 0;
+      transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), color 0.25s ease, opacity 0.25s ease;
+      opacity: 0.5;
+    }
+    .splash-card--primary .card-arrow { color: var(--accent); opacity: 0.7; }
+    .splash-card:hover .card-arrow { opacity: 1; }
+    .splash-card--primary:hover .card-arrow { transform: translateX(5px); }
+    .splash-card--secondary:hover .card-arrow { transform: translateY(5px); }
+
+    /* ── About section ── */
+    #about {
+      border-top: 1px solid var(--line);
+    }
+
+    /* Hero-like about intro */
+    .about-intro {
+      padding: 80px 24px 64px;
+      text-align: center;
+    }
+    .about-intro-inner {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .about-intro h2 {
+      font-family: var(--serif);
+      font-weight: 300;
+      font-size: 42px;
+      line-height: 1.1;
+      letter-spacing: -0.025em;
+      font-variation-settings: "opsz" 144;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+    .about-intro h2 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .about-intro p {
+      font-family: var(--sans);
+      font-weight: 300;
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.65;
+      margin-bottom: 28px;
     }
 
     .model-flow {
@@ -169,7 +306,7 @@
       justify-content: center;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
     }
     .model-flow-models {
       font-family: var(--mono);
@@ -193,31 +330,6 @@
       border: 1px solid rgba(201, 167, 122, 0.5);
       padding: 3px 10px;
       border-radius: 999px;
-      background: var(--accent-soft);
-    }
-
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-    }
-    .chip {
-      font-family: var(--sans);
-      font-weight: 300;
-      font-size: 12px;
-      color: var(--text-dim);
-      border: 1px solid var(--line-hover);
-      padding: 7px 15px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.02);
-      cursor: pointer;
-      transition: border-color 0.2s, color 0.2s, background 0.2s;
-      display: inline-block;
-    }
-    .chip:hover {
-      border-color: rgba(201, 167, 122, 0.4);
-      color: var(--text);
       background: var(--accent-soft);
     }
 
@@ -583,8 +695,13 @@
       nav { padding: 0 16px; }
       .nav-links { display: none; }
 
-      .hero { padding: 72px 16px 64px; }
-      .hero h1 { font-size: 36px; }
+      .splash { padding: 48px 16px 64px; }
+      .splash-wordmark { font-size: 40px; }
+      .splash-cards { flex-direction: column; align-items: center; }
+      .splash-card { width: 100%; max-width: 320px; height: auto; padding: 22px 24px; flex-direction: row; align-items: center; justify-content: space-between; }
+
+      .about-intro { padding: 56px 16px 48px; }
+      .about-intro h2 { font-size: 30px; }
 
       .section { padding: 64px 16px; }
       .section-title { font-size: 28px; margin-bottom: 32px; }
@@ -615,7 +732,7 @@
 <!-- Page-transition overlay -->
 <div id="pt-overlay" style="position:fixed;inset:0;background:#0a0a0c;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.45s cubic-bezier(0.4,0,0.2,1)"></div>
 
-<!-- Shared logo mark symbols (nav, footer, CTA) -->
+<!-- Shared logo mark symbols -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
   <symbol id="lm-sm" viewBox="0 0 28 28" fill="none">
     <circle cx="14" cy="14" r="12.5" stroke="rgba(255,255,255,0.1)"  stroke-width="0.75"/>
@@ -638,19 +755,18 @@
     <span class="nav-wordmark">OpClave</span>
   </a>
   <ul class="nav-links">
-    <li><a href="#how-it-works">How it works</a></li>
-    <li><a href="#features">Features</a></li>
+    <li><a href="#about">About</a></li>
     <li><a href="https://github.com/p6oo" target="_blank" rel="noopener">GitHub</a></li>
   </ul>
   <a href="/app" class="nav-cta">Try for free</a>
 </nav>
 
 <!-- Hero -->
-<section class="hero">
-  <div class="hero-inner">
-    <h1 class="fade-in">Ask <em>Voyance.</em></h1>
+<section class="splash">
+  <div class="splash-inner">
+    <h1 class="splash-wordmark fade-in">Ask <em>Voyance.</em></h1>
 
-    <p class="hero-subtitle fade-in" style="transition-delay:.1s">
+    <p class="splash-tagline fade-in" style="transition-delay:.1s">
       Ask once. Get independent answers from four AI models, synthesized into one.
     </p>
 
@@ -660,125 +776,155 @@
       <span class="model-flow-synthesis">Synthesis</span>
     </div>
 
-    <div class="chips fade-in" style="transition-delay:.2s">
-      <a href="/app" class="chip">Explain quantum entanglement</a>
-      <a href="/app" class="chip">React vs Vue for a SaaS team</a>
-      <a href="/app" class="chip">Best practices for REST APIs</a>
-      <a href="/app" class="chip">What is consciousness?</a>
-      <a href="/app" class="chip">Which LLM for my app?</a>
+    <div class="splash-cards fade-in" style="transition-delay:.2s">
+      <a href="/app" class="splash-card splash-card--primary">
+        <div class="card-text">
+          <div class="card-label">Try Voyance</div>
+          <div class="card-sub">Free · No account required</div>
+        </div>
+        <div class="card-arrow">→</div>
+      </a>
+      <a href="#about" class="splash-card splash-card--secondary">
+        <div class="card-text">
+          <div class="card-label">About</div>
+          <div class="card-sub">How it works</div>
+        </div>
+        <div class="card-arrow">↓</div>
+      </a>
     </div>
   </div>
 </section>
 
-<!-- App Preview -->
-<section class="preview-section">
-  <div class="preview-inner">
-    <div class="preview-header fade-in">
-      <p class="eyebrow">In action</p>
-      <h2 class="section-title" style="margin-bottom:0">Four minds. <em>One answer.</em></h2>
-    </div>
+<!-- About -->
+<div id="about">
 
-    <div class="browser-chrome fade-in" style="margin-top:36px;transition-delay:.08s">
-      <div class="browser-top">
-        <div class="browser-dots">
-          <div class="browser-dot dot-red"></div>
-          <div class="browser-dot dot-yellow"></div>
-          <div class="browser-dot dot-green"></div>
+  <!-- Intro -->
+  <div class="about-intro">
+    <div class="about-intro-inner">
+      <h2 class="fade-in">Four minds. <em>One answer.</em></h2>
+      <p class="fade-in" style="transition-delay:.06s">
+        Ask once. Get independent answers from GPT, Claude, Gemini, and Grok —
+        then a fifth model synthesizes everything into a single, unified response.
+      </p>
+      <div class="model-flow fade-in" style="transition-delay:.12s">
+        <span class="model-flow-models">GPT · Claude · Gemini · Grok</span>
+        <span class="model-flow-arrow">→</span>
+        <span class="model-flow-synthesis">Synthesis</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Preview -->
+  <section class="preview-section">
+    <div class="preview-inner">
+      <div class="preview-header fade-in">
+        <p class="eyebrow">In action</p>
+        <h2 class="section-title" style="margin-bottom:0">See the difference <em>four voices</em> make.</h2>
+      </div>
+
+      <div class="browser-chrome fade-in" style="margin-top:36px;transition-delay:.08s">
+        <div class="browser-top">
+          <div class="browser-dots">
+            <div class="browser-dot dot-red"></div>
+            <div class="browser-dot dot-yellow"></div>
+            <div class="browser-dot dot-green"></div>
+          </div>
+          <div class="browser-url">opclave.com</div>
         </div>
-        <div class="browser-url">opclave.com</div>
-      </div>
-      <div class="browser-tabs" id="previewTabs">
-        <div class="browser-tab active" data-tab="synthesis">Synthesis</div>
-        <div class="browser-tab" data-tab="gpt">GPT</div>
-        <div class="browser-tab" data-tab="claude">Claude</div>
-        <div class="browser-tab" data-tab="gemini">Gemini</div>
-        <div class="browser-tab" data-tab="grok">Grok</div>
-      </div>
-      <div class="browser-body" id="previewBody">
-        <div class="browser-q-label">Question</div>
-        <div class="browser-q-text">What's the most important thing to understand about consciousness?</div>
-        <div id="previewBadge">
-          <div class="synthesis-badge">
-            <div class="synthesis-dot"></div>
-            <span class="synthesis-tag">Synthesis</span>
+        <div class="browser-tabs" id="previewTabs">
+          <div class="browser-tab active" data-tab="synthesis">Synthesis</div>
+          <div class="browser-tab" data-tab="gpt">GPT</div>
+          <div class="browser-tab" data-tab="claude">Claude</div>
+          <div class="browser-tab" data-tab="gemini">Gemini</div>
+          <div class="browser-tab" data-tab="grok">Grok</div>
+        </div>
+        <div class="browser-body" id="previewBody">
+          <div class="browser-q-label">Question</div>
+          <div class="browser-q-text">What's the most important thing to understand about consciousness?</div>
+          <div id="previewBadge">
+            <div class="synthesis-badge">
+              <div class="synthesis-dot"></div>
+              <span class="synthesis-tag">Synthesis</span>
+            </div>
+          </div>
+          <div class="synthesis-body" id="previewContent">
+            <strong>The hard problem.</strong> All four models converge on the same central mystery: it's not whether brains produce consciousness, but <em>why</em> any physical process gives rise to subjective experience at all. GPT and Claude emphasize the explanatory gap: we can map neural correlates precisely without ever explaining why there's "something it is like" to be aware. Gemini argues this may require entirely new scientific frameworks beyond classical neuroscience. Grok takes the sharpest angle: the question itself might be malformed; our intuitions about the mind/body divide could be the actual source of confusion, not a clue toward an answer.
           </div>
         </div>
-        <div class="synthesis-body" id="previewContent">
-          <strong>The hard problem.</strong> All four models converge on the same central mystery: it's not whether brains produce consciousness, but <em>why</em> any physical process gives rise to subjective experience at all. GPT and Claude emphasize the explanatory gap: we can map neural correlates precisely without ever explaining why there's "something it is like" to be aware. Gemini argues this may require entirely new scientific frameworks beyond classical neuroscience. Grok takes the sharpest angle: the question itself might be malformed; our intuitions about the mind/body divide could be the actual source of confusion, not a clue toward an answer.
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <div class="section-inner">
+      <p class="eyebrow fade-in">Features</p>
+      <h2 class="section-title fade-in" style="transition-delay:.05s">Built for <em>serious</em> questions.</h2>
+      <div class="features-grid">
+        <div class="feature-cell fade-in">
+          <div class="feature-num">01</div>
+          <div class="feature-title">Four models, <em>one query</em></div>
+          <p class="feature-desc">Send your question once and get responses from GPT, Claude, Gemini, and Grok simultaneously. No tab-switching. No copy-pasting. No context lost in translation.</p>
+        </div>
+        <div class="feature-cell fade-in" style="transition-delay:.06s">
+          <div class="feature-num">02</div>
+          <div class="feature-title"><em>Voyance</em> synthesis</div>
+          <p class="feature-desc">A fifth model reads all four responses and produces a unified answer, surfacing consensus, highlighting disagreements, and finding what no single model said alone.</p>
+        </div>
+        <div class="feature-cell fade-in" style="transition-delay:.12s">
+          <div class="feature-num">03</div>
+          <div class="feature-title">File <em>attachments</em></div>
+          <p class="feature-desc">Upload documents, code, or images and every model in Voyance gets the full context, giving you four perspectives on your specific material at once.</p>
+        </div>
+        <div class="feature-cell fade-in" style="transition-delay:.18s">
+          <div class="feature-num">04</div>
+          <div class="feature-title">Full <em>control</em></div>
+          <p class="feature-desc">Bring your own API keys. Disable any model. Voyance works with whatever you have: no subscription required, no lock-in, no black box.</p>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- Features -->
-<section class="section" id="features">
-  <div class="section-inner">
-    <p class="eyebrow fade-in">Features</p>
-    <h2 class="section-title fade-in" style="transition-delay:.05s">Built for <em>serious</em> questions.</h2>
-    <div class="features-grid">
-      <div class="feature-cell fade-in">
-        <div class="feature-num">01</div>
-        <div class="feature-title">Four models, <em>one query</em></div>
-        <p class="feature-desc">Send your question once and get responses from GPT, Claude, Gemini, and Grok simultaneously. No tab-switching. No copy-pasting. No context lost in translation.</p>
-      </div>
-      <div class="feature-cell fade-in" style="transition-delay:.06s">
-        <div class="feature-num">02</div>
-        <div class="feature-title"><em>Voyance</em> synthesis</div>
-        <p class="feature-desc">A fifth model reads all four responses and produces a unified answer, surfacing consensus, highlighting disagreements, and finding what no single model said alone.</p>
-      </div>
-      <div class="feature-cell fade-in" style="transition-delay:.12s">
-        <div class="feature-num">03</div>
-        <div class="feature-title">File <em>attachments</em></div>
-        <p class="feature-desc">Upload documents, code, or images and every model in Voyance gets the full context, giving you four perspectives on your specific material at once.</p>
-      </div>
-      <div class="feature-cell fade-in" style="transition-delay:.18s">
-        <div class="feature-num">04</div>
-        <div class="feature-title">Full <em>control</em></div>
-        <p class="feature-desc">Bring your own API keys. Disable any model. Voyance works with whatever you have: no subscription required, no lock-in, no black box.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- How it works -->
-<section class="section" id="how-it-works">
-  <div class="section-inner">
-    <p class="eyebrow fade-in">How it works</p>
-    <h2 class="section-title fade-in" style="transition-delay:.05s">Simple by <em>design.</em></h2>
-    <div class="steps">
-      <div class="step fade-in">
-        <span class="step-num">01</span>
-        <div>
-          <div class="step-title">Ask your <em>question</em></div>
-          <p class="step-desc">Type anything: a hard question, a decision you're wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p>
+  <!-- How it works -->
+  <section class="section" id="how-it-works">
+    <div class="section-inner">
+      <p class="eyebrow fade-in">How it works</p>
+      <h2 class="section-title fade-in" style="transition-delay:.05s">Simple by <em>design.</em></h2>
+      <div class="steps">
+        <div class="step fade-in">
+          <span class="step-num">01</span>
+          <div>
+            <div class="step-title">Ask your <em>question</em></div>
+            <p class="step-desc">Type anything: a hard question, a decision you're wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p>
+          </div>
         </div>
-      </div>
-      <div class="step fade-in">
-        <span class="step-num">02</span>
-        <div>
-          <div class="step-title"><em>Voyance</em> responds</div>
-          <p class="step-desc">All four models answer independently and in parallel. You get each perspective in its own tab, unfiltered, unmerged, and fully attributable to its source.</p>
+        <div class="step fade-in">
+          <span class="step-num">02</span>
+          <div>
+            <div class="step-title"><em>Voyance</em> responds</div>
+            <p class="step-desc">All four models answer independently and in parallel. You get each perspective in its own tab, unfiltered, unmerged, and fully attributable to its source.</p>
+          </div>
         </div>
-      </div>
-      <div class="step fade-in">
-        <span class="step-num">03</span>
-        <div>
-          <div class="step-title">One <em>synthesis</em></div>
-          <p class="step-desc">A synthesis model reads everything and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p>
+        <div class="step fade-in">
+          <span class="step-num">03</span>
+          <div>
+            <div class="step-title">One <em>synthesis</em></div>
+            <p class="step-desc">A synthesis model reads everything and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- CTA -->
-<section class="cta-section">
-  <svg class="cta-logo fade-in" width="40" height="40" aria-hidden="true"><use href="#lm-lg"/></svg>
-  <h2 class="cta-title fade-in" style="transition-delay:.05s">Stop asking <em>one.</em><br>Ask all of them.</h2>
-  <p class="cta-sub fade-in" style="transition-delay:.1s">Free to use. No account required.</p>
-  <a href="/app" class="cta-btn fade-in" style="transition-delay:.15s">Ask Voyance</a>
-</section>
+  <!-- CTA -->
+  <section class="cta-section">
+    <svg class="cta-logo fade-in" width="40" height="40" aria-hidden="true"><use href="#lm-lg"/></svg>
+    <h2 class="cta-title fade-in" style="transition-delay:.05s">Stop asking <em>one.</em><br>Ask all of them.</h2>
+    <p class="cta-sub fade-in" style="transition-delay:.1s">Free to use. No account required.</p>
+    <a href="/app" class="cta-btn fade-in" style="transition-delay:.15s">Ask Voyance</a>
+  </section>
+
+</div>
 
 <!-- Footer -->
 <footer>
@@ -849,7 +995,7 @@
     });
   });
 
-  // Transition animation for all /app links
+  // Fade transition for /app links
   document.querySelectorAll('a[href="/app"]').forEach(function(link) {
     link.addEventListener('click', function(e) {
       e.preventDefault();
