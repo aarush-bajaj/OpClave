@@ -52,7 +52,11 @@
       "Bash(sed -n '200,250p' /Users/aarushbajaj/Downloads/Council/templates/index.html)",
       "Bash(awk 'NR>=1 && NR<=20' /Users/aarushbajaj/Downloads/Council/templates/index.html)",
       "Bash(npm --version)",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git mv *)",
+      "Bash(git restore *)"
     ],
     "additionalDirectories": [
       "\\tmp"
