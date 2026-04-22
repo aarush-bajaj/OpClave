@@ -1,8 +1,13 @@
 {
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/app",      "destination": "/api/index" },
-    { "source": "/app/(.*)", "destination": "/api/index" },
-    { "source": "/",         "destination": "/landing.html" }
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "public/**",    "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)",    "dest": "/api/index" },
+    { "src": "/app",         "dest": "/api/index" },
+    { "src": "/app/(.*)",    "dest": "/api/index" },
+    { "src": "/",            "dest": "/public/landing.html" },
+    { "src": "/(.*)",        "dest": "/api/index" }
   ]
 }
