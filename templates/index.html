@@ -41,9 +41,15 @@
     <img src="/assets/logo.png" alt="OpClave" style="width:28px;height:28px;object-fit:contain;display:block">
     <span style="font-family:'Fraunces',serif;font-weight:400;font-size:17px;letter-spacing:-0.01em">OpClave</span>
 
+    <!-- Home link -->
+    <a href="/" title="Back to home" class="ml-auto flex items-center gap-1 px-2 py-1.5 rounded-lg dark:text-[#55555a] text-gray-400 dark:hover:text-gray-300 hover:text-gray-600 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 text-[12px]" style="text-decoration:none;letter-spacing:0.02em">
+      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span class="hidden sm:inline">Home</span>
+    </a>
+
     <!-- About button -->
     <button onclick="document.getElementById('about-modal-overlay').classList.add('visible')" title="How it works"
-      class="ml-auto p-1.5 rounded-lg dark:text-gray-400 text-gray-500 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 text-[13px] font-bold w-7 h-7 flex items-center justify-center border dark:border-[#1e1e1e] border-gray-200">?</button>
+      class="p-1.5 rounded-lg dark:text-gray-400 text-gray-500 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 text-[13px] font-bold w-7 h-7 flex items-center justify-center border dark:border-[#1e1e1e] border-gray-200">?</button>
 
     <!-- Feedback button (always in navbar) -->
     <button onclick="openFeedbackModal()" title="Give feedback"

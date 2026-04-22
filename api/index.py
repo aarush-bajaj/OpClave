@@ -397,6 +397,12 @@ def index():
         return HTMLResponse(f.read())
 
 
+@app.get("/app")
+def app_route():
+    with open(os.path.join(_root, "templates", "index.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
 @app.post("/extract-file")
 async def extract_file(file: UploadFile = File(...)):
     MAX_SIZE = 10 * 1024 * 1024  # 10 MB
