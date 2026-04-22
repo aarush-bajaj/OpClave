@@ -612,6 +612,9 @@
 </head>
 <body>
 
+<!-- Page-transition overlay -->
+<div id="pt-overlay" style="position:fixed;inset:0;background:#0a0a0c;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.45s cubic-bezier(0.4,0,0.2,1)"></div>
+
 <!-- Shared logo mark symbols (nav, footer, CTA) -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
   <symbol id="lm-sm" viewBox="0 0 28 28" fill="none">
@@ -844,6 +847,17 @@
         content.innerHTML = tabContent[key].body;
         body.classList.remove('fading');
       }, 150);
+    });
+  });
+
+  // Transition animation for all /app links
+  document.querySelectorAll('a[href="/app"]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var overlay = document.getElementById('pt-overlay');
+      overlay.style.pointerEvents = 'all';
+      overlay.style.opacity = '1';
+      setTimeout(function() { window.location.href = '/app'; }, 450);
     });
   });
 </script>
