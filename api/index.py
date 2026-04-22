@@ -393,7 +393,7 @@ def build_attachment_context(attachments: list) -> str:
 
 @app.get("/")
 def index():
-    with open(os.path.join(_root, "public", "index.html"), encoding="utf-8") as f:
+    with open(os.path.join(_root, "templates", "landing.html"), encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
 
