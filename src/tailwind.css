@@ -503,6 +503,189 @@ html.dark body {
 .synth-pill:hover { color: #6b7280; }
 .synth-pill.active { background: rgba(201,167,122,0.12); border-color: rgba(167,139,250,0.4); color: #c9a77a; }
 
+/* Preset trigger pill */
+.preset-trigger {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 8px; border: 1px solid;
+  font-size: 11.5px; font-weight: 500; cursor: pointer;
+  transition: all 0.15s; font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em; line-height: 1.5;
+}
+.dark .preset-trigger { color: #c9a77a; border-color: rgba(201,167,122,0.32); background: rgba(201,167,122,0.06); }
+.preset-trigger { color: #6b7280; border-color: #d1d5db; background: #f9fafb; }
+.dark .preset-trigger:hover { border-color: rgba(201,167,122,0.55); background: rgba(201,167,122,0.11); }
+.preset-trigger:hover { border-color: #9ca3af; background: #f3f4f6; }
+
+/* Floating card (base for both panels) */
+.preset-card {
+  position: absolute; bottom: calc(100% + 10px); left: 0; z-index: 60;
+  border-radius: 16px; padding: 6px; min-width: 280px;
+  transform-origin: bottom left;
+  animation: presetCardIn 0.16s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.dark .preset-card {
+  background: #141417;
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.2);
+}
+.preset-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+}
+@keyframes presetCardIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Preset item rows (name + desc stacked, checkmark / chevron on right) */
+.preset-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; border-radius: 10px; cursor: pointer;
+  transition: background 0.12s; gap: 12px;
+}
+.dark .preset-item:hover { background: rgba(255,255,255,0.04); }
+.preset-item:hover { background: #f6f7f9; }
+
+.preset-item-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.preset-item-name {
+  font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+  letter-spacing: 0.01em; font-weight: 500; line-height: 1.35;
+}
+.dark .preset-item-name { color: #ededed; }
+.preset-item-name { color: #111827; }
+
+.preset-item-desc {
+  font-size: 11.5px; line-height: 1.4; letter-spacing: 0.005em;
+}
+.dark .preset-item-desc { color: #8e8ea0; }
+.preset-item-desc { color: #6b7280; }
+
+.dark .preset-item.active .preset-item-name { color: #c9a77a; }
+.preset-item.active .preset-item-name { color: #b45309; }
+
+/* Checkmark (hidden unless active) */
+.preset-check {
+  opacity: 0; flex-shrink: 0;
+  color: #c9a77a; transition: opacity 0.12s;
+}
+.preset-item.active .preset-check,
+.preset-radio-item.active .preset-check { opacity: 1; }
+
+/* Trailing actions wrapper (check + chevron together) */
+.preset-item-actions {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+}
+
+/* Chevron for items that open another card */
+.preset-chevron { flex-shrink: 0; }
+.dark .preset-chevron { color: #55555a; }
+.preset-chevron { color: #9ca3af; }
+.dark .preset-item:hover .preset-chevron { color: #8e8ea0; }
+.preset-item:hover .preset-chevron { color: #6b7280; }
+
+/* Divider inside cards */
+.preset-card-divider { height: 1px; margin: 6px 10px; }
+.dark .preset-card-divider { background: rgba(255,255,255,0.06); }
+.preset-card-divider { background: #f3f4f6; }
+
+/* Custom panel */
+.preset-card-custom { min-width: 300px; }
+
+.preset-card-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 6px 4px;
+}
+
+.preset-back-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 8px;
+  cursor: pointer; background: transparent; border: none;
+  transition: all 0.12s;
+}
+.dark .preset-back-btn { color: #8e8ea0; }
+.preset-back-btn { color: #6b7280; }
+.dark .preset-back-btn:hover { background: rgba(255,255,255,0.06); color: #ededed; }
+.preset-back-btn:hover { background: #f3f4f6; color: #111827; }
+
+.preset-card-title {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  font-weight: 500; letter-spacing: 0.02em;
+}
+.dark .preset-card-title { color: #ededed; }
+.preset-card-title { color: #111827; }
+
+.preset-section { padding: 2px 0 4px; }
+
+.preset-section-label {
+  padding: 8px 14px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.dark .preset-section-label { color: #55555a; }
+.preset-section-label { color: #9ca3af; }
+
+/* Toggle row (model on/off) */
+.preset-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; border-radius: 10px; cursor: pointer;
+  transition: background 0.12s;
+}
+.dark .preset-toggle-row:hover { background: rgba(255,255,255,0.035); }
+.preset-toggle-row:hover { background: #f6f7f9; }
+
+.preset-toggle-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; letter-spacing: 0.02em;
+}
+.dark .preset-toggle-label { color: #ededed; }
+.preset-toggle-label { color: #111827; }
+
+/* iOS-style toggle switch */
+.preset-toggle {
+  position: relative; display: inline-block;
+  width: 32px; height: 18px; border-radius: 999px;
+  flex-shrink: 0; transition: background 0.18s;
+}
+.dark .preset-toggle { background: #2a2a2f; }
+.preset-toggle { background: #d1d5db; }
+
+.preset-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%;
+  transition: left 0.18s ease, background 0.18s;
+}
+.dark .preset-toggle::after { background: #565869; }
+.preset-toggle::after { background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+.preset-toggle.active { background: #c9a77a; }
+.preset-toggle.active::after { left: 16px; background: #1a1a1a; }
+
+/* Radio-style row (lead synthesizer) */
+.preset-radio-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 14px; border-radius: 10px; cursor: pointer;
+  transition: background 0.12s;
+}
+.dark .preset-radio-item:hover { background: rgba(255,255,255,0.035); }
+.preset-radio-item:hover { background: #f6f7f9; }
+
+.preset-radio-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; letter-spacing: 0.02em;
+}
+.dark .preset-radio-name { color: #ededed; }
+.preset-radio-name { color: #111827; }
+.dark .preset-radio-item.active .preset-radio-name { color: #c9a77a; }
+.preset-radio-item.active .preset-radio-name { color: #b45309; }
+
+/* Mobile adjustments */
+@media (max-width: 639px) {
+  .preset-card { min-width: 240px; }
+  .preset-card-custom { min-width: 260px; }
+}
+
 /* Help icon & tooltip */
 .help-icon {
   display: inline-flex; align-items: center; justify-content: center;

@@ -56,7 +56,11 @@
       "Bash(git pull *)",
       "Bash(git stash *)",
       "Bash(git mv *)",
-      "Bash(git restore *)"
+      "Bash(git restore *)",
+      "Bash(npm run *)",
+      "Bash(grep -o \"\\\\.[a-zA-Z_-]*preset-card[^{},]*{[^}]*}\" \"/Users/adityamishra/personal-important/Codeing stuff/adi-js/Council/templates/assets/tailwind.css\")",
+      "Bash(grep -oE \"\\\\.dark [^{}]{1,80}preset[^{}]{0,40}\\\\{[^}]{1,100}\\\\}\" \"/Users/adityamishra/personal-important/Codeing stuff/adi-js/Council/templates/assets/tailwind.css\")",
+      "Bash(grep -oE \"[^{,}]*preset-card[^{,]*\\\\{\" \"/Users/adityamishra/personal-important/Codeing stuff/adi-js/Council/templates/assets/tailwind.css\")"
     ],
     "additionalDirectories": [
       "\\tmp"
