@@ -1,17 +1,11 @@
 {
-  "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" },
-    { "src": "public/**", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/assets/(.*)", "dest": "/api/index" },
-    { "src": "/api/(.*)", "dest": "/api/index" },
-    { "src": "/stream", "dest": "/api/index" },
-    { "src": "/extract-file", "dest": "/api/index" },
-    { "src": "/feedback", "dest": "/api/index" },
-    { "src": "/verify-admin", "dest": "/api/index" },
-    { "src": "/logs", "dest": "/api/index" },
-    { "src": "/app", "dest": "/api/index" },
-    { "src": "/", "dest": "/public/index.html" }
+  "rewrites": [
+    { "source": "/assets/(.*)", "destination": "/api/index" },
+    { "source": "/stream",      "destination": "/api/index" },
+    { "source": "/extract-file","destination": "/api/index" },
+    { "source": "/feedback",    "destination": "/api/index" },
+    { "source": "/verify-admin","destination": "/api/index" },
+    { "source": "/logs",        "destination": "/api/index" },
+    { "source": "/app",         "destination": "/api/index" }
   ]
 }
