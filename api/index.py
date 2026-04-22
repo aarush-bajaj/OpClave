@@ -27,7 +27,7 @@ load_dotenv(dotenv_path=os.path.join(_root, '.env'))
 
 app = FastAPI()
 
-DAILY_LIMIT = 15
+DAILY_LIMIT = 15          # per-IP daily query limit
 _UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL", "")
 _UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
 
@@ -61,10 +61,10 @@ def check_feedback_rate_limit(ip: str) -> bool:
         return True  # fail open — an Upstash outage shouldn't block feedback
 
 
-def check_and_increment_global_limit() -> tuple[bool, int]:
-    """Returns (allowed, current_count). Increments counter; sets 24h TTL on first use."""
+def check_and_increment_ip_limit(ip: str) -> tuple[bool, int]:
+    """Returns (allowed, current_count) for the given IP. Resets every 24h."""
     try:
-        key = f"council:prompts:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        key = f"council:prompts:{ip}:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
         count = _redis(["INCR", key])
         if count == 1:
             _redis(["EXPIRE", key, 86400])
@@ -545,7 +545,7 @@ def clear_logs():
 
 
 @app.post("/stream")
-def stream(req: StreamRequest):
+def stream(req: StreamRequest, request: Request):
     question = req.question.strip()
     synthesizer = req.synthesizer.lower()
     requested_models = set(req.models)
@@ -558,7 +558,10 @@ def stream(req: StreamRequest):
             yield 'data: {"type":"error","message":"No question provided"}\n\n'
         return StreamingResponse(err(), media_type="text/event-stream")
 
-    allowed, count = check_and_increment_global_limit()
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+
+    allowed, count = check_and_increment_ip_limit(ip)
     if not allowed:
         def rate_limited():
             yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":DAILY_LIMIT})}\n\n'
