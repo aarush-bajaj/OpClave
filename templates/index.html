@@ -353,10 +353,6 @@
           <!-- Preset description -->
           <span id="preset-desc" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#55555a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">General Purpose</span>
         </div>
-        <!-- Visuals button -->
-        <div class="flex items-center gap-1.5 shrink-0">
-          <button id="img-mode-btn" onclick="toggleImageMode()">✦</button>
-        </div>
       </div>
       <div id="attachment-pills" class="hidden"></div>
       <div id="input-bottom" class="flex items-end gap-2">
@@ -616,7 +612,6 @@
 
   function toggleImageMode() {
     imageMode = !imageMode;
-    document.getElementById('img-mode-btn').classList.toggle('active', imageMode);
 
     if (imageMode) {
       if (!inputEl.value.trim()) {
