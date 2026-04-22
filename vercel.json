@@ -1,13 +1,17 @@
 {
   "builds": [
     { "src": "api/index.py", "use": "@vercel/python" },
-    { "src": "public/**",    "use": "@vercel/static" }
+    { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "/api/(.*)",    "dest": "/api/index" },
-    { "src": "/app",         "dest": "/api/index" },
-    { "src": "/app/(.*)",    "dest": "/api/index" },
-    { "src": "/",            "dest": "/public/landing.html" },
-    { "src": "/(.*)",        "dest": "/api/index" }
+    { "src": "/assets/(.*)", "dest": "/api/index" },
+    { "src": "/api/(.*)", "dest": "/api/index" },
+    { "src": "/stream", "dest": "/api/index" },
+    { "src": "/extract-file", "dest": "/api/index" },
+    { "src": "/feedback", "dest": "/api/index" },
+    { "src": "/verify-admin", "dest": "/api/index" },
+    { "src": "/logs", "dest": "/api/index" },
+    { "src": "/app", "dest": "/api/index" },
+    { "src": "/", "dest": "/public/landing.html" }
   ]
 }
