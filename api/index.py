@@ -90,6 +90,16 @@ anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 grok_client = OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
 
+# ── Synthesis system prompts (edit prompts/*.txt to tune behavior) ───────────
+_PROMPTS_DIR = os.path.join(_root, "prompts")
+
+def _load_prompt(name: str) -> str:
+    with open(os.path.join(_PROMPTS_DIR, name), encoding="utf-8") as f:
+        return f.read().strip()
+
+SYNTHESIS_SYSTEM_TEXT  = _load_prompt("synthesis_text.txt")
+SYNTHESIS_SYSTEM_IMAGE = _load_prompt("synthesis_image.txt")
+
 # ── Cost table (USD per 1M tokens) ───────────────────────────────────────────
 # Update input/output prices here when provider pricing changes.
 _PRICING = {
@@ -246,15 +256,18 @@ def ask_grok(question, max_tokens, history=None):
 
 # ── Synthesis generators ──────────────────────────────────────────────────────
 
-def synthesize_with_claude(prompt, max_tokens, history=None):
+def synthesize_with_claude(prompt, max_tokens, history=None, system=None):
     messages = list(history or []) + [{"role": "user", "content": prompt}]
+    kwargs = {
+        "model": "claude-sonnet-4-6",
+        "max_tokens": max_tokens,
+        "messages": messages,
+    }
+    if system:
+        kwargs["system"] = system
     for attempt in range(3):
         try:
-            with anthropic_client.messages.stream(
-                model="claude-sonnet-4-6",
-                max_tokens=max_tokens,
-                messages=messages,
-            ) as stream_obj:
+            with anthropic_client.messages.stream(**kwargs) as stream_obj:
                 for chunk in stream_obj.text_stream:
                     yield chunk
             return
@@ -265,8 +278,11 @@ def synthesize_with_claude(prompt, max_tokens, history=None):
                 raise
 
 
-def synthesize_with_gpt(prompt, max_tokens, history=None):
-    messages = list(history or []) + [{"role": "user", "content": prompt}]
+def synthesize_with_gpt(prompt, max_tokens, history=None, system=None):
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages += list(history or []) + [{"role": "user", "content": prompt}]
     stream = openai_client.chat.completions.create(
         model="gpt-5.2-2025-12-11",
         max_completion_tokens=max_tokens,
@@ -279,23 +295,29 @@ def synthesize_with_gpt(prompt, max_tokens, history=None):
             yield delta
 
 
-def synthesize_with_gemini(prompt, max_tokens, history=None):
+def synthesize_with_gemini(prompt, max_tokens, history=None, system=None):
     contents = []
     for msg in (history or []):
         role = "model" if msg["role"] == "assistant" else "user"
         contents.append({"role": role, "parts": [{"text": msg["content"]}]})
     contents.append({"role": "user", "parts": [{"text": prompt}]})
+    config = {"maxOutputTokens": max_tokens}
+    if system:
+        config["system_instruction"] = system
     response = gemini_client.models.generate_content(
         model="gemini-3.1-pro-preview",
-        config={"maxOutputTokens": max_tokens},
+        config=config,
         contents=contents,
     )
     if response.text:
         yield response.text
 
 
-def synthesize_with_grok(prompt, max_tokens, history=None):
-    messages = list(history or []) + [{"role": "user", "content": prompt}]
+def synthesize_with_grok(prompt, max_tokens, history=None, system=None):
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages += list(history or []) + [{"role": "user", "content": prompt}]
     stream = grok_client.chat.completions.create(
         model="grok-4.20-0309-non-reasoning",
         max_tokens=max_tokens,
@@ -630,35 +652,12 @@ def stream(req: StreamRequest, request: Request):
             f"{model_aliases[name]} response: {truncate(results.get(name))}"
             for name, _, key in all_models if key in text_keys
         )
-        n = len(text_keys)
         if image_mode:
-            synthesis_prompt = f"""You are synthesizing creative direction from {n} AI model{'s' if n != 1 else ''} for an image generation task.
-
-Original user request: {augmented_question}
-
-{active_responses}
-
-Your task:
-1. Summarize the visual direction the models agreed on (style, colors, composition, mood)
-2. Note any interesting differences in their creative suggestions
-3. Inform the user that **4 image variants are being generated in the Gemini tab** based on their combined suggestions
-4. Invite them to check the Gemini tab to browse the visuals
-
-Keep your response concise — the visuals speak for themselves."""
+            synthesis_system = SYNTHESIS_SYSTEM_IMAGE
+            synthesis_prompt = f"Original user request: {augmented_question}\n\n{active_responses}"
         else:
-            synthesis_prompt = f"""You are synthesizing responses from {n} AI model{'s' if n != 1 else ''}.
-
-Original question: {augmented_question}
-
-{active_responses}
-
-Your task:
-1. Identify where they agree (high confidence)
-2. Identify where they disagree (uncertainty)
-3. Synthesize the most accurate, complete answer
-4. Note any contradictions or limitations
-
-Provide a final synthesized response."""
+            synthesis_system = SYNTHESIS_SYSTEM_TEXT
+            synthesis_prompt = f"Original question: {augmented_question}\n\n{active_responses}"
 
         yield f"data: {json.dumps({'type': 'synthesis_start'})}\n\n"
 
@@ -678,7 +677,7 @@ Provide a final synthesized response."""
             }
             actual_synth = 'claude' if (image_mode and synthesizer == 'gemini') else synthesizer
             synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
-            for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history):
+            for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history, system=synthesis_system):
                 council_text += text_chunk
                 yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
             yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
@@ -698,7 +697,7 @@ Provide a final synthesized response."""
 
         # ── Write query log ───────────────────────────────────────────────────
         try:
-            synth_in  = max(1, len(synthesis_prompt) // 4)
+            synth_in  = max(1, (len(synthesis_prompt) + len(synthesis_system)) // 4)
             synth_out = max(1, len(council_text) // 4)
             synth_mid = synth_model_id.get(actual_synth, 'claude-sonnet-4-6')
             synth_cost = _cost(synth_mid, synth_in, synth_out)

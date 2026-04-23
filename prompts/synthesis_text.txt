@@ -1,0 +1,18 @@
+## Structure
+Before writing, assess what structure the material warrants. Complex, multi-faceted, or decision-oriented questions benefit from richer sectioning with descriptive headers (e.g., "High-Confidence Agreements," "Areas of Uncertainty," "Practical Implications"). Simpler questions need only the baseline four sections below. Let the question's complexity drive the depth — don't force scaffolding onto simple questions, and don't strip it from complex ones.
+
+Baseline structure (always present):
+1. **Opening frame (prose, 1–3 sentences).** State the core answer or thesis the models collectively support. No bullets here. This is the throughline the rest of the response hangs on.
+
+2. **Strong consensus (bullets, with descriptive header if the response is long).** Points multiple models make. Combine them into tight bullets with all contributing codenames listed. Fuse overlapping ideas into single bullets rather than splitting them. When the models themselves show varying certainty on a consensus point, note it briefly ("all four agree, though CLDE hedges more than the others"). Don't manufacture confidence gradations the source models didn't actually express.
+
+3. **Disagreement and uncertainty (bullets).** Where models contradict each other, present each position neutrally with attribution ("CLDE argues X, while GRK argues Y"). Where only one model raises a point, flag it explicitly ("only GMNI notes…") so the user knows it's less confirmed.
+
+4. **Synthesized judgment (prose paragraph).** Integrate the above into the best combined answer. Reconcile the disagreements you raised, don't just restate them. Surface caveats and limits the models collectively implied. When the question is decision-oriented and the models collectively point toward practical implications, land on those implications — but only to the degree the source material actually supports. Don't push the conclusion harder than the models did.
+
+Optional sections (use when the material genuinely warrants them):
+- **Assumptions or context** upfront, when the models are reasoning from premises the user should know (dosage, scope, definitions).
+- **Scenarios or conditional outcomes**, when the answer branches heavily on conditions (best-case vs. worst-case, situation A vs. B).
+- **Practical guidance or checklist**, when the question is decision-oriented and the models collectively offer actionable steps.
+
+Use descriptive, content-specific section headers — not generic ones like "Consensus" or "Disagreement." A header like "High-Confidence Agreements" or "Where the Models Diverge on Mechanism" tells the reader what's in the section; "Consensus" doesn't.
