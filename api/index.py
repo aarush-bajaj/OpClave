@@ -605,10 +605,21 @@ def stream(req: StreamRequest, request: Request):
         usages = {}
         lock = threading.Lock()
 
+        if image_mode:
+            model_question = (
+                f"The user wants an image generated with this prompt:\n\n{augmented_question}\n\n"
+                "Your job is to provide detailed creative direction for this image — NOT to generate it. "
+                "Describe: the subject and focal point, composition and framing, art style and medium, "
+                "color palette, lighting, and overall mood. Be specific and visual. "
+                "Output only your creative direction, no preamble."
+            )
+        else:
+            model_question = augmented_question
+
         def run_model(name, func):
             event_queue.put({'type': 'progress', 'model': name, 'status': 'running'})
             try:
-                result, usage = func(augmented_question, model_tokens, history)
+                result, usage = func(model_question, model_tokens, history)
                 print(f"[DEBUG] {name} response length: {len(result) if result else 0} chars", flush=True)
                 with lock:
                     results[name] = result
@@ -627,7 +638,7 @@ def stream(req: StreamRequest, request: Request):
             ('Gemini', ask_gemini, 'gemini'),
             ('Grok',   ask_grok,   'grok'),
         ]
-        # In image mode Gemini generates images; exclude it from text queries
+        # In image mode, Gemini generates images only — exclude it from text queries
         text_keys = requested_models - {'gemini'} if image_mode else requested_models
         models = [(name, func) for name, func, key in all_models if key in text_keys]
 
@@ -675,7 +686,7 @@ def stream(req: StreamRequest, request: Request):
                 'gemini': synthesize_with_gemini,
                 'grok': synthesize_with_grok,
             }
-            actual_synth = 'claude' if (image_mode and synthesizer == 'gemini') else synthesizer
+            actual_synth = synthesizer
             synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
             for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history, system=synthesis_system):
                 council_text += text_chunk
@@ -684,14 +695,14 @@ def stream(req: StreamRequest, request: Request):
         except Exception as e:
             yield f"data: {json.dumps({'type': 'council_error', 'error': str(e)})}\n\n"
 
-        if image_mode and 'gemini' in requested_models:
-            yield f"data: {json.dumps({'type': 'imagen_start'})}\n\n"
+        if image_mode:
+            yield f"data: {json.dumps({'type': 'imagen_start', 'model': 'Gemini'})}\n\n"
             try:
                 enriched = enrich_prompt_for_imagen(question, results)
                 images = call_gemini_imagen(enriched)
-                yield f"data: {json.dumps({'type': 'images_ready', 'images': images, 'enriched_prompt': enriched})}\n\n"
+                yield f"data: {json.dumps({'type': 'images_ready', 'model': 'Gemini', 'images': images, 'enriched_prompt': enriched})}\n\n"
             except Exception as e:
-                yield f"data: {json.dumps({'type': 'imagen_error', 'error': str(e)})}\n\n"
+                yield f"data: {json.dumps({'type': 'imagen_error', 'model': 'Gemini', 'error': str(e)})}\n\n"
 
         yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
