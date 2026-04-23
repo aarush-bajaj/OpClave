@@ -238,7 +238,14 @@ def ask_gemini(question, max_tokens, history=None):
     usage = {"model": "gemini-3.1-pro-preview",
              "input_tokens": getattr(meta, "prompt_token_count", 0) or 0,
              "output_tokens": getattr(meta, "candidates_token_count", 0) or 0}
-    return response.text, usage
+    try:
+        text = response.text
+    except ValueError:
+        # Response was blocked or cut off — extract text from parts directly
+        candidate = response.candidates[0] if response.candidates else None
+        parts = candidate.content.parts if candidate and candidate.content else []
+        text = "".join(p.text for p in parts if hasattr(p, "text") and p.text)
+    return text, usage
 
 
 def ask_grok(question, max_tokens, history=None):
@@ -304,13 +311,20 @@ def synthesize_with_gemini(prompt, max_tokens, history=None, system=None):
     config = {"maxOutputTokens": max_tokens}
     if system:
         config["system_instruction"] = system
-    response = gemini_client.models.generate_content(
+    for chunk in gemini_client.models.generate_content_stream(
         model="gemini-3.1-pro-preview",
         config=config,
         contents=contents,
-    )
-    if response.text:
-        yield response.text
+    ):
+        try:
+            if chunk.text:
+                yield chunk.text
+        except ValueError:
+            candidate = chunk.candidates[0] if chunk.candidates else None
+            parts = candidate.content.parts if candidate and candidate.content else []
+            text = "".join(p.text for p in parts if hasattr(p, "text") and p.text)
+            if text:
+                yield text
 
 
 def synthesize_with_grok(prompt, max_tokens, history=None, system=None):

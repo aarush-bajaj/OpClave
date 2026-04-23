@@ -61,7 +61,8 @@
       "Bash(grep -o \"\\\\.[a-zA-Z_-]*preset-card[^{},]*{[^}]*}\" \"/Users/adityamishra/personal-important/Codeing stuff/adi-js/Council/templates/assets/tailwind.css\")",
       "Bash(grep -oE \"\\\\.dark [^{}]{1,80}preset[^{}]{0,40}\\\\{[^}]{1,100}\\\\}\" \"/Users/adityamishra/personal-important/Codeing stuff/adi-js/Council/templates/assets/tailwind.css\")",
       "Bash(grep -oE \"[^{,}]*preset-card[^{,]*\\\\{\" \"/Users/adityamishra/personal-important/Codeing stuff/adi-js/Council/templates/assets/tailwind.css\")",
-      "Bash(grep -n \"color.*#\\\\|#[0-9a-f]\\\\{3,6\\\\}\" /Users/aarushbajaj/Downloads/Council/templates/index.html)"
+      "Bash(grep -n \"color.*#\\\\|#[0-9a-f]\\\\{3,6\\\\}\" /Users/aarushbajaj/Downloads/Council/templates/index.html)",
+      "Bash(git checkout *)"
     ],
     "additionalDirectories": [
       "\\tmp"
