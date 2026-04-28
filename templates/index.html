@@ -72,10 +72,23 @@
     .dark #mic-btn { color:#565869; }
     #mic-btn:hover { color:#6b7280; background:#f3f4f6; }
     .dark #mic-btn:hover { color:#8e8ea0; background:#3a3a3a; }
-    #mic-btn.recording { color:#ef4444 !important; animation:mic-pulse 1.2s ease-in-out infinite; }
-    @keyframes mic-pulse {
-      0%, 100% { opacity:1; transform:scale(1); }
-      50% { opacity:0.6; transform:scale(1.15); }
+    #mic-btn.recording { color:#ef4444 !important; background:rgba(239,68,68,0.08) !important; }
+    #mic-icon { display:flex; align-items:center; justify-content:center; }
+    #mic-btn.recording #mic-icon { display:none; }
+    #mic-wave { display:none; align-items:center; gap:2.5px; height:16px; }
+    #mic-btn.recording #mic-wave { display:flex; }
+    .mic-wave-bar {
+      width:3px; border-radius:3px; background:#ef4444;
+      animation:mic-wave-anim 0.8s ease-in-out infinite;
+    }
+    .mic-wave-bar:nth-child(1) { animation-duration:0.9s;  animation-delay:0s;    }
+    .mic-wave-bar:nth-child(2) { animation-duration:0.65s; animation-delay:0.18s; }
+    .mic-wave-bar:nth-child(3) { animation-duration:0.75s; animation-delay:0.08s; }
+    .mic-wave-bar:nth-child(4) { animation-duration:0.6s;  animation-delay:0.25s; }
+    .mic-wave-bar:nth-child(5) { animation-duration:0.85s; animation-delay:0.1s;  }
+    @keyframes mic-wave-anim {
+      0%, 100% { height:3px; }
+      50% { height:16px; }
     }
 
   </style>
@@ -372,12 +385,21 @@
         <div style="flex:1"></div>
         <!-- Right: mic + send -->
         <button id="mic-btn" title="Speak" onclick="toggleMic()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <line x1="12" y1="19" x2="12" y2="23"/>
-            <line x1="8" y1="23" x2="16" y2="23"/>
-          </svg>
+          <span id="mic-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </span>
+          <span id="mic-wave">
+            <span class="mic-wave-bar"></span>
+            <span class="mic-wave-bar"></span>
+            <span class="mic-wave-bar"></span>
+            <span class="mic-wave-bar"></span>
+            <span class="mic-wave-bar"></span>
+          </span>
         </button>
         <button id="send-btn" disabled title="Send"
           class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 leading-none">↑</button>
