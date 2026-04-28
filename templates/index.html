@@ -91,6 +91,26 @@
       50% { height:16px; }
     }
 
+    /* Intensive usage pips */
+    #intensive-pips { display:none; }
+    .i-pip {
+      width:8px; height:8px; border-radius:50%;
+      border:1.5px solid rgba(107,114,128,0.45);
+      background:transparent;
+      transition:background .25s, border-color .25s, transform .15s;
+      flex-shrink:0;
+    }
+    .dark .i-pip { border-color:rgba(75,85,99,0.55); }
+    .i-pip.used {
+      background:#d97706;
+      border-color:#d97706;
+      transform:scale(1.15);
+    }
+    .i-pip.used.last {
+      background:#ef4444;
+      border-color:#ef4444;
+    }
+
   </style>
 </head>
 <body class="h-full dark:bg-[#0a0a0c] bg-[#f8f8f4] dark:text-[#ededed] text-[#1c1b19] text-[14px] leading-relaxed font-light" style="font-family:'Inter',sans-serif;font-weight:300;letter-spacing:0.005em">
@@ -158,6 +178,16 @@
         <circle id="ctx-fill"  cx="13" cy="13" r="10" stroke-dasharray="62.83" stroke-dashoffset="62.83"/>
       </svg>
       <span id="ctx-label">0 / 15</span>
+    </div>
+
+    <!-- Intensive usage pips (shown only in intensive mode) -->
+    <div id="intensive-pips" title="Premium queries used today" class="sm:flex items-center gap-2 dark:text-gray-400 text-gray-500 text-xs shrink-0">
+      <div class="flex items-center gap-[5px]">
+        <span class="i-pip" id="i-pip-0"></span>
+        <span class="i-pip" id="i-pip-1"></span>
+        <span class="i-pip" id="i-pip-2"></span>
+      </div>
+      <span id="intensive-pip-label" style="color:#d97706">0 / 3</span>
     </div>
   </div>
 
@@ -236,15 +266,6 @@
   </div>
 
   <!-- Context limit modal -->
-  <div id="ctx-modal-overlay" class="fixed inset-0 dark:bg-black/60 bg-black/40 z-[100] items-center justify-center">
-    <div id="ctx-modal" class="relative dark:bg-[#0d0d0d] bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-xl px-10 py-9 max-w-sm w-full mx-4 text-center flex flex-col items-center gap-3.5">
-      <button onclick="closeCtxModal()" title="Dismiss" style="position:absolute;top:12px;right:12px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:#78787e;transition:background 0.15s,color 0.15s;background:transparent;border:none;cursor:pointer;font-size:16px;line-height:1" onmouseover="this.style.background='rgba(255,255,255,0.06)';this.style.color='#8a8a90'" onmouseout="this.style.background='transparent';this.style.color='#55555a'">✕</button>
-      <div class="text-4xl">⌛</div>
-      <h2 class="text-lg font-semibold">Context limit reached</h2>
-      <p class="dark:text-gray-400 text-gray-500 text-sm leading-relaxed">Thank you for trying OpClave!<br>The daily limit of 15 prompts has been reached. Check back tomorrow!</p>
-    </div>
-  </div>
-
   <!-- Chat area -->
   <div id="chat-area" class="flex-1 overflow-y-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2 scroll-smooth">
     <div id="empty-state" class="max-w-[700px] mx-auto mt-16 sm:mt-20 text-center px-4">
@@ -310,6 +331,11 @@
     <div id="input-wrap"
       class="max-w-[760px] mx-auto flex flex-col">
       <div id="attachment-pills" class="hidden"></div>
+      <!-- Intensive mode notice -->
+      <div id="intensive-notice" style="display:none; align-items:center; gap:6px; padding:5px 2px; font-size:11.5px; color:#d97706; opacity:0.85; border-bottom:1px solid rgba(217,119,6,0.15); margin-bottom:4px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Premium models active — 3 queries/day, separate from your 15 general queries
+      </div>
       <!-- Textarea row -->
       <textarea id="input" rows="1" placeholder="Ask Voyance…"
         class="w-full bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[28px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
@@ -497,7 +523,7 @@
 
   const ctxFill  = document.getElementById('ctx-fill');
   const ctxLabel = document.getElementById('ctx-label');
-  const ctxModalOverlay = document.getElementById('ctx-modal-overlay');
+
 
   function updateRing(count) {
     const pct = count / MAX_PROMPTS;
@@ -509,6 +535,20 @@
     ctxLabel.textContent = `${count} / ${MAX_PROMPTS}`;
   }
 
+  function updateIntensivePips(count) {
+    for (let i = 0; i < 3; i++) {
+      const pip = document.getElementById(`i-pip-${i}`);
+      if (!pip) continue;
+      pip.classList.toggle('used', i < count);
+      pip.classList.toggle('last', i < count && count === MAX_INTENSIVE);
+    }
+    const label = document.getElementById('intensive-pip-label');
+    if (label) {
+      label.textContent = `${count} / 3`;
+      label.style.color = count >= MAX_INTENSIVE ? '#ef4444' : '#d97706';
+    }
+  }
+
   const ALL_MODELS = ['gpt', 'claude', 'gemini', 'grok'];
   const MODEL_TAB = { gpt: 'GPT', claude: 'Claude', gemini: 'Gemini', grok: 'Grok' };
 
@@ -516,10 +556,14 @@
   let enabledImageModels = new Set(['gemini']);
 
   const PRESETS = {
-    malic:     { models: ['gpt','claude','gemini','grok'], synthesizer: 'grok',   imageMode: false, label: 'Malic',     desc: 'General Purpose' },
-    crystalis: { models: ['gpt','gemini','claude'],        synthesizer: 'claude', imageMode: false, label: 'Crystalis', desc: 'Coding heavy tasks' },
-    lumen:     { models: ['gemini'],                       synthesizer: 'gemini', imageMode: true,  label: 'Lumen',     desc: 'Image Gen' },
+    malic:     { models: ['gpt','claude','gemini','grok'], synthesizer: 'grok',   imageMode: false, mode: 'general',   label: 'Malic',     desc: 'General Purpose' },
+    crystalis: { models: ['gpt','gemini','claude'],        synthesizer: 'claude', imageMode: false, mode: 'intensive', label: 'Crystalis', desc: 'Coding heavy tasks' },
+    lumen:     { models: ['gemini'],                       synthesizer: 'gemini', imageMode: true,  mode: 'general',   label: 'Lumen',     desc: 'Image Gen' },
   };
+
+  const MAX_INTENSIVE = 3;
+  let currentMode = 'general';
+  let intensiveCount = 0;
 
   // ── Pipeline / configure functions ───────────────
   function syncPipelineUI() {
@@ -539,6 +583,15 @@
     document.querySelectorAll('.cfg-synth-row').forEach(el =>
       el.classList.toggle('active', el.dataset.model === selectedSynthesizer)
     );
+    // Intensive notice bar
+    const notice = document.getElementById('intensive-notice');
+    if (notice) notice.style.display = (currentMode === 'intensive') ? 'flex' : 'none';
+    // Swap ring ↔ pips based on mode
+    const ctxRingEl = document.getElementById('ctx-ring');
+    const pipsEl = document.getElementById('intensive-pips');
+    if (ctxRingEl) ctxRingEl.style.display = currentMode === 'intensive' ? 'none' : '';
+    if (pipsEl) pipsEl.style.display = currentMode === 'intensive' ? 'flex' : 'none';
+    updateIntensivePips(intensiveCount);
   }
 
   function toggleCfgDropdown() {
@@ -563,11 +616,15 @@
   function selectPreset(name) {
     const p = PRESETS[name];
     if (!p) return;
+    const prevMode = currentMode;
     currentPreset = name;
+    currentMode = p.mode || 'general';
     enabledModels = new Set(p.models);
     selectedSynthesizer = p.synthesizer;
     document.getElementById('cfg-dropdown').classList.add('hidden');
     syncPipelineUI();
+    if (currentMode === 'intensive' && prevMode !== 'intensive') {
+    }
   }
 
   function toggleModel(model) {
@@ -645,10 +702,6 @@
     sendBtn.disabled = true;
   }
 
-  function closeCtxModal() {
-    ctxModalOverlay.classList.remove('visible');
-    lockInput();
-  }
 
   function updateSendBtn() {
     if (limitReached) { sendBtn.disabled = true; return; }
@@ -777,7 +830,6 @@
         isAdminMode = true;
         promptCount = 0;
         updateRing(0);
-        ctxModalOverlay.classList.remove('visible');
         adminOverlay.classList.add('visible');
         launchConfetti();
         return;
@@ -786,9 +838,12 @@
       // network error — fall through and treat as a normal question
     }
 
-    if (!isAdminMode && promptCount >= MAX_PROMPTS) {
+    if (!isAdminMode && currentMode === 'intensive' && intensiveCount >= MAX_INTENSIVE) {
       lockInput();
-      ctxModalOverlay.classList.add('visible');
+      return;
+    }
+    if (!isAdminMode && currentMode !== 'intensive' && promptCount >= MAX_PROMPTS) {
+      lockInput();
       return;
     }
 
@@ -806,9 +861,15 @@
     attachedFiles = [];
     renderPills();
 
-    promptCount++;
-    updateRing(promptCount);
-    saveGlobalPromptCount();
+    if (currentMode === 'intensive') {
+      intensiveCount++;
+      localStorage.setItem('council-intensive-count', String(intensiveCount));
+      updateIntensivePips(intensiveCount);
+    } else {
+      promptCount++;
+      updateRing(promptCount);
+      saveGlobalPromptCount();
+    }
 
 
     // Auto-name thread on first message
@@ -846,6 +907,7 @@
         history: historyToSend,
         image_mode: imageMode,
         attachments: attachmentsPayload,
+        mode: currentMode,
       }),
       signal: controller.signal,
     }).then(async (res) => {
@@ -872,9 +934,10 @@
             isLoading = false;
             updateSendBtn();
             newThreadBtn.disabled = false;
-            if (!isAdminMode && promptCount >= MAX_PROMPTS) {
+            const hitGeneralLimit = currentMode !== 'intensive' && promptCount >= MAX_PROMPTS;
+            const hitIntensiveLimit = currentMode === 'intensive' && intensiveCount >= MAX_INTENSIVE;
+            if (!isAdminMode && (hitGeneralLimit || hitIntensiveLimit)) {
               lockInput();
-              setTimeout(() => ctxModalOverlay.classList.add('visible'), 600);
             }
           }
         }
@@ -1046,7 +1109,6 @@
       case 'rate_limited':
         isLoading = false;
         lockInput();
-        ctxModalOverlay.classList.add('visible');
         newThreadBtn.disabled = false;
         break;
 
@@ -1367,16 +1429,16 @@
     const savedDate = localStorage.getItem('council-prompt-date');
     if (savedDate === today) {
       promptCount = parseInt(localStorage.getItem('council-prompt-count') || '0', 10);
+      intensiveCount = parseInt(localStorage.getItem('council-intensive-count') || '0', 10);
     } else {
       promptCount = 0;
+      intensiveCount = 0;
+      localStorage.removeItem('council-intensive-count');
     }
     updateRing(promptCount);
-    if (promptCount > 0) {
-
-    }
+    updateIntensivePips(intensiveCount);
     if (!isAdminMode && promptCount >= MAX_PROMPTS) {
       lockInput();
-      ctxModalOverlay.classList.add('visible');
     }
   }
 

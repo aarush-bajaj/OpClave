@@ -27,9 +27,23 @@ load_dotenv(dotenv_path=os.path.join(_root, '.env'))
 
 app = FastAPI()
 
-DAILY_LIMIT = 15          # per-IP daily query limit
+DAILY_LIMIT = 15          # per-IP daily query limit (general mode)
+INTENSIVE_LIMIT = 3       # per-IP daily query limit (intensive/coding mode)
 _UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL", "")
 _UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
+
+MODELS_GENERAL = {
+    "gpt":    "gpt-5.4-mini-2026-03-17",
+    "claude": "claude-sonnet-4-6",
+    "gemini": "gemini-3.1-flash-lite-preview",
+    "grok":   "grok-4-1-fast-non-reasoning",
+}
+MODELS_INTENSIVE = {
+    "gpt":    "gpt-5.5-2026-04-23",
+    "claude": "claude-opus-4-7",
+    "gemini": "gemini-3.1-pro-preview",
+    # Grok is not available in intensive mode
+}
 
 
 def _redis(command: list) -> object:
@@ -71,6 +85,18 @@ def check_and_increment_ip_limit(ip: str) -> tuple[bool, int]:
         return (count <= DAILY_LIMIT, int(count))
     except Exception:
         return (True, 0)  # fail open so an Upstash outage doesn't break the site
+
+
+def check_and_increment_intensive_limit(ip: str) -> tuple[bool, int]:
+    """Returns (allowed, current_count) for intensive queries. Separate 3/day bucket."""
+    try:
+        key = f"council:intensive:{ip}:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        count = _redis(["INCR", key])
+        if count == 1:
+            _redis(["EXPIRE", key, 86400])
+        return (count <= INTENSIVE_LIMIT, int(count))
+    except Exception:
+        return (True, 0)
 
 
 @app.get("/assets/logo.png")
@@ -188,31 +214,33 @@ def estimate_max_tokens(question):
 
 # ── Council model functions ───────────────────────────────────────────────────
 
-def ask_gpt(question, max_tokens, history=None):
+def ask_gpt(question, max_tokens, history=None, model=None):
+    model = model or MODELS_GENERAL["gpt"]
     messages = list(history or []) + [{"role": "user", "content": question}]
     response = openai_client.chat.completions.create(
-        model="gpt-5.2-2025-12-11",
+        model=model,
         max_completion_tokens=max_tokens,
         messages=messages,
     )
-    usage = {"model": "gpt-5.2-2025-12-11",
+    usage = {"model": model,
              "input_tokens": response.usage.prompt_tokens,
              "output_tokens": response.usage.completion_tokens}
     return response.choices[0].message.content, usage
 
 
-def ask_claude(question, max_tokens, history=None):
+def ask_claude(question, max_tokens, history=None, model=None):
+    model = model or MODELS_GENERAL["claude"]
     messages = list(history or []) + [{"role": "user", "content": question}]
     for attempt in range(3):
         try:
             with anthropic_client.messages.stream(
-                model="claude-haiku-4-5-20251001",
+                model=model,
                 max_tokens=max_tokens,
                 messages=messages,
             ) as stream:
                 text = stream.get_final_text()
                 u = stream.get_final_message().usage
-                usage = {"model": "claude-haiku-4-5-20251001",
+                usage = {"model": model,
                          "input_tokens": u.input_tokens,
                          "output_tokens": u.output_tokens}
                 return text, usage
@@ -223,19 +251,20 @@ def ask_claude(question, max_tokens, history=None):
                 raise
 
 
-def ask_gemini(question, max_tokens, history=None):
+def ask_gemini(question, max_tokens, history=None, model=None):
+    model = model or MODELS_GENERAL["gemini"]
     contents = []
     for msg in (history or []):
         role = "model" if msg["role"] == "assistant" else "user"
         contents.append({"role": role, "parts": [{"text": msg["content"]}]})
     contents.append({"role": "user", "parts": [{"text": question}]})
     response = gemini_client.models.generate_content(
-        model="gemini-3.1-pro-preview",
+        model=model,
         config={"maxOutputTokens": max_tokens},
         contents=contents,
     )
     meta = response.usage_metadata
-    usage = {"model": "gemini-3.1-pro-preview",
+    usage = {"model": model,
              "input_tokens": getattr(meta, "prompt_token_count", 0) or 0,
              "output_tokens": getattr(meta, "candidates_token_count", 0) or 0}
     try:
@@ -248,14 +277,15 @@ def ask_gemini(question, max_tokens, history=None):
     return text, usage
 
 
-def ask_grok(question, max_tokens, history=None):
+def ask_grok(question, max_tokens, history=None, model=None):
+    model = model or MODELS_GENERAL["grok"]
     messages = list(history or []) + [{"role": "user", "content": question}]
     response = grok_client.chat.completions.create(
-        model="grok-4.20-0309-non-reasoning",
+        model=model,
         max_tokens=max_tokens,
         messages=messages,
     )
-    usage = {"model": "grok-4.20-0309-non-reasoning",
+    usage = {"model": model,
              "input_tokens": response.usage.prompt_tokens,
              "output_tokens": response.usage.completion_tokens}
     return response.choices[0].message.content, usage
@@ -263,10 +293,11 @@ def ask_grok(question, max_tokens, history=None):
 
 # ── Synthesis generators ──────────────────────────────────────────────────────
 
-def synthesize_with_claude(prompt, max_tokens, history=None, system=None):
+def synthesize_with_claude(prompt, max_tokens, history=None, system=None, model=None):
+    model = model or MODELS_GENERAL["claude"]
     messages = list(history or []) + [{"role": "user", "content": prompt}]
     kwargs = {
-        "model": "claude-sonnet-4-6",
+        "model": model,
         "max_tokens": max_tokens,
         "messages": messages,
     }
@@ -285,13 +316,14 @@ def synthesize_with_claude(prompt, max_tokens, history=None, system=None):
                 raise
 
 
-def synthesize_with_gpt(prompt, max_tokens, history=None, system=None):
+def synthesize_with_gpt(prompt, max_tokens, history=None, system=None, model=None):
+    model = model or MODELS_GENERAL["gpt"]
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
     messages += list(history or []) + [{"role": "user", "content": prompt}]
     stream = openai_client.chat.completions.create(
-        model="gpt-5.2-2025-12-11",
+        model=model,
         max_completion_tokens=max_tokens,
         messages=messages,
         stream=True,
@@ -302,7 +334,8 @@ def synthesize_with_gpt(prompt, max_tokens, history=None, system=None):
             yield delta
 
 
-def synthesize_with_gemini(prompt, max_tokens, history=None, system=None):
+def synthesize_with_gemini(prompt, max_tokens, history=None, system=None, model=None):
+    model = model or MODELS_GENERAL["gemini"]
     contents = []
     for msg in (history or []):
         role = "model" if msg["role"] == "assistant" else "user"
@@ -312,7 +345,7 @@ def synthesize_with_gemini(prompt, max_tokens, history=None, system=None):
     if system:
         config["system_instruction"] = system
     for chunk in gemini_client.models.generate_content_stream(
-        model="gemini-3.1-pro-preview",
+        model=model,
         config=config,
         contents=contents,
     ):
@@ -327,13 +360,14 @@ def synthesize_with_gemini(prompt, max_tokens, history=None, system=None):
                 yield text
 
 
-def synthesize_with_grok(prompt, max_tokens, history=None, system=None):
+def synthesize_with_grok(prompt, max_tokens, history=None, system=None, model=None):
+    model = model or MODELS_GENERAL["grok"]
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
     messages += list(history or []) + [{"role": "user", "content": prompt}]
     stream = grok_client.chat.completions.create(
-        model="grok-4.20-0309-non-reasoning",
+        model=model,
         max_tokens=max_tokens,
         messages=messages,
         stream=True,
@@ -404,6 +438,7 @@ class StreamRequest(BaseModel):
     history: List[dict] = []
     image_mode: bool = False
     attachments: List[Attachment] = []
+    mode: str = "general"  # "general" or "intensive"
 
 class FeedbackRequest(BaseModel):
     message: str = ""
@@ -588,6 +623,13 @@ def stream(req: StreamRequest, request: Request):
     history = req.history
     image_mode = req.image_mode
     attachments = req.attachments
+    is_intensive = req.mode.lower() == "intensive"
+
+    # Enforce intensive-mode restrictions before anything else
+    if is_intensive:
+        requested_models -= {"grok"}
+        if synthesizer == "grok":
+            synthesizer = "claude"
 
     if not question and not attachments:
         def err():
@@ -597,10 +639,16 @@ def stream(req: StreamRequest, request: Request):
     forwarded = request.headers.get("x-forwarded-for")
     ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
 
-    allowed, count = check_and_increment_ip_limit(ip)
+    if is_intensive:
+        allowed, count = check_and_increment_intensive_limit(ip)
+        active_limit = INTENSIVE_LIMIT
+    else:
+        allowed, count = check_and_increment_ip_limit(ip)
+        active_limit = DAILY_LIMIT
+
     if not allowed:
         def rate_limited():
-            yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":DAILY_LIMIT})}\n\n'
+            yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":active_limit,"mode":req.mode})}\n\n'
         return StreamingResponse(rate_limited(), media_type="text/event-stream")
 
     attachment_ctx = build_attachment_context(attachments)
@@ -646,11 +694,14 @@ def stream(req: StreamRequest, request: Request):
                     usages[name] = None
                 event_queue.put({'type': 'model_error', 'model': name, 'error': str(e)})
 
+        model_map = MODELS_INTENSIVE if is_intensive else MODELS_GENERAL
+
+        def _mk(fn, m): return lambda q, t, h, _m=m, _fn=fn: _fn(q, t, h, model=_m)
         all_models = [
-            ('GPT',    ask_gpt,    'gpt'),
-            ('Claude', ask_claude, 'claude'),
-            ('Gemini', ask_gemini, 'gemini'),
-            ('Grok',   ask_grok,   'grok'),
+            ('GPT',    _mk(ask_gpt,    model_map["gpt"]),    'gpt'),
+            ('Claude', _mk(ask_claude, model_map["claude"]), 'claude'),
+            ('Gemini', _mk(ask_gemini, model_map["gemini"]), 'gemini'),
+            ('Grok',   _mk(ask_grok,   MODELS_GENERAL["grok"]), 'grok'),
         ]
         # In image mode, Gemini generates images only — exclude it from text queries
         text_keys = requested_models - {'gemini'} if image_mode else requested_models
@@ -686,12 +737,8 @@ def stream(req: StreamRequest, request: Request):
 
         yield f"data: {json.dumps({'type': 'synthesis_start'})}\n\n"
 
-        synth_model_id = {
-            'claude': 'claude-sonnet-4-6',
-            'gpt':    'gpt-5.2-2025-12-11',
-            'gemini': 'gemini-3.1-pro-preview',
-            'grok':   'grok-4.20-0309-non-reasoning',
-        }
+        synth_model_id = {k: v for k, v in model_map.items()}
+        synth_model_id.setdefault('grok', MODELS_GENERAL['grok'])
         council_text = ''
         try:
             synth_map = {
@@ -702,7 +749,8 @@ def stream(req: StreamRequest, request: Request):
             }
             actual_synth = synthesizer
             synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
-            for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history, system=synthesis_system):
+            synth_model_str = model_map.get(actual_synth) or MODELS_GENERAL.get(actual_synth, MODELS_GENERAL["claude"])
+            for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history, system=synthesis_system, model=synth_model_str):
                 council_text += text_chunk
                 yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
             yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
