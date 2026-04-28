@@ -770,12 +770,6 @@
       Ask once. Get independent answers from four AI models, synthesized into one.
     </p>
 
-    <div class="model-flow fade-in" style="transition-delay:.15s">
-      <span class="model-flow-models">GPT · Claude · Gemini · Grok</span>
-      <span class="model-flow-arrow">→</span>
-      <span class="model-flow-synthesis">Synthesis</span>
-    </div>
-
     <div class="splash-cards fade-in" style="transition-delay:.2s">
       <a href="/app" class="splash-card splash-card--primary">
         <div class="card-text">
@@ -803,14 +797,9 @@
     <div class="about-intro-inner">
       <h2 class="fade-in">Four minds. <em>One answer.</em></h2>
       <p class="fade-in" style="transition-delay:.06s">
-        Ask once. Get independent answers from GPT, Claude, Gemini, and Grok —
+        Ask once. Get independent answers from GPT, Claude, Gemini, and Grok,
         then a fifth model synthesizes everything into a single, unified response.
       </p>
-      <div class="model-flow fade-in" style="transition-delay:.12s">
-        <span class="model-flow-models">GPT · Claude · Gemini · Grok</span>
-        <span class="model-flow-arrow">→</span>
-        <span class="model-flow-synthesis">Synthesis</span>
-      </div>
     </div>
   </div>
 
@@ -840,7 +829,7 @@
         </div>
         <div class="browser-body" id="previewBody">
           <div class="browser-q-label">Question</div>
-          <div class="browser-q-text">What's the most important thing to understand about consciousness?</div>
+          <div class="browser-q-text">RAG or fine-tuning: which should you use for a production LLM application?</div>
           <div id="previewBadge">
             <div class="synthesis-badge">
               <div class="synthesis-dot"></div>
@@ -848,7 +837,7 @@
             </div>
           </div>
           <div class="synthesis-body" id="previewContent">
-            <strong>The hard problem.</strong> All four models converge on the same central mystery: it's not whether brains produce consciousness, but <em>why</em> any physical process gives rise to subjective experience at all. GPT and Claude emphasize the explanatory gap: we can map neural correlates precisely without ever explaining why there's "something it is like" to be aware. Gemini argues this may require entirely new scientific frameworks beyond classical neuroscience. Grok takes the sharpest angle: the question itself might be malformed; our intuitions about the mind/body divide could be the actual source of confusion, not a clue toward an answer.
+            <strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.
           </div>
         </div>
       </div>
@@ -859,27 +848,27 @@
   <section class="section" id="features">
     <div class="section-inner">
       <p class="eyebrow fade-in">Features</p>
-      <h2 class="section-title fade-in" style="transition-delay:.05s">Built for <em>serious</em> questions.</h2>
+      <h2 class="section-title fade-in" style="transition-delay:.05s">One question. <em>Every perspective.</em></h2>
       <div class="features-grid">
         <div class="feature-cell fade-in">
           <div class="feature-num">01</div>
           <div class="feature-title">Four models, <em>one query</em></div>
-          <p class="feature-desc">Send your question once and get responses from GPT, Claude, Gemini, and Grok simultaneously. No tab-switching. No copy-pasting. No context lost in translation.</p>
+          <p class="feature-desc">Send your question once and get independent responses from GPT, Claude, Gemini, and Grok in parallel. No tab switching. No copy-pasting. See exactly where they agree and where they don't.</p>
         </div>
         <div class="feature-cell fade-in" style="transition-delay:.06s">
           <div class="feature-num">02</div>
           <div class="feature-title"><em>Voyance</em> synthesis</div>
-          <p class="feature-desc">A fifth model reads all four responses and produces a unified answer, surfacing consensus, highlighting disagreements, and finding what no single model said alone.</p>
+          <p class="feature-desc">A fifth model reads all four responses and produces one unified answer, surfacing where the models converge, flagging where they diverge, and finding what no single model said alone.</p>
         </div>
         <div class="feature-cell fade-in" style="transition-delay:.12s">
           <div class="feature-num">03</div>
           <div class="feature-title">File <em>attachments</em></div>
-          <p class="feature-desc">Upload documents, code, or images and every model in Voyance gets the full context, giving you four perspectives on your specific material at once.</p>
+          <p class="feature-desc">Upload a PDF, image, or document. All four models reason over your file simultaneously, useful for homework, research, or anything where context matters.</p>
         </div>
         <div class="feature-cell fade-in" style="transition-delay:.18s">
           <div class="feature-num">04</div>
-          <div class="feature-title">Full <em>control</em></div>
-          <p class="feature-desc">Bring your own API keys. Disable any model. Voyance works with whatever you have: no subscription required, no lock-in, no black box.</p>
+          <div class="feature-title">Prompt <em>engineering</em></div>
+          <p class="feature-desc">Using OpClave to generate prompts before building with tools like Lovable or Claude produces significantly better results. Four models debating an approach catches angles a single prompt misses.</p>
         </div>
       </div>
     </div>
@@ -953,23 +942,23 @@
   const tabContent = {
     synthesis: {
       badge: `<div class="synthesis-badge"><div class="synthesis-dot"></div><span class="synthesis-tag">Synthesis</span></div>`,
-      body: `<strong>The hard problem.</strong> All four models converge on the same central mystery: it's not whether brains produce consciousness, but <em>why</em> any physical process gives rise to subjective experience at all. GPT and Claude emphasize the explanatory gap: we can map neural correlates precisely without ever explaining why there's "something it is like" to be aware. Gemini argues this may require entirely new scientific frameworks beyond classical neuroscience. Grok takes the sharpest angle: the question itself might be malformed; our intuitions about the mind/body divide could be the actual source of confusion, not a clue toward an answer.`
+      body: `<strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.`
     },
     gpt: {
       badge: `<div class="model-tag">GPT-4o</div>`,
-      body: `The central challenge is what David Chalmers calls the hard problem: explaining why there is "something it is like" to be conscious. We can describe cognition, attention, and memory in mechanical terms, but none of that tells us why these processes are accompanied by subjective experience. This is distinct from the functional questions about how the brain processes information, which are tractable. The phenomenal dimension is the genuinely mysterious part, and it's the one where our best scientific tools reach their current limit.`
+      body: `Start with RAG. It is faster to iterate, cheaper to maintain, and your data stays auditable. Fine-tuning makes sense when you need the model to follow a very specific output format consistently, adopt a voice or persona at scale, or when retrieval latency is a hard constraint. The failure mode I see most often: teams spend weeks fine-tuning because they want the model to "know" something, when what they actually need is better retrieval. Fine-tuned models do not know things more reliably; they just pattern-match differently. If your problem is factual accuracy or knowledge recency, fine-tuning will not fix it.`
     },
     claude: {
       badge: `<div class="model-tag">Claude</div>`,
-      body: `I'd point to the explanatory gap between objective descriptions and subjective experience. You can give a complete neuroscientific account of what happens when you see red: wavelengths, retinal activation, cortical processing. What you cannot explain from that account alone is why it feels like something. This isn't a gap we close with more neuroscience. It may require rethinking what kind of explanation we're even looking for, and whether our current scientific vocabulary is the right tool for the question.`
+      body: `The distinction I would draw is between knowledge and behavior. RAG changes what the model knows at inference time. Fine-tuning changes how it responds: its tone, format, reasoning style, and task-specific conventions. If you need your model to cite internal documents, respect proprietary terminology, or stay within a knowledge boundary, RAG handles that with far less cost and much better transparency. Fine-tuning becomes worth the investment when the target behavior is genuinely hard to specify in a prompt, or when you are running at a volume where retrieval latency and token costs become a meaningful constraint.`
     },
     gemini: {
       badge: `<div class="model-tag">Gemini</div>`,
-      body: `Consciousness is almost certainly not binary, and our intuitions about it are unreliable guides. Existing theories, from Global Workspace Theory to Integrated Information Theory, offer useful frameworks but none fully bridges the phenomenal gap. What I find most important is intellectual humility here: this is a domain where confident explanations tend to address the easy problems while quietly sidestepping the hard one. Progress will likely require new conceptual tools, not just better brain imaging or larger models.`
+      body: `In production the answer is often both, staged. Start with prompt engineering, then layer in RAG for knowledge grounding, and only evaluate fine-tuning if there is a measurable gap in behavior alignment. The most common mistake is committing to fine-tuning before you have a rigorous benchmark that tells you what is actually failing. Fine-tuning without good evaluation data tends to produce models that feel better in demos but regress on production edge cases. Worth noting: a fine-tuned model is an ongoing infrastructure commitment. Versioning, retraining schedules, and drift detection all become your responsibility.`
     },
     grok: {
       badge: `<div class="model-tag">Grok</div>`,
-      body: `The question might be confused from the start. We ask "why does this physical process feel like something?" as if the mind/body divide is a given. But that framing may be the source of the mystery rather than a clue toward solving it. The hard problem is hard partly because we've built it into the question itself. I'm not saying consciousness is an illusion. I'm saying the way we've carved up the problem might be making it structurally unsolvable by design.`
+      body: `Most teams reach for fine-tuning because it feels like the serious engineering move. It usually is not. RAG is underestimated partly because it is easier to explain and easier to debug. The harder question is not RAG versus fine-tuning. It is whether you have actually defined what "working" looks like for your application. I have seen teams fine-tune on internal data expecting domain expertise to emerge, then wonder why the model still fails on their actual use cases. Fine-tuning optimizes for patterns in your training data. If your evaluation set does not represent real production queries, you are just overfitting to your own assumptions about the problem.`
     }
   };
 

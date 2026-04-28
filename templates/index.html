@@ -222,7 +222,7 @@
       </p>
 
       <p class="dark:text-gray-400 text-gray-600 text-sm leading-relaxed">
-        When you ask a question, your prompt is sent simultaneously and independently to every model in Voyance. Each gives its own uninfluenced answer. A lead model (your choice) then reads all of those responses and synthesises them into a single output, identifying where the models agree (high confidence), where they disagree (uncertainty), and producing a final answer with far more context than any single model could alone.
+        When you ask a question, your prompt is sent simultaneously and independently to every model in Voyance. Each gives its own uninfluenced answer. A lead model (your choice) then reads all of those responses and synthesizes them into a single output, identifying where the models agree (high confidence), where they disagree (uncertainty), and producing a final answer with far more context than any single model could alone.
       </p>
 
       <div>
@@ -298,7 +298,7 @@
         </span>
         <span onclick="fillInput(this)"
           class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
-          What is consciousness?
+          RAG vs. fine-tuning for production LLM apps?
         </span>
         <span onclick="fillInput(this)"
           class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
@@ -334,7 +334,7 @@
       <!-- Intensive mode notice -->
       <div id="intensive-notice" style="display:none; align-items:center; gap:6px; padding:5px 2px; font-size:11.5px; color:#d97706; opacity:0.85; border-bottom:1px solid rgba(217,119,6,0.15); margin-bottom:4px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Premium models active — 3 queries/day, separate from your 15 general queries
+        Premium models active: 3 queries/day, separate from your 15 general queries
       </div>
       <!-- Textarea row -->
       <textarea id="input" rows="1" placeholder="Ask Voyance…"
@@ -703,11 +703,64 @@
   }
 
 
+  const stopIconSvg = `<svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><rect x="1" y="1" width="10" height="10" rx="2"/></svg>`;
+
   function updateSendBtn() {
+    if (isLoading) {
+      sendBtn.disabled = false;
+      sendBtn.classList.add('stop-mode');
+      sendBtn.title = 'Stop generation';
+      sendBtn.innerHTML = stopIconSvg;
+      return;
+    }
+    sendBtn.classList.remove('stop-mode');
+    sendBtn.title = 'Send';
+    sendBtn.innerHTML = '↑';
     if (limitReached) { sendBtn.disabled = true; return; }
     const hasContent = !!inputEl.value.trim() || attachedFiles.some(a => a.status === 'done');
     const isExtracting = attachedFiles.some(a => a.status === 'extracting' || a.status === 'pending');
-    sendBtn.disabled = !hasContent || isLoading || isExtracting;
+    sendBtn.disabled = !hasContent || isExtracting;
+  }
+
+  function stopGeneration() {
+    if (activeSSE) { activeSSE.abort(); activeSSE = null; }
+
+    // Clean up in-progress panes on the active message
+    const activeId = msgCounter - 1;
+    const tabBar = document.getElementById(`tabs-${activeId}`);
+    if (tabBar) {
+      tabBar.querySelectorAll('.tab-btn').forEach(btn => {
+        const tab = btn.dataset.tab;
+        const dot  = document.getElementById(`dot-${activeId}-${tab}`);
+        const ph   = document.getElementById(`placeholder-${activeId}-${tab}`);
+        const content = document.getElementById(`content-${activeId}-${tab}`);
+        const footer  = document.getElementById(`footer-${activeId}-${tab}`);
+        if (!dot) return;
+        if (!dot.classList.contains('loading') && !dot.classList.contains('pending')) return;
+
+        dot.className = 'tab-dot stopped';
+        if (ph) ph.style.display = 'none';
+        if (content) {
+          const stoppedHtml = `<div class="pane-stopped">
+            <svg width="13" height="13" viewBox="0 0 12 12" fill="currentColor" style="flex-shrink:0;opacity:0.6"><rect x="1" y="1" width="10" height="10" rx="2"/></svg>
+            Response stopped
+          </div>`;
+          if (!content.innerHTML.trim()) {
+            content.style.display = 'block';
+            content.innerHTML = stoppedHtml;
+          } else {
+            content.insertAdjacentHTML('beforeend', stoppedHtml);
+          }
+          if (footer) footer.style.display = 'flex';
+        }
+      });
+    }
+
+    if (activeStreams[activeId] !== undefined) delete activeStreams[activeId];
+
+    isLoading = false;
+    newThreadBtn.disabled = false;
+    updateSendBtn();
   }
 
   function renderPills() {
@@ -790,6 +843,7 @@
   });
 
   sendBtn.addEventListener('click', () => {
+    if (isLoading) { stopGeneration(); return; }
     if (!sendBtn.disabled) submitQuestion();
   });
 
@@ -850,9 +904,9 @@
     emptyState.style.display = 'none';
     inputEl.value = '';
     inputEl.style.height = 'auto';
-    sendBtn.disabled = true;
     newThreadBtn.disabled = true;
     isLoading = true;
+    updateSendBtn();
     const attachmentsPayload = doneAttachments.map(a => ({
       type: a.result.type,
       content: a.result.content,
@@ -882,6 +936,7 @@
 
     const turn = document.createElement('div');
     turn.className = 'turn';
+    turn.dataset.historyStart = conversationHistory.length - 1;
     messagesEl.appendChild(turn);
 
     addUserMessage(question, turn, attachmentsPayload.map(a => a.filename));
@@ -952,13 +1007,18 @@
   }
 
   // ── Message builders ──────────────────────────────
+  const pencilIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+
   function addUserMessage(text, container, filenames = []) {
     const div = document.createElement('div');
     div.className = 'msg-user';
     const pillsHtml = filenames.length
       ? `<div class="msg-attachments">${filenames.map(f => `<span class="msg-attach-pill">📎 ${escapeHtml(f)}</span>`).join('')}</div>`
       : '';
-    div.innerHTML = `${pillsHtml}<div class="bubble">${escapeHtml(text)}</div>`;
+    div.innerHTML = `${pillsHtml}<div class="msg-user-inner">
+      <button class="edit-msg-btn" title="Edit message" onclick="startEditMessage(this)">${pencilIcon}</button>
+      <div class="bubble">${escapeHtml(text)}</div>
+    </div>`;
     container.appendChild(div);
   }
 
@@ -1000,11 +1060,15 @@
       pane.id = `pane-${id}-${tab}`;
 
       const placeholderText = tab === 'Voyance' ? 'Waiting for all models…' : 'Waiting…';
+      const clipIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
       pane.innerHTML = `<div class="pane-placeholder" id="placeholder-${id}-${tab}">
         <div class="pane-spinner"></div>
         <span>${placeholderText}</span>
       </div>
-      <div class="md-content" id="content-${id}-${tab}" style="display:none"></div>`;
+      <div class="md-content" id="content-${id}-${tab}" style="display:none"></div>
+      <div class="pane-footer" id="footer-${id}-${tab}" style="display:none">
+        <button class="copy-btn" id="copy-btn-${id}-${tab}" onclick="copyContent('${id}', '${tab}')">${clipIcon} Copy</button>
+      </div>`;
 
       div.appendChild(pane);
     });
@@ -1102,7 +1166,7 @@
         setDotStatus(id, imgModelKey, 'error');
         setError(id, imgModelKey, event.error);
         const statusErr = document.getElementById(`image-panel-status-${id}-${imgModelKey}`);
-        if (statusErr) statusErr.textContent = `✦ ${imgModelKey} — generation failed`;
+        if (statusErr) statusErr.textContent = `✦ ${imgModelKey}: generation failed`;
         break;
       }
 
@@ -1148,11 +1212,14 @@
   function setContent(id, model, markdown) {
     const ph = document.getElementById(`placeholder-${id}-${model}`);
     const content = document.getElementById(`content-${id}-${model}`);
+    const footer = document.getElementById(`footer-${id}-${model}`);
     if (ph) ph.style.display = 'none';
     if (content) {
       content.style.display = 'block';
       content.innerHTML = marked.parse(markdown || '');
+      content.dataset.raw = markdown || '';
     }
+    if (footer) footer.style.display = 'flex';
   }
 
   function setStreamingContent(id, model, chunk) {
@@ -1190,6 +1257,98 @@
       content.innerHTML = `${promptHtml}<div class="imagen-grid">${imgsHtml}</div>`;
     }
   }
+
+  // ── Copy content ──────────────────────────────────
+  const clipIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+  const checkIconSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+  function copyContent(id, model) {
+    const content = document.getElementById(`content-${id}-${model}`);
+    const btn = document.getElementById(`copy-btn-${id}-${model}`);
+    if (!content || !btn) return;
+    const text = content.dataset.raw || content.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.classList.add('copied');
+      btn.innerHTML = `${checkIconSvg} Copied`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `${clipIconSvg} Copy`;
+      }, 2000);
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.classList.add('copied');
+      btn.innerHTML = `${checkIconSvg} Copied`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `${clipIconSvg} Copy`;
+      }, 2000);
+    });
+  }
+
+  // ── Edit user message ─────────────────────────────
+  function startEditMessage(btn) {
+    if (isLoading) return;
+    const inner = btn.closest('.msg-user-inner');
+    const bubble = inner.querySelector('.bubble');
+    const originalText = bubble.textContent;
+
+    btn.style.display = 'none';
+    bubble.style.display = 'none';
+
+    const editWrap = document.createElement('div');
+    editWrap.className = 'edit-wrap';
+    editWrap.innerHTML = `
+      <textarea class="edit-textarea">${escapeHtml(originalText)}</textarea>
+      <div class="edit-actions">
+        <button class="edit-cancel-btn" onclick="cancelEditMessage(this)">Cancel</button>
+        <button class="edit-send-btn" onclick="submitEditMessage(this)">Send</button>
+      </div>`;
+    inner.appendChild(editWrap);
+
+    const ta = editWrap.querySelector('textarea');
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    ta.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEditMessage(editWrap.querySelector('.edit-send-btn')); }
+      if (e.key === 'Escape') cancelEditMessage(editWrap.querySelector('.edit-cancel-btn'));
+    });
+  }
+
+  function cancelEditMessage(btn) {
+    const editWrap = btn.closest('.edit-wrap');
+    const inner = editWrap.closest('.msg-user-inner');
+    inner.querySelector('.bubble').style.display = '';
+    inner.querySelector('.edit-msg-btn').style.display = '';
+    editWrap.remove();
+  }
+
+  function submitEditMessage(btn) {
+    if (isLoading) return;
+    const editWrap = btn.closest('.edit-wrap');
+    const newText = editWrap.querySelector('textarea').value.trim();
+    if (!newText) return;
+
+    const turn = editWrap.closest('.turn');
+    const historyStart = parseInt(turn.dataset.historyStart);
+
+    // Truncate history from this turn onwards
+    conversationHistory.splice(historyStart);
+
+    // Remove this turn and all later turns from the DOM
+    const allTurns = [...messagesEl.querySelectorAll('.turn')];
+    allTurns.slice(allTurns.indexOf(turn)).forEach(t => t.remove());
+
+    // Re-submit with edited text
+    inputEl.value = newText;
+    submitQuestion();
+  }
+
 
   // ── Utils ─────────────────────────────────────────
   function isNearBottom() {

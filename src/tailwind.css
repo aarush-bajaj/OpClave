@@ -88,6 +88,16 @@ html.dark body {
   transform: scale(1.06) !important;
 }
 #send-btn:disabled { cursor: not-allowed; }
+#send-btn.stop-mode:not(:disabled) {
+  background: rgba(239,68,68,0.15) !important;
+  color: #ef4444 !important;
+  box-shadow: none !important;
+}
+#send-btn.stop-mode:not(:disabled):hover {
+  background: rgba(239,68,68,0.25) !important;
+  box-shadow: none !important;
+  transform: scale(1.06) !important;
+}
 
 /* ── Configure chip ───────────────────────────────────────────── */
 #cfg-btn {
@@ -525,13 +535,54 @@ html.dark body {
 .turn + .turn { border-top-color: #e5e7eb; }
 
 /* User message bubble */
-.msg-user { display: flex; justify-content: flex-end; }
+.msg-user { display: flex; flex-direction: column; align-items: flex-end; }
+.msg-user-inner { display: flex; align-items: flex-end; gap: 6px; max-width: 88%; }
 .msg-user .bubble {
   border-radius: 12px; padding: 12px 16px;
-  max-width: 88%; white-space: pre-wrap; word-break: break-word;
+  white-space: pre-wrap; word-break: break-word;
 }
 .dark .msg-user .bubble { background: #1a1a1a; }
 .msg-user .bubble { background: #f3f4f6; color: #8a6030; }
+
+/* Edit message button */
+.edit-msg-btn {
+  flex-shrink: 0; opacity: 0; padding: 5px; border-radius: 6px;
+  border: none; background: transparent; cursor: pointer;
+  transition: all 0.15s; display: flex; align-items: center;
+}
+.msg-user:hover .edit-msg-btn { opacity: 1; }
+.dark .edit-msg-btn { color: #565869; }
+.edit-msg-btn { color: #9ca3af; }
+.dark .edit-msg-btn:hover { background: #1a1a1a; color: #ececec; }
+.edit-msg-btn:hover { background: #f3f4f6; color: #374151; }
+
+/* Edit textarea + actions */
+.edit-wrap { width: 100%; }
+.edit-textarea {
+  width: 100%; min-height: 72px; padding: 10px 14px;
+  border-radius: 12px; border: 1px solid; resize: vertical;
+  font-family: inherit; font-size: 14px; line-height: 1.5;
+  box-sizing: border-box; outline: none; display: block;
+}
+.dark .edit-textarea { background: #1a1a1a; border-color: rgba(255,255,255,0.14); color: #ededed; }
+.edit-textarea { background: #fff; border-color: #d1d5db; color: #111827; }
+.dark .edit-textarea:focus { border-color: rgba(201,167,122,0.5); }
+.edit-textarea:focus { border-color: #c9a77a; }
+.edit-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.edit-cancel-btn, .edit-send-btn {
+  padding: 5px 14px; border-radius: 8px; border: 1px solid;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.dark .edit-cancel-btn { background: transparent; border-color: rgba(255,255,255,0.1); color: #8e8ea0; }
+.edit-cancel-btn { background: transparent; border-color: #d1d5db; color: #6b7280; }
+.dark .edit-cancel-btn:hover { border-color: rgba(255,255,255,0.25); color: #ececec; }
+.edit-cancel-btn:hover { border-color: #9ca3af; color: #374151; }
+.dark .edit-send-btn { background: #c9a77a; border-color: #c9a77a; color: #0a0a0c; }
+.edit-send-btn { background: #c9a77a; border-color: #c9a77a; color: #0a0a0c; }
+.dark .edit-send-btn:hover { background: #d4b88a; border-color: #d4b88a; }
+.edit-send-btn:hover { background: #b8966a; border-color: #b8966a; }
+.edit-send-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Assistant message */
 .msg-assistant { display: flex; flex-direction: column; }
@@ -561,6 +612,16 @@ html.dark body {
 }
 .tab-dot.done { background: #22c55e; }
 .tab-dot.error { background: #f87171; }
+.tab-dot.stopped { background: #6b7280; }
+
+/* Stopped notice inside a pane */
+.pane-stopped {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13px; margin-top: 10px; padding: 8px 12px;
+  border-radius: 8px;
+}
+.dark .pane-stopped { color: #6b7280; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); }
+.pane-stopped { color: #9ca3af; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.07); }
 
 /* Tab pane visibility */
 .tab-pane { display: none; }
@@ -581,6 +642,24 @@ html.dark body {
 
 /* Pane error */
 .pane-error { color: #f87171; font-size: 14px; }
+
+/* Copy button footer */
+.pane-footer {
+  display: flex; justify-content: flex-end; margin-top: 10px;
+  opacity: 0; transition: opacity 0.15s; min-height: 24px;
+}
+.tab-pane.active:hover .pane-footer { opacity: 1; }
+.copy-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 8px; border-radius: 6px; border: 1px solid transparent;
+  background: transparent; cursor: pointer; font-size: 12px; font-family: inherit;
+  transition: all 0.15s; line-height: 1;
+}
+.dark .copy-btn { color: #565869; }
+.copy-btn { color: #9ca3af; }
+.dark .copy-btn:hover { background: #1a1a1a; border-color: rgba(255,255,255,0.08); color: #ececec; }
+.copy-btn:hover { background: #f3f4f6; border-color: #e5e7eb; color: #374151; }
+.copy-btn.copied { color: #22c55e !important; }
 
 /* Model toggles */
 .model-toggle, .synth-pill {
