@@ -11,74 +11,73 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="/assets/tailwind.css?v=3">
   <style>
-    /* ── Pipeline chip row ─────────────────────────────── */
-    #pipeline-chips-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-
-    .model-chip {
-      display:inline-flex; align-items:center; gap:5px;
-      padding:4px 11px; border-radius:999px; border:1px solid;
-      font-size:11px; font-weight:500; cursor:pointer; line-height:1.5;
-      transition:color .15s, border-color .15s, background .15s;
-      font-family:'JetBrains Mono',monospace; letter-spacing:.05em; white-space:nowrap;
+    /* ── Input area positioning ───────────────────────────────── */
+    #input-area {
+      padding-top: 12px !important;
+      padding-bottom: 48px !important;
     }
-    .dark .model-chip         { color:#4a4a52; border-color:rgba(255,255,255,0.07); background:transparent; }
-    .dark .model-chip.active  { color:#c9a77a; border-color:rgba(201,167,122,.36); background:rgba(201,167,122,.07); }
-    .dark .model-chip:hover   { border-color:rgba(255,255,255,0.14); }
-    .dark .model-chip.active:hover { border-color:rgba(201,167,122,.55); }
-    .model-chip               { color:#9ca3af; border-color:#e5e7eb; background:transparent; }
-    .model-chip.active        { color:#b45309; border-color:rgba(180,83,9,.35); background:rgba(180,83,9,.05); }
-
-    .chip-dot {
-      width:5px; height:5px; border-radius:50%; flex-shrink:0;
-      transition:background .15s, box-shadow .15s;
+    @media (min-width: 640px) {
+      #input-area {
+        padding-bottom: 64px !important;
+      }
     }
-    .model-chip .chip-dot               { background:#3a3a42; }
-    .model-chip.active .chip-dot        { background:#c9a77a; box-shadow:0 0 6px rgba(201,167,122,.75); }
-    .model-chip.active:hover .chip-dot  { box-shadow:0 0 9px rgba(201,167,122,.9); }
 
-    .pipeline-arrow { font-size:12px; color:#3a3a42; flex-shrink:0; margin:0 1px; user-select:none; }
-    .dark .pipeline-arrow { color:#3a3a42; }
-
-    #synth-chip {
-      display:inline-flex; align-items:center; gap:5px;
-      padding:4px 11px; border-radius:999px; border:1px solid;
-      font-size:11px; cursor:pointer; white-space:nowrap; line-height:1.5;
-      transition:color .15s, border-color .15s, background .15s;
-      font-family:'JetBrains Mono',monospace; letter-spacing:.04em;
+    /* ── Redesigned input bar ─────────────────────────────────── */
+    #input-wrap {
+      padding: 14px 12px 10px 16px !important;
+      border-radius: 22px !important;
+      background: #ffffff !important;
+      border: 1px solid #e2e5ea !important;
+      box-shadow: 0 2px 18px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04) !important;
+      transition: box-shadow .2s ease, border-color .2s ease !important;
+      gap: 0 !important;
     }
-    .dark #synth-chip { color:#c9a77a; border-color:rgba(201,167,122,.32); background:rgba(201,167,122,.06); }
-    .dark #synth-chip:hover { border-color:rgba(201,167,122,.55); background:rgba(201,167,122,.11); }
-    #synth-chip { color:#b45309; border-color:rgba(180,83,9,.3); background:rgba(180,83,9,.04); }
-
-    #synth-dropdown {
-      position:absolute; bottom:calc(100% + 8px); right:0; z-index:60;
-      border-radius:12px; padding:5px; min-width:160px;
-      animation:presetCardIn .15s cubic-bezier(.2,.9,.3,1);
+    .dark #input-wrap {
+      background: #141417 !important;
+      border-color: rgba(255,255,255,0.09) !important;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04) !important;
     }
-    .dark #synth-dropdown { background:#141417; border:1px solid rgba(255,255,255,.07); box-shadow:0 16px 48px rgba(0,0,0,.55); }
-    #synth-dropdown { background:#fff; border:1px solid #e5e7eb; box-shadow:0 8px 28px rgba(0,0,0,.12); }
-
-    .synth-option {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:8px 12px; border-radius:8px; cursor:pointer;
-      font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.02em;
-      transition:background .1s;
+    #input-wrap:focus-within {
+      border-color: transparent !important;
+      box-shadow: 0 2px 18px rgba(0,0,0,0.1), 0 0 0 1.5px rgba(180,83,9,0.22) !important;
     }
-    .dark .synth-option { color:#ededed; }
-    .dark .synth-option:hover { background:rgba(255,255,255,.04); }
-    .synth-option:hover { background:#f6f7f9; }
-    .dark .synth-option.active { color:#c9a77a; }
-    .synth-option.active { color:#b45309; }
-    .synth-option .preset-check { opacity:0; transition:opacity .1s; color:#c9a77a; }
-    .synth-option.active .preset-check { opacity:1; }
-
-    #pipeline-hint {
-      font-family:'JetBrains Mono',monospace; font-size:9px;
-      letter-spacing:.1em; margin-top:6px; display:flex; align-items:center; gap:6px;
+    .dark #input-wrap:focus-within {
+      border-color: transparent !important;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(201,167,122,0.32) !important;
     }
-    #pipeline-count { color:#78787e; }
-    .pipeline-hint-text { color:#3a3a42; }
-    .dark .pipeline-hint-text { color:#3a3a42; }
+    #input-wrap textarea {
+      margin-bottom: 6px;
+    }
+    #input-bottom {
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    .dark #input-bottom {
+      border-top-color: rgba(255,255,255,0.05);
+    }
+    #attach-btn, #mic-btn {
+      width: 32px;
+      height: 32px;
+      padding: 7px !important;
+      border-radius: 8px !important;
+    }
+
+    /* Mic button */
+    #mic-btn {
+      background:none; border:none; cursor:pointer; padding:4px; border-radius:6px;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      transition:color .15s, background .15s; color:#9ca3af;
+    }
+    .dark #mic-btn { color:#565869; }
+    #mic-btn:hover { color:#6b7280; background:#f3f4f6; }
+    .dark #mic-btn:hover { color:#8e8ea0; background:#3a3a3a; }
+    #mic-btn.recording { color:#ef4444 !important; animation:mic-pulse 1.2s ease-in-out infinite; }
+    @keyframes mic-pulse {
+      0%, 100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.6; transform:scale(1.15); }
+    }
+
   </style>
 </head>
 <body class="h-full dark:bg-[#0a0a0c] bg-[#f8f8f4] dark:text-[#ededed] text-[#1c1b19] text-[14px] leading-relaxed font-light" style="font-family:'Inter',sans-serif;font-weight:300;letter-spacing:0.005em">
@@ -249,21 +248,6 @@
         Ask once. Get independent answers from four AI models, synthesized into one.
       </p>
 
-      <!-- Model row: GPT · CLAUDE · GEMINI · GROK → SYNTHESIS -->
-      <div class="model-label-row mb-10">
-        <span class="model-pill">GPT</span>
-        <span class="dark:text-gray-700 text-gray-300 text-[10px] font-light">·</span>
-        <span class="model-pill">Claude</span>
-        <span class="dark:text-gray-700 text-gray-300 text-[10px] font-light">·</span>
-        <span class="model-pill">Gemini</span>
-        <span class="dark:text-gray-700 text-gray-300 text-[10px] font-light">·</span>
-        <span class="model-pill">Grok</span>
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" class="opacity-20 mx-2 shrink-0">
-          <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="model-pill model-pill-accent">Synthesis</span>
-      </div>
-
       <!-- Prompt chips -->
       <div class="flex flex-wrap gap-2 justify-center">
         <span onclick="fillInput(this)"
@@ -309,117 +293,95 @@
 
   <!-- Input area -->
   <input type="file" id="file-input" accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" multiple style="display:none" onchange="handleFileSelect(event)">
-  <div id="input-area" class="px-3 sm:px-8 pt-2 pb-4 sm:pb-6 shrink-0">
+  <div id="input-area" class="px-3 sm:px-8 pt-2 pb-10 sm:pb-14 shrink-0">
     <div id="input-wrap"
-      class="max-w-[760px] mx-auto dark:bg-[#111114] bg-white border dark:border-[rgba(255,255,255,0.06)] border-gray-200 rounded-[14px] flex flex-col p-2.5 pl-4 transition-colors dark:focus-within:border-[#2e2e2e] focus-within:border-gray-400">
-      <div id="input-toolbar" class="px-3 pt-2.5 pb-2 border-b dark:border-[#1e1e1e] border-gray-200 mb-2">
-        <!-- Row 1: pipeline chips -->
-        <div id="pipeline-chips-row">
-          <!-- Preset shortcut (Malic / Crystalis / Lumen) -->
-          <div class="relative shrink-0" id="preset-wrapper">
-            <button id="preset-trigger" class="preset-trigger" onclick="togglePresetDropdown()">
-              <span id="preset-name">Malic</span>
-              <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3L4.5 6L7.5 3"/></svg>
-            </button>
-            <div id="preset-dropdown" class="preset-card hidden">
-              <div class="preset-item active" data-preset="malic" onclick="selectPreset('malic')">
-                <div class="preset-item-text">
-                  <div class="preset-item-name">Malic</div>
-                  <div class="preset-item-desc">General purpose</div>
-                </div>
-                <svg class="preset-check" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-              </div>
-              <div class="preset-item" data-preset="crystalis" onclick="selectPreset('crystalis')">
-                <div class="preset-item-text">
-                  <div class="preset-item-name">Crystalis</div>
-                  <div class="preset-item-desc">Coding-heavy tasks</div>
-                </div>
-                <svg class="preset-check" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-              </div>
-              <div class="preset-item" data-preset="lumen" onclick="openLumenPanel()">
-                <div class="preset-item-text">
-                  <div class="preset-item-name">Lumen</div>
-                  <div class="preset-item-desc">Image generation</div>
-                </div>
-                <span class="preset-item-actions">
-                  <svg class="preset-check" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-                  <svg class="preset-chevron" width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5L9 6.5L4.5 10.5"/></svg>
-                </span>
-              </div>
-            </div>
-            <!-- Lumen config card -->
-            <div id="preset-lumen-panel" class="preset-card preset-card-custom hidden">
-              <div class="preset-card-header">
-                <button class="preset-back-btn" onclick="closeLumenPanel()" title="Back">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2.5L4 6.5L8.5 10.5"/></svg>
-                </button>
-                <div class="preset-card-title">Lumen</div>
-              </div>
-              <div class="preset-section">
-                <div class="preset-section-label">Image Model</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#78787e;padding:4px 0;">Gemini Imagen</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Model toggle chips -->
-          <button class="model-chip active" data-model="gpt" onclick="toggleModelChip('gpt')">
-            <span class="chip-dot"></span>GPT
-          </button>
-          <button class="model-chip active" data-model="claude" onclick="toggleModelChip('claude')">
-            <span class="chip-dot"></span>Claude
-          </button>
-          <button class="model-chip active" data-model="gemini" onclick="toggleModelChip('gemini')">
-            <span class="chip-dot"></span>Gemini
-          </button>
-          <button class="model-chip active" data-model="grok" onclick="toggleModelChip('grok')">
-            <span class="chip-dot"></span>Grok
-          </button>
-
-          <!-- Arrow separator -->
-          <span class="pipeline-arrow">→</span>
-
-          <!-- Synthesis chip + dropdown -->
-          <div class="relative shrink-0" id="synth-wrapper">
-            <button id="synth-chip" onclick="toggleSynthDropdown()">
-              Synthesize via <span id="synth-chip-label">Grok</span>
-              <svg width="8" height="8" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3L4.5 6L7.5 3"/></svg>
-            </button>
-            <div id="synth-dropdown" class="hidden">
-              <div class="synth-option" data-model="gpt" onclick="selectSynth('gpt')">
-                GPT<svg class="preset-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-              </div>
-              <div class="synth-option" data-model="claude" onclick="selectSynth('claude')">
-                Claude<svg class="preset-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-              </div>
-              <div class="synth-option" data-model="gemini" onclick="selectSynth('gemini')">
-                Gemini<svg class="preset-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-              </div>
-              <div class="synth-option active" data-model="grok" onclick="selectSynth('grok')">
-                Grok<svg class="preset-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Row 2: pipeline hint -->
-        <div id="pipeline-hint">
-          <span id="pipeline-count">4 models active</span>
-          <span class="pipeline-hint-text"> · tap models to toggle · tap synth to change</span>
-        </div>
-      </div>
+      class="max-w-[760px] mx-auto flex flex-col">
       <div id="attachment-pills" class="hidden"></div>
-      <div id="input-bottom" class="flex items-end gap-2">
+      <!-- Textarea row -->
+      <textarea id="input" rows="1" placeholder="Ask Voyance…"
+        class="w-full bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[28px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
+      <!-- Button bar -->
+      <div id="input-bottom" class="flex items-center gap-2">
+        <!-- Left: attach + configure -->
         <button id="attach-btn" title="Attach file" onclick="document.getElementById('file-input').click()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
         </button>
-        <textarea id="input" rows="1" placeholder="Ask Voyance…"
-          class="flex-1 bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[24px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
+        <div class="relative shrink-0" id="cfg-wrapper">
+            <button id="cfg-btn" onclick="toggleCfgDropdown()">
+              <span id="cfg-label">General</span>
+              <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3L4.5 6L7.5 3"/></svg>
+            </button>
+            <div id="cfg-dropdown" class="hidden">
+              <!-- Main view: 3 options -->
+              <div id="cfg-main">
+                <div class="cfg-option active" data-preset="malic" onclick="selectPreset('malic')">
+                  General Purpose<svg class="cfg-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                </div>
+                <div class="cfg-option" data-preset="crystalis" onclick="selectPreset('crystalis')">
+                  Coding<svg class="cfg-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                </div>
+                <div class="cfg-option cfg-has-sub" onclick="showCfgDetail()">
+                  Configure
+                  <svg width="10" height="10" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5"><path d="M3 1.5L6 4.5L3 7.5"/></svg>
+                </div>
+              </div>
+              <!-- Detail view: model toggles + synthesis -->
+              <div id="cfg-detail" class="hidden">
+                <button class="cfg-back" onclick="showCfgMain()">
+                  <svg width="10" height="10" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1.5L3 4.5L6 7.5"/></svg>
+                  Back
+                </button>
+                <div class="cfg-divider"></div>
+                <div class="cfg-section-label">Active Models</div>
+                <div class="cfg-model-row" data-model="gpt">
+                  GPT
+                  <div class="cfg-toggle on" data-model="gpt" onclick="toggleModel('gpt')"><span class="cfg-toggle-knob"></span></div>
+                </div>
+                <div class="cfg-model-row" data-model="claude">
+                  Claude
+                  <div class="cfg-toggle on" data-model="claude" onclick="toggleModel('claude')"><span class="cfg-toggle-knob"></span></div>
+                </div>
+                <div class="cfg-model-row" data-model="gemini">
+                  Gemini
+                  <div class="cfg-toggle on" data-model="gemini" onclick="toggleModel('gemini')"><span class="cfg-toggle-knob"></span></div>
+                </div>
+                <div class="cfg-model-row" data-model="grok">
+                  Grok
+                  <div class="cfg-toggle on" data-model="grok" onclick="toggleModel('grok')"><span class="cfg-toggle-knob"></span></div>
+                </div>
+                <div class="cfg-divider"></div>
+                <div class="cfg-section-label">Synthesis Model</div>
+                <div class="cfg-synth-row" data-model="gpt" onclick="selectSynth('gpt')">
+                  GPT<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                </div>
+                <div class="cfg-synth-row" data-model="claude" onclick="selectSynth('claude')">
+                  Claude<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                </div>
+                <div class="cfg-synth-row" data-model="gemini" onclick="selectSynth('gemini')">
+                  Gemini<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                </div>
+                <div class="cfg-synth-row active" data-model="grok" onclick="selectSynth('grok')">
+                  Grok<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                </div>
+              </div>
+            </div>
+        </div><!-- /#cfg-wrapper -->
+        <!-- Spacer -->
+        <div style="flex:1"></div>
+        <!-- Right: mic + send -->
+        <button id="mic-btn" title="Speak" onclick="toggleMic()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+        </button>
         <button id="send-btn" disabled title="Send"
-          class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 leading-none">↑</button>
-      </div>
+          class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 leading-none">↑</button>
+      </div><!-- /#input-bottom -->
     </div>
 
   <!-- Lightbox for generated images -->
@@ -537,89 +499,70 @@
     lumen:     { models: ['gemini'],                       synthesizer: 'gemini', imageMode: true,  label: 'Lumen',     desc: 'Image Gen' },
   };
 
-  function togglePresetDropdown() {
-    const dropdown = document.getElementById('preset-dropdown');
-    const lumen = document.getElementById('preset-lumen-panel');
-    const anyOpen = !dropdown.classList.contains('hidden')
-                 || !lumen.classList.contains('hidden');
-    dropdown.classList.add('hidden');
-    lumen.classList.add('hidden');
-    if (!anyOpen) dropdown.classList.remove('hidden');
-  }
-
-  // ── Pipeline chip functions ───────────────────────
+  // ── Pipeline / configure functions ───────────────
   function syncPipelineUI() {
-    const labels = { gpt: 'GPT', claude: 'Claude', gemini: 'Gemini', grok: 'Grok' };
-    document.querySelectorAll('.model-chip').forEach(chip =>
-      chip.classList.toggle('active', enabledModels.has(chip.dataset.model))
+    // Configure button label
+    const presetLabels = { malic: 'General', crystalis: 'Coding' };
+    document.getElementById('cfg-label').textContent = presetLabels[currentPreset] || 'Custom';
+    // Preset option active states
+    document.querySelectorAll('.cfg-option[data-preset]').forEach(o =>
+      o.classList.toggle('active', o.dataset.preset === currentPreset)
     );
-    document.getElementById('synth-chip-label').textContent = labels[selectedSynthesizer] || selectedSynthesizer;
-    document.querySelectorAll('.synth-option').forEach(el =>
+    // Model toggles
+    ALL_MODELS.forEach(m => {
+      const toggle = document.querySelector(`.cfg-toggle[data-model="${m}"]`);
+      if (toggle) toggle.classList.toggle('on', enabledModels.has(m));
+    });
+    // Synthesis rows
+    document.querySelectorAll('.cfg-synth-row').forEach(el =>
       el.classList.toggle('active', el.dataset.model === selectedSynthesizer)
     );
-    const n = enabledModels.size;
-    document.getElementById('pipeline-count').textContent = `${n} model${n !== 1 ? 's' : ''} active`;
   }
 
-  function toggleModelChip(model) {
-    if (enabledModels.has(model)) {
-      if (enabledModels.size <= 1) return;
-      enabledModels.delete(model);
-    } else {
-      enabledModels.add(model);
+  function toggleCfgDropdown() {
+    const dd = document.getElementById('cfg-dropdown');
+    dd.classList.toggle('hidden');
+    if (!dd.classList.contains('hidden')) {
+      document.getElementById('cfg-main').classList.remove('hidden');
+      document.getElementById('cfg-detail').classList.add('hidden');
     }
-    syncPipelineUI();
   }
 
-  function toggleSynthDropdown() {
-    document.getElementById('preset-dropdown').classList.add('hidden');
-    document.getElementById('preset-lumen-panel').classList.add('hidden');
-    document.getElementById('synth-dropdown').classList.toggle('hidden');
+  function showCfgDetail() {
+    document.getElementById('cfg-main').classList.add('hidden');
+    document.getElementById('cfg-detail').classList.remove('hidden');
   }
 
-  function selectSynth(model) {
-    selectedSynthesizer = model;
-    document.getElementById('synth-dropdown').classList.add('hidden');
-    syncPipelineUI();
+  function showCfgMain() {
+    document.getElementById('cfg-detail').classList.add('hidden');
+    document.getElementById('cfg-main').classList.remove('hidden');
   }
 
-  // ── Preset functions ──────────────────────────────
   function selectPreset(name) {
     const p = PRESETS[name];
     if (!p) return;
     currentPreset = name;
-    document.getElementById('preset-name').textContent = p.label;
-    document.querySelectorAll('.preset-item').forEach(o =>
-      o.classList.toggle('active', o.dataset.preset === name)
-    );
-    document.getElementById('preset-dropdown').classList.add('hidden');
-    document.getElementById('preset-lumen-panel').classList.add('hidden');
     enabledModels = new Set(p.models);
     selectedSynthesizer = p.synthesizer;
-    if (p.imageMode && !imageMode) toggleImageMode();
-    else if (!p.imageMode && imageMode) toggleImageMode();
+    document.getElementById('cfg-dropdown').classList.add('hidden');
     syncPipelineUI();
   }
 
-  function openLumenPanel() {
-    currentPreset = 'lumen';
-    const p = PRESETS.lumen;
-    document.getElementById('preset-name').textContent = p.label;
-    document.querySelectorAll('.preset-item').forEach(o =>
-      o.classList.toggle('active', o.dataset.preset === 'lumen')
-    );
-    document.getElementById('preset-dropdown').classList.add('hidden');
-    document.getElementById('synth-dropdown').classList.add('hidden');
-    document.getElementById('preset-lumen-panel').classList.remove('hidden');
-    enabledModels = new Set(['gpt', 'claude', 'gemini', 'grok']);
-    selectedSynthesizer = 'claude';
-    if (!imageMode) toggleImageMode();
+  function toggleModel(model) {
+    if (enabledModels.has(model)) {
+      if (enabledModels.size <= 1) return;
+      enabledModels.delete(model);
+      if (selectedSynthesizer === model) selectedSynthesizer = [...enabledModels][0];
+    } else {
+      enabledModels.add(model);
+    }
+    currentPreset = null;
     syncPipelineUI();
   }
 
-  function closeLumenPanel() {
-    document.getElementById('preset-lumen-panel').classList.add('hidden');
-    document.getElementById('preset-dropdown').classList.remove('hidden');
+  function selectSynth(model) {
+    selectedSynthesizer = model;
+    syncPipelineUI();
   }
 
   const IMAGE_PROMPT_PREFIX = 'Create an image of: ';
@@ -1188,14 +1131,9 @@
   inputEl.addEventListener('input', updateSendBtn);
 
   document.addEventListener('click', function(e) {
-    const presetWrapper = document.getElementById('preset-wrapper');
-    if (presetWrapper && !presetWrapper.contains(e.target)) {
-      document.getElementById('preset-dropdown').classList.add('hidden');
-      document.getElementById('preset-lumen-panel').classList.add('hidden');
-    }
-    const synthWrapper = document.getElementById('synth-wrapper');
-    if (synthWrapper && !synthWrapper.contains(e.target)) {
-      document.getElementById('synth-dropdown').classList.add('hidden');
+    const cfgWrapper = document.getElementById('cfg-wrapper');
+    if (cfgWrapper && !cfgWrapper.contains(e.target)) {
+      document.getElementById('cfg-dropdown').classList.add('hidden');
     }
   });
 
@@ -1472,6 +1410,66 @@
   loadFromLocalStorage();
 
   inputEl.focus();
+
+  // ── Voice input (Web Speech API) ─────────────────
+  (function() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micBtn = document.getElementById('mic-btn');
+    if (!SpeechRec) { if (micBtn) micBtn.style.display = 'none'; return; }
+
+    const rec = new SpeechRec();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = 'en-US';
+
+    let recording = false;
+    let baseText = '';
+    let finalExtra = '';
+
+    rec.onstart = function() {
+      recording = true;
+      micBtn.classList.add('recording');
+      micBtn.title = 'Stop recording';
+    };
+
+    rec.onresult = function(e) {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalExtra += t;
+        else interim = t;
+      }
+      const parts = [];
+      if (baseText) parts.push(baseText);
+      if (finalExtra.trim()) parts.push(finalExtra.trim());
+      if (interim.trim()) parts.push(interim.trim());
+      inputEl.value = parts.join(' ');
+      inputEl.dispatchEvent(new Event('input'));
+    };
+
+    rec.onend = function() {
+      recording = false;
+      micBtn.classList.remove('recording');
+      micBtn.title = 'Speak';
+    };
+
+    rec.onerror = function(e) {
+      if (e.error !== 'no-speech') console.warn('Speech recognition error:', e.error);
+      recording = false;
+      micBtn.classList.remove('recording');
+      micBtn.title = 'Speak';
+    };
+
+    window.toggleMic = function() {
+      if (recording) {
+        rec.stop();
+      } else {
+        baseText = inputEl.value.trim();
+        finalExtra = '';
+        try { rec.start(); } catch(err) { console.warn('Recognition start failed:', err); }
+      }
+    };
+  })();
 </script>
 </body>
 </html>
