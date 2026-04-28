@@ -91,6 +91,57 @@
       50% { height:16px; }
     }
 
+    /* Web search toggle button */
+    #web-search-btn {
+      background: none; border: 1px solid transparent; cursor: pointer;
+      padding: 4px 8px; border-radius: 6px;
+      display: flex; align-items: center; gap: 5px; flex-shrink: 0;
+      transition: color .15s, background .15s, border-color .15s;
+      color: #9ca3af; font-size: 11px; font-family: var(--mono, 'JetBrains Mono', monospace);
+      letter-spacing: 0.04em;
+    }
+    .dark #web-search-btn { color: #565869; }
+    #web-search-btn:hover { color: #6b7280; background: #f3f4f6; }
+    .dark #web-search-btn:hover { color: #8e8ea0; background: #3a3a3a; }
+    #web-search-btn.active {
+      color: #c9a77a; border-color: rgba(201,167,122,0.45);
+      background: rgba(201,167,122,0.07);
+    }
+    .dark #web-search-btn.active { color: #c9a77a; border-color: rgba(201,167,122,0.45); background: rgba(201,167,122,0.08); }
+    #web-search-btn.active:hover { background: rgba(201,167,122,0.13); }
+
+    /* Sources panel */
+    .sources-panel {
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--line, rgba(255,255,255,0.07));
+    }
+    .sources-label {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-faint, #78787e); margin-bottom: 8px;
+    }
+    .source-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 8px; border-radius: 7px; cursor: pointer;
+      text-decoration: none; color: inherit;
+      transition: background .15s;
+    }
+    .source-row:hover { background: var(--bg-raised, rgba(255,255,255,0.04)); }
+    .source-favicon { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
+    .source-text { display: flex; flex-direction: column; min-width: 0; }
+    .source-title {
+      font-size: 12px; color: var(--text-dim, #b8b8c0);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .source-domain {
+      font-size: 10px; color: var(--text-faint, #78787e);
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+    }
+
+    /* Teal dot for Perplexity tab */
+    .tab-btn[data-tab="Perplexity"] .tab-dot.done    { background: #2dd4bf; }
+    .tab-btn[data-tab="Perplexity"] .tab-dot.loading { background: #2dd4bf; }
+
     /* Intensive usage pips */
     #intensive-pips { display:none; }
     .i-pip {
@@ -142,6 +193,10 @@
   <div id="header" class="flex items-center gap-2.5 px-3 sm:px-6 py-3 shrink-0">
     <img src="/assets/logo.png" alt="OpClave" style="width:28px;height:28px;object-fit:contain;display:block">
     <span style="font-family:'Fraunces',serif;font-weight:400;font-size:17px;letter-spacing:-0.01em">OpClave</span>
+    <span id="perplexity-pill" style="display:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:#2dd4bf;border:1px solid rgba(45,212,191,0.35);border-radius:4px;padding:2px 7px;letter-spacing:0.06em;align-items:center;gap:4px;">
+      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      PERPLEXITY
+    </span>
 
     <!-- Home link -->
     <a href="/" title="Back to home" class="ml-auto flex items-center gap-1 px-2 py-1.5 rounded-lg dark:text-[#55555a] text-gray-400 dark:hover:text-gray-300 hover:text-gray-600 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 text-[12px]" style="text-decoration:none;letter-spacing:0.02em">
@@ -347,6 +402,14 @@
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
         </button>
+        <button id="web-search-btn" title="Toggle web search" onclick="toggleWebSearch()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <span id="web-search-label" style="display:none">Web</span>
+        </button>
         <div class="relative shrink-0" id="cfg-wrapper">
             <button id="cfg-btn" onclick="toggleCfgDropdown()">
               <span id="cfg-label">General</span>
@@ -392,17 +455,23 @@
                 </div>
                 <div class="cfg-divider"></div>
                 <div class="cfg-section-label">Synthesis Model</div>
-                <div class="cfg-synth-row" data-model="gpt" onclick="selectSynth('gpt')">
-                  GPT<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                <div id="synth-web-notice" style="display:none;padding:6px 8px;font-size:11px;color:#2dd4bf;background:rgba(45,212,191,0.06);border-radius:6px;border:1px solid rgba(45,212,191,0.2);display:none;align-items:center;gap:5px;">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  Perplexity synthesizes in web mode
                 </div>
-                <div class="cfg-synth-row" data-model="claude" onclick="selectSynth('claude')">
-                  Claude<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-                </div>
-                <div class="cfg-synth-row" data-model="gemini" onclick="selectSynth('gemini')">
-                  Gemini<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-                </div>
-                <div class="cfg-synth-row active" data-model="grok" onclick="selectSynth('grok')">
-                  Grok<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                <div id="synth-selector-rows">
+                  <div class="cfg-synth-row" data-model="gpt" onclick="selectSynth('gpt')">
+                    GPT<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                  </div>
+                  <div class="cfg-synth-row" data-model="claude" onclick="selectSynth('claude')">
+                    Claude<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                  </div>
+                  <div class="cfg-synth-row" data-model="gemini" onclick="selectSynth('gemini')">
+                    Gemini<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                  </div>
+                  <div class="cfg-synth-row active" data-model="grok" onclick="selectSynth('grok')">
+                    Grok<svg class="cfg-synth-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
+                  </div>
                 </div>
               </div>
             </div>
@@ -517,6 +586,7 @@
   let selectedSynthesizer = 'grok';
   let enabledModels = new Set(['gpt', 'claude', 'gemini', 'grok']);
   let imageMode = false;
+  let webSearchEnabled = false;
   let currentPreset = 'malic';
   let promptCount = 0;
   let conversationHistory = []; // [{role:'user'|'assistant', content:'...'}]
@@ -623,7 +693,12 @@
     selectedSynthesizer = p.synthesizer;
     document.getElementById('cfg-dropdown').classList.add('hidden');
     syncPipelineUI();
-    if (currentMode === 'intensive' && prevMode !== 'intensive') {
+    const webBtn = document.getElementById('web-search-btn');
+    if (currentMode === 'intensive') {
+      if (webSearchEnabled) toggleWebSearch();
+      if (webBtn) webBtn.style.display = 'none';
+    } else {
+      if (webBtn) webBtn.style.display = '';
     }
   }
 
@@ -853,6 +928,20 @@
     inputEl.focus();
   }
 
+  function toggleWebSearch() {
+    webSearchEnabled = !webSearchEnabled;
+    const btn = document.getElementById('web-search-btn');
+    const label = document.getElementById('web-search-label');
+    const pill = document.getElementById('perplexity-pill');
+    const synthNotice = document.getElementById('synth-web-notice');
+    const synthRows = document.getElementById('synth-selector-rows');
+    btn.classList.toggle('active', webSearchEnabled);
+    label.style.display = webSearchEnabled ? 'inline' : 'none';
+    pill.style.display = webSearchEnabled ? 'inline-flex' : 'none';
+    if (synthNotice) synthNotice.style.display = webSearchEnabled ? 'flex' : 'none';
+    if (synthRows) synthRows.style.display = webSearchEnabled ? 'none' : 'block';
+  }
+
   // ── Submit ────────────────────────────────────────
   async function submitQuestion() {
     const question = inputEl.value.trim();
@@ -942,7 +1031,7 @@
     addUserMessage(question, turn, attachmentsPayload.map(a => a.filename));
     const id = msgCounter++;
     const turnModels = [...enabledModels];
-    createAssistantMessage(id, turn, turnModels, imageMode);
+    createAssistantMessage(id, turn, turnModels, imageMode, webSearchEnabled);
     scrollToBottom(true);
 
     if (activeSSE) { activeSSE.abort(); activeSSE = null; }
@@ -963,6 +1052,7 @@
         image_mode: imageMode,
         attachments: attachmentsPayload,
         mode: currentMode,
+        web_search: webSearchEnabled,
       }),
       signal: controller.signal,
     }).then(async (res) => {
@@ -1022,7 +1112,7 @@
     container.appendChild(div);
   }
 
-  function createAssistantMessage(id, container, turnModels, imageModeOn) {
+  function createAssistantMessage(id, container, turnModels, imageModeOn, webSearchOn) {
     const tabModels = imageModeOn ? turnModels.filter(m => !enabledImageModels.has(m)) : turnModels;
     const tabs = ['Voyance', ...tabModels.map(m => MODEL_TAB[m])];
 
@@ -1047,8 +1137,14 @@
       dot.id = `dot-${id}-${tab}`;
 
       btn.appendChild(dot);
-      const tabLabel = (imageModeOn && [...enabledImageModels].map(m => MODEL_TAB[m]).includes(tab)) ? `✦ ${tab}` : TAB_LABELS[tab];
-      btn.appendChild(document.createTextNode(tabLabel));
+      const labelSpan = document.createElement('span');
+      if (tab === 'Voyance' && webSearchOn) {
+        labelSpan.style.cssText = 'display:inline-flex;align-items:center;gap:4px;';
+        labelSpan.innerHTML = `OpClave<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.55;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+      } else {
+        labelSpan.textContent = (imageModeOn && [...enabledImageModels].map(m => MODEL_TAB[m]).includes(tab)) ? `✦ ${tab}` : (TAB_LABELS[tab] || tab);
+      }
+      btn.appendChild(labelSpan);
       tabBar.appendChild(btn);
     });
 
@@ -1061,6 +1157,9 @@
 
       const placeholderText = tab === 'Voyance' ? 'Waiting for all models…' : 'Waiting…';
       const clipIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+      const sourcesSlot = tab === 'Voyance'
+        ? `<div class="sources-panel" id="citations-${id}-Voyance" style="display:none"></div>`
+        : '';
       pane.innerHTML = `<div class="pane-placeholder" id="placeholder-${id}-${tab}">
         <div class="pane-spinner"></div>
         <span>${placeholderText}</span>
@@ -1068,7 +1167,7 @@
       <div class="md-content" id="content-${id}-${tab}" style="display:none"></div>
       <div class="pane-footer" id="footer-${id}-${tab}" style="display:none">
         <button class="copy-btn" id="copy-btn-${id}-${tab}" onclick="copyContent('${id}', '${tab}')">${clipIcon} Copy</button>
-      </div>`;
+      </div>${sourcesSlot}`;
 
       div.appendChild(pane);
     });
@@ -1118,6 +1217,27 @@
         setDotStatus(id, event.model, 'error');
         setError(id, event.model, event.error);
         break;
+
+      case 'citations': {
+        const panel = document.getElementById(`citations-${id}-Voyance`);
+        if (!panel || !event.citations || !event.citations.length) break;
+        const rows = event.citations.slice(0, 10).map(url => {
+          let domain = '';
+          try { domain = new URL(url).hostname.replace(/^www\./, ''); } catch {}
+          const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=16`;
+          const shortUrl = url.length > 60 ? url.slice(0, 57) + '…' : url;
+          return `<a class="source-row" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+            <img class="source-favicon" src="${favicon}" alt="" onerror="this.style.display='none'">
+            <div class="source-text">
+              <span class="source-title">${escapeHtml(domain)}</span>
+              <span class="source-domain">${escapeHtml(shortUrl)}</span>
+            </div>
+          </a>`;
+        }).join('');
+        panel.innerHTML = `<div class="sources-label">Sources</div>${rows}`;
+        panel.style.display = 'block';
+        break;
+      }
 
       case 'synthesis_start':
         setDotStatus(id, 'Voyance', 'loading');

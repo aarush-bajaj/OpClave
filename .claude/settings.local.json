@@ -63,7 +63,8 @@
       "Bash(grep -oE \"[^{,}]*preset-card[^{,]*\\\\{\" \"/Users/adityamishra/personal-important/Codeing stuff/adi-js/Council/templates/assets/tailwind.css\")",
       "Bash(grep -n \"color.*#\\\\|#[0-9a-f]\\\\{3,6\\\\}\" /Users/aarushbajaj/Downloads/Council/templates/index.html)",
       "Bash(git checkout *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(pip install *)"
     ],
     "additionalDirectories": [
       "\\tmp"

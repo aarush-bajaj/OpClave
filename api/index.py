@@ -115,6 +115,7 @@ openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 grok_client = OpenAI(api_key=os.getenv("XAI_API_KEY"), base_url="https://api.x.ai/v1")
+perplexity_client = OpenAI(api_key=os.getenv("PERPLEXITY_API_KEY"), base_url="https://api.perplexity.ai")
 
 # ── Synthesis system prompts (edit prompts/*.txt to tune behavior) ───────────
 _PROMPTS_DIR = os.path.join(_root, "prompts")
@@ -439,12 +440,27 @@ class StreamRequest(BaseModel):
     image_mode: bool = False
     attachments: List[Attachment] = []
     mode: str = "general"  # "general" or "intensive"
+    web_search: bool = False
 
 class FeedbackRequest(BaseModel):
     message: str = ""
 
 class AdminVerifyRequest(BaseModel):
     code: str = ""
+
+
+# ── Perplexity Sonar (web-aware council member) ───────────────────────────────
+
+def synthesize_with_perplexity(prompt: str, max_tokens: int, history=None):
+    messages = list(history or []) + [{"role": "user", "content": prompt}]
+    response = perplexity_client.chat.completions.create(
+        model="sonar",
+        max_tokens=max_tokens,
+        messages=messages,
+    )
+    content = response.choices[0].message.content
+    citations = getattr(response, 'citations', []) or []
+    return content, citations
 
 
 # ── Attachment helpers ────────────────────────────────────────────────────────
@@ -617,6 +633,7 @@ def clear_logs():
 
 @app.post("/stream")
 def stream(req: StreamRequest, request: Request):
+    print(f"[STREAM] received — web_search={req.web_search} question={repr(req.question[:60])}", flush=True)
     question = req.question.strip()
     synthesizer = req.synthesizer.lower()
     requested_models = set(req.models)
@@ -654,8 +671,10 @@ def stream(req: StreamRequest, request: Request):
     attachment_ctx = build_attachment_context(attachments)
     effective_question = question or "Please review the attached file(s)."
     augmented_question = f"{attachment_ctx}\n{effective_question}" if attachment_ctx else effective_question
+    do_perplexity = req.web_search and not image_mode and not is_intensive
 
     def generate():
+        nonlocal augmented_question
         model_tokens = estimate_max_tokens(effective_question)
         synthesis_tokens = min(max(model_tokens * 2, 3000), 6000)
         print(f"[DEBUG] Question: {repr(effective_question[:80])}", flush=True)
@@ -740,20 +759,42 @@ def stream(req: StreamRequest, request: Request):
         synth_model_id = {k: v for k, v in model_map.items()}
         synth_model_id.setdefault('grok', MODELS_GENERAL['grok'])
         council_text = ''
+        actual_synth = 'perplexity' if do_perplexity else synthesizer
         try:
-            synth_map = {
-                'claude': synthesize_with_claude,
-                'gpt': synthesize_with_gpt,
-                'gemini': synthesize_with_gemini,
-                'grok': synthesize_with_grok,
-            }
-            actual_synth = synthesizer
-            synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
-            synth_model_str = model_map.get(actual_synth) or MODELS_GENERAL.get(actual_synth, MODELS_GENERAL["claude"])
-            for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history, system=synthesis_system, model=synth_model_str):
-                council_text += text_chunk
-                yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
-            yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
+            if do_perplexity:
+                n = sum(1 for _, _, key in all_models if key in text_keys)
+                web_synthesis_prompt = (
+                    f"You are synthesizing responses from {n} AI models on the following question. "
+                    f"You also have access to live web search — use it to verify claims, add current "
+                    f"information, and ground the synthesis in real sources.\n\n"
+                    f"Original question: {augmented_question}\n\n"
+                    f"{active_responses}\n\n"
+                    f"Your task:\n"
+                    f"1. Identify where the models agree and where they diverge\n"
+                    f"2. Use your web search access to verify key claims and add any current information the models may have missed\n"
+                    f"3. Synthesize the most accurate, complete, and up to date answer\n"
+                    f"4. Cite your web sources inline using [1], [2] etc\n"
+                    f"5. Note if any model responses contained outdated or incorrect information based on what you found\n\n"
+                    f"Provide a synthesized response that is grounded in both the models' reasoning and current web sources."
+                )
+                council_text, citations = synthesize_with_perplexity(web_synthesis_prompt, synthesis_tokens, history)
+                yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': council_text})}\n\n"
+                yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
+                if citations:
+                    yield f"data: {json.dumps({'type': 'citations', 'citations': citations})}\n\n"
+            else:
+                synth_map = {
+                    'claude': synthesize_with_claude,
+                    'gpt': synthesize_with_gpt,
+                    'gemini': synthesize_with_gemini,
+                    'grok': synthesize_with_grok,
+                }
+                synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
+                synth_model_str = model_map.get(actual_synth) or MODELS_GENERAL.get(actual_synth, MODELS_GENERAL["claude"])
+                for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history, system=synthesis_system, model=synth_model_str):
+                    council_text += text_chunk
+                    yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
+                yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'council_error', 'error': str(e)})}\n\n"
 
