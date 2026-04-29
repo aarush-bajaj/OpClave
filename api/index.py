@@ -13,6 +13,7 @@ import queue
 import threading
 import concurrent.futures
 import time
+import asyncio
 import urllib.request
 import urllib.parse
 import hmac
@@ -451,15 +452,17 @@ class AdminVerifyRequest(BaseModel):
 
 # ── Perplexity Sonar (web-aware council member) ───────────────────────────────
 
-def synthesize_with_perplexity(prompt: str, max_tokens: int, history=None):
-    messages = list(history or []) + [{"role": "user", "content": prompt}]
+def synthesize_with_perplexity(prompt: str, max_tokens: int):
     response = perplexity_client.chat.completions.create(
         model="sonar",
         max_tokens=max_tokens,
-        messages=messages,
+        messages=[{"role": "user", "content": prompt}],
     )
     content = response.choices[0].message.content
-    citations = getattr(response, 'citations', []) or []
+    citations = getattr(response, 'citations', None)
+    if citations is None and hasattr(response, 'model_extra') and response.model_extra:
+        citations = response.model_extra.get('citations')
+    citations = list(citations) if citations else []
     return content, citations
 
 
@@ -554,7 +557,7 @@ def verify_admin(req: AdminVerifyRequest):
 
 
 @app.post("/feedback")
-def feedback(req: FeedbackRequest, request: Request):
+async def feedback(req: FeedbackRequest, request: Request):
     message = req.message.strip()
     if not message:
         return {"ok": False, "error": "No message provided"}
@@ -565,25 +568,36 @@ def feedback(req: FeedbackRequest, request: Request):
     if not check_feedback_rate_limit(ip):
         return {"ok": False, "rate_limited": True, "error": "Too many submissions. Please wait before sending again."}
 
+    host = request.headers.get("host", "")
+    is_local = host.startswith("localhost") or host.startswith("127.")
+    if is_local:
+        print(f"[feedback] {message}")
+        return {"ok": True}
+
     gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
     if not gmail_pass:
         return {"ok": False, "error": "Email not configured"}
 
-    try:
+    def send_email():
         import smtplib, email.mime.text, email.mime.multipart
         sender = "aarushbajajus@gmail.com"
+        recipient = "councilaiclb@gmail.com"
         msg = email.mime.multipart.MIMEMultipart()
         msg["From"] = sender
-        msg["To"] = sender
+        msg["To"] = recipient
         msg["Subject"] = "Opclave — Feedback"
         msg.attach(email.mime.text.MIMEText(
             f"Feedback received:\n\n{message}\n\n---\nSent via Opclave", "plain"
         ))
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
             server.ehlo()
             server.starttls()
             server.login(sender, gmail_pass)
-            server.sendmail(sender, sender, msg.as_string())
+            server.sendmail(sender, recipient, msg.as_string())
+
+    try:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, send_email)
         return {"ok": True}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -777,7 +791,7 @@ def stream(req: StreamRequest, request: Request):
                     f"5. Note if any model responses contained outdated or incorrect information based on what you found\n\n"
                     f"Provide a synthesized response that is grounded in both the models' reasoning and current web sources."
                 )
-                council_text, citations = synthesize_with_perplexity(web_synthesis_prompt, synthesis_tokens, history)
+                council_text, citations = synthesize_with_perplexity(web_synthesis_prompt, synthesis_tokens)
                 yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': council_text})}\n\n"
                 yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
                 if citations:

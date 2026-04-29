@@ -1433,6 +1433,12 @@
     inner.appendChild(editWrap);
 
     const ta = editWrap.querySelector('textarea');
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 300) + 'px';
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 300) + 'px';
+    });
     ta.focus();
     ta.setSelectionRange(ta.value.length, ta.value.length);
     ta.addEventListener('keydown', e => {
@@ -1687,12 +1693,12 @@
         status.style.color = '#f87171';
         // keep button disabled; no point retrying immediately
       } else {
-        status.textContent = 'Failed to send. Try again.';
+        status.textContent = data.error ? `Error: ${data.error}` : 'Failed to send. Try again.';
         status.style.color = '#f87171';
         btn.disabled = false;
       }
-    } catch {
-      status.textContent = 'Failed to send. Try again.';
+    } catch (err) {
+      status.textContent = `Failed to send: ${err.message}`;
       status.style.color = '#f87171';
       btn.disabled = false;
     }

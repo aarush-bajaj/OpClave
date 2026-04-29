@@ -559,15 +559,28 @@ html.dark body {
 /* Edit textarea + actions */
 .edit-wrap { width: 100%; }
 .edit-textarea {
-  width: 100%; min-height: 72px; padding: 10px 14px;
-  border-radius: 12px; border: 1px solid; resize: vertical;
-  font-family: inherit; font-size: 14px; line-height: 1.5;
+  width: 100%; min-height: 44px; padding: 14px 16px;
+  border-radius: 22px; border: 1px solid; resize: none; overflow: hidden;
+  font-family: inherit; font-size: 15px; line-height: 1.6; font-weight: 300;
   box-sizing: border-box; outline: none; display: block;
+  transition: box-shadow .2s ease, border-color .2s ease;
 }
-.dark .edit-textarea { background: #1a1a1a; border-color: rgba(255,255,255,0.14); color: #ededed; }
-.edit-textarea { background: #fff; border-color: #d1d5db; color: #111827; }
-.dark .edit-textarea:focus { border-color: rgba(201,167,122,0.5); }
-.edit-textarea:focus { border-color: #c9a77a; }
+.dark .edit-textarea {
+  background: #141417; border-color: rgba(255,255,255,0.09); color: #ededed;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04);
+}
+.edit-textarea {
+  background: #ffffff; border-color: #e2e5ea; color: #111827;
+  box-shadow: 0 2px 18px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+}
+.dark .edit-textarea:focus {
+  border-color: transparent;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.55), 0 0 0 1.5px rgba(201,167,122,0.32);
+}
+.edit-textarea:focus {
+  border-color: transparent;
+  box-shadow: 0 2px 18px rgba(0,0,0,0.1), 0 0 0 1.5px rgba(180,83,9,0.22);
+}
 .edit-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 .edit-cancel-btn, .edit-send-btn {
   padding: 5px 14px; border-radius: 8px; border: 1px solid;

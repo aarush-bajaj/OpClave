@@ -64,7 +64,9 @@
       "Bash(grep -n \"color.*#\\\\|#[0-9a-f]\\\\{3,6\\\\}\" /Users/aarushbajaj/Downloads/Council/templates/index.html)",
       "Bash(git checkout *)",
       "Bash(npm install *)",
-      "Bash(pip install *)"
+      "Bash(pip install *)",
+      "Bash(python3 -c \"import ast; ast.parse\\(open\\('/Users/aarushbajaj/Downloads/Council/api/index.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(npx tailwindcss *)"
     ],
     "additionalDirectories": [
       "\\tmp"
