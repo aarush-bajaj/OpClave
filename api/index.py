@@ -452,11 +452,19 @@ class AdminVerifyRequest(BaseModel):
 
 # ── Perplexity Sonar (web-aware council member) ───────────────────────────────
 
-def synthesize_with_perplexity(prompt: str, max_tokens: int):
+def synthesize_with_perplexity(prompt: str, max_tokens: int, search_query: str = ""):
+    messages = []
+    if search_query:
+        messages.append({"role": "system", "content": (
+            f"The user's original question is: {search_query}\n"
+            f"Your web search MUST be focused specifically on this question. "
+            f"Only retrieve sources directly relevant to this question."
+        )})
+    messages.append({"role": "user", "content": prompt})
     response = perplexity_client.chat.completions.create(
         model="sonar",
         max_tokens=max_tokens,
-        messages=[{"role": "user", "content": prompt}],
+        messages=messages,
     )
     content = response.choices[0].message.content
     citations = getattr(response, 'citations', None)
@@ -791,7 +799,7 @@ def stream(req: StreamRequest, request: Request):
                     f"5. Note if any model responses contained outdated or incorrect information based on what you found\n\n"
                     f"Provide a synthesized response that is grounded in both the models' reasoning and current web sources."
                 )
-                council_text, citations = synthesize_with_perplexity(web_synthesis_prompt, synthesis_tokens)
+                council_text, citations = synthesize_with_perplexity(web_synthesis_prompt, synthesis_tokens, search_query=req.question)
                 yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': council_text})}\n\n"
                 yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
                 if citations:

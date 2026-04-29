@@ -385,16 +385,19 @@
   <div id="input-area" class="px-3 sm:px-8 pt-2 pb-10 sm:pb-14 shrink-0">
     <div id="input-wrap"
       class="max-w-[760px] mx-auto flex flex-col">
-      <div id="attachment-pills" class="hidden"></div>
       <!-- Intensive mode notice -->
       <div id="intensive-notice" style="display:none; align-items:center; gap:6px; padding:5px 2px; font-size:11.5px; color:#d97706; opacity:0.85; border-bottom:1px solid rgba(217,119,6,0.15); margin-bottom:4px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         Premium models active: 3 queries/day, separate from your 15 general queries
       </div>
-      <!-- Textarea row -->
-      <textarea id="input" rows="1" placeholder="Ask Voyance…"
-        class="w-full bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[28px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
-      <!-- Button bar -->
+      <!-- Input box -->
+      <div id="input-box">
+        <!-- Textarea row -->
+        <textarea id="input" rows="1" placeholder="Ask Voyance…"
+          class="w-full bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[28px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
+        <!-- Attachment chips (inside the box) -->
+        <div id="attachment-pills" class="hidden"></div>
+        <!-- Button bar -->
       <div id="input-bottom" class="flex items-center gap-2">
         <!-- Left: attach + configure -->
         <button id="attach-btn" title="Attach file" onclick="document.getElementById('file-input').click()">
@@ -499,6 +502,7 @@
         <button id="send-btn" disabled title="Send"
           class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 leading-none">↑</button>
       </div><!-- /#input-bottom -->
+      </div><!-- /#input-box -->
     </div>
     <p style="text-align:center;font-size:11px;color:var(--text-faint,#78787e);margin-top:6px;letter-spacing:0.01em;">Voyance can make mistakes — double-check important information.</p>
 
@@ -854,8 +858,15 @@
       if (a.status === 'error') cls += ' error';
       if (a.status === 'extracting' || a.status === 'pending') cls += ' extracting';
       pill.className = cls;
-      const label = a.status === 'extracting' ? '⏳ ' : a.status === 'error' ? '✕ ' : '';
-      pill.innerHTML = `<span class="attach-pill-name" title="${escapeHtml(a.error || a.file.name)}">${label}${escapeHtml(a.file.name)}</span><button class="attach-pill-remove" onclick="removeAttachment(${a.id})">×</button>`;
+      const isImg = /\.(png|jpe?g|webp)$/i.test(a.file.name);
+      const icon = a.status === 'extracting' || a.status === 'pending'
+        ? `<svg class="attach-pill-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`
+        : a.status === 'error'
+        ? `<svg class="attach-pill-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+        : isImg
+        ? `<svg class="attach-pill-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`
+        : `<svg class="attach-pill-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+      pill.innerHTML = `${icon}<span class="attach-pill-name" title="${escapeHtml(a.error || a.file.name)}">${escapeHtml(a.file.name)}</span><button class="attach-pill-remove" onclick="removeAttachment(${a.id})">×</button>`;
       container.appendChild(pill);
     }
   }
