@@ -55,7 +55,7 @@ logs/queries.jsonl    # Local query log fallback
 
 ```bash
 # Clone and set up
-git clone https://github.com/p6oo/council
+git clone https://github.com/p6oo/OpClave
 cd council
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
