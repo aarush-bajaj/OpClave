@@ -667,6 +667,9 @@
     if (ctxRingEl) ctxRingEl.style.display = currentMode === 'intensive' ? 'none' : '';
     if (pipsEl) pipsEl.style.display = currentMode === 'intensive' ? 'flex' : 'none';
     updateIntensivePips(intensiveCount);
+    // Web search button visibility
+    const webBtn = document.getElementById('web-search-btn');
+    if (webBtn) webBtn.style.display = currentMode === 'intensive' ? 'none' : '';
   }
 
   function toggleCfgDropdown() {
@@ -697,6 +700,7 @@
     enabledModels = new Set(p.models);
     selectedSynthesizer = p.synthesizer;
     document.getElementById('cfg-dropdown').classList.add('hidden');
+    saveConfig();
     syncPipelineUI();
     const webBtn = document.getElementById('web-search-btn');
     if (currentMode === 'intensive') {
@@ -716,11 +720,13 @@
       enabledModels.add(model);
     }
     currentPreset = null;
+    saveConfig();
     syncPipelineUI();
   }
 
   function selectSynth(model) {
     selectedSynthesizer = model;
+    saveConfig();
     syncPipelineUI();
   }
 
@@ -1715,6 +1721,27 @@
     }
   }
 
+  function saveConfig() {
+    localStorage.setItem('opclave-config', JSON.stringify({
+      preset: currentPreset,
+      models: [...enabledModels],
+      synthesizer: selectedSynthesizer,
+      mode: currentMode,
+    }));
+  }
+
+  function loadConfig() {
+    try {
+      const raw = localStorage.getItem('opclave-config');
+      if (!raw) return;
+      const cfg = JSON.parse(raw);
+      if (cfg.models && cfg.models.length) enabledModels = new Set(cfg.models);
+      if (cfg.synthesizer) selectedSynthesizer = cfg.synthesizer;
+      if (cfg.preset !== undefined) currentPreset = cfg.preset;
+      if (cfg.mode) currentMode = cfg.mode;
+    } catch (_) {}
+  }
+
   function saveGlobalPromptCount() {
     const today = new Date().toISOString().slice(0, 10);
     localStorage.setItem('council-prompt-date', today);
@@ -1787,6 +1814,8 @@
   }
 
   // ── Initialize threads ───────────────────────────
+  loadConfig();
+  syncPipelineUI();
   loadGlobalPromptCount();
   loadFromLocalStorage();
 
