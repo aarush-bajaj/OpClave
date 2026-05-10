@@ -1,0 +1,78 @@
+STUDIO — FEATURE ADDITIONS & CHANGES
+=====================================
+
+
+1. THREADS REMOVED FROM STUDIO
+-------------------------------
+Studio no longer maintains a thread history sidebar. Every Studio session
+is treated as a fresh, standalone artifact creation — no history is saved
+between sessions. This keeps the experience focused: you open Studio,
+build something, and save it as an artifact.
+
+Voyance (chat mode) threads are completely unaffected and continue to work
+as before.
+
+
+2. ARTIFACTS PANEL (REPLACES MODAL)
+-------------------------------------
+The old "My Artifacts" button buried at the bottom of the sidebar has been
+replaced with a persistent gold-tinted "Artifacts" button in the header bar,
+visible whenever Studio is active.
+
+Clicking it slides in a right-side drawer panel (300px wide, full height)
+that lists all saved artifacts without covering the main content. The panel
+can be closed by clicking the button again, pressing the × inside the panel,
+or clicking anywhere outside it.
+
+Each artifact card in the panel shows:
+  - An icon indicating type (code or research)
+  - The artifact name
+  - A type badge and the date saved
+  - A pencil (rename) button and a trash (delete) button on hover
+
+
+3. ARTIFACT RENAMING
+---------------------
+Artifacts can now be renamed in two places:
+
+  a) In the artifacts panel — hover over any card to reveal a pencil icon.
+     Clicking it turns the name into an inline input field. Press Enter or
+     click away to save; press Escape to cancel.
+
+  b) In the artifact view — a "Rename" button appears in the export toolbar
+     (alongside Download, Copy, etc.). Clicking it makes the large title
+     directly editable in place. Same Enter/Escape behaviour.
+
+Both surfaces stay in sync: renaming in the panel updates the open view
+title, and vice versa. Names are persisted to localStorage immediately.
+
+
+4. ARTIFACT SAVE — USER-DEFINED NAMES
+---------------------------------------
+When saving a new artifact, the name field is now always blank. Previously
+the app would auto-generate a name from the prompt text; now the user is
+required to choose their own name. This encourages more intentional,
+descriptive naming of saved work.
+
+
+5. INPUT TEXT COMPRESSION
+--------------------------
+When a large amount of text is typed or pasted into the input bar (over 300
+characters), it is automatically compressed into a compact chip displayed
+above the input field. The chip shows a preview of the first ~36 characters
+plus the total character count (e.g. "Explain the entire architecture of… · 842 chars").
+
+This keeps the input area clean and uncluttered when submitting long prompts
+or pasted content.
+
+  - Pressing × on the chip discards the compressed text entirely.
+  - On send, the full text inside the chip is used as the message.
+  - Switching modes clears the chip along with the input.
+
+
+6. ARTIFACT PILL REMOVED FROM HEADER
+--------------------------------------
+The "ARTIFACT" status badge that previously appeared next to the Voyance/
+Studio mode switcher has been removed. The header Artifacts button already
+communicates that Studio is active and artifacts are accessible, making the
+separate pill redundant.
