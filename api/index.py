@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from mangum import Mangum
 from pydantic import BaseModel
 from openai import OpenAI
+import anthropic
 from anthropic import Anthropic
 from google import genai
 from dotenv import load_dotenv
@@ -40,7 +41,7 @@ MODELS_GENERAL = {
     "grok":   "grok-4-1-fast-non-reasoning",
 }
 MODELS_INTENSIVE = {
-    "gpt":    "gpt-5.5-2026-04-23",
+    "gpt":    "gpt-5.4-2026-03-05",
     "claude": "claude-opus-4-7",
     "gemini": "gemini-3.1-pro-preview",
     # Grok is not available in intensive mode
@@ -219,21 +220,38 @@ def estimate_max_tokens(question):
 def ask_gpt(question, max_tokens, history=None, model=None):
     model = model or MODELS_GENERAL["gpt"]
     messages = list(history or []) + [{"role": "user", "content": question}]
-    response = openai_client.chat.completions.create(
-        model=model,
-        max_completion_tokens=max_tokens,
-        messages=messages,
-    )
+    try:
+        response = openai_client.chat.completions.create(
+            model=model,
+            max_completion_tokens=max_tokens,
+            messages=messages,
+        )
+    except Exception as e:
+        err = str(e)
+        print(f"[GPT] {model} failed with max_completion_tokens: {err}", flush=True)
+        # Some models reject max_completion_tokens — retry without it
+        if "max_completion_tokens" in err or "unknown" in err.lower() or "unsupported" in err.lower():
+            response = openai_client.chat.completions.create(
+                model=model,
+                messages=messages,
+            )
+        else:
+            raise
     usage = {"model": model,
              "input_tokens": response.usage.prompt_tokens,
              "output_tokens": response.usage.completion_tokens}
-    return response.choices[0].message.content, usage
+    content = response.choices[0].message.content
+    if not content:
+        content = (getattr(response.choices[0].message, 'refusal', None)
+                   or getattr(response.choices[0].message, 'reasoning_content', None)
+                   or "")
+    return content, usage
 
 
 def ask_claude(question, max_tokens, history=None, model=None):
     model = model or MODELS_GENERAL["claude"]
     messages = list(history or []) + [{"role": "user", "content": question}]
-    for attempt in range(3):
+    for attempt in range(4):
         try:
             with anthropic_client.messages.stream(
                 model=model,
@@ -246,11 +264,11 @@ def ask_claude(question, max_tokens, history=None, model=None):
                          "input_tokens": u.input_tokens,
                          "output_tokens": u.output_tokens}
                 return text, usage
-        except Exception as e:
-            if "overloaded" in str(e).lower() and attempt < 2:
-                time.sleep(5 * (attempt + 1))
+        except anthropic.InternalServerError as e:
+            if attempt < 3:
+                time.sleep(10 * (attempt + 1))
             else:
-                raise
+                raise RuntimeError("Claude is currently overloaded — please try again in a moment.") from e
 
 
 def ask_gemini(question, max_tokens, history=None, model=None):
@@ -305,17 +323,19 @@ def synthesize_with_claude(prompt, max_tokens, history=None, system=None, model=
     }
     if system:
         kwargs["system"] = system
-    for attempt in range(3):
+    for attempt in range(4):
         try:
             with anthropic_client.messages.stream(**kwargs) as stream_obj:
                 for chunk in stream_obj.text_stream:
                     yield chunk
+                final = stream_obj.get_final_message()
+                print(f"[SYNTH Claude] stop_reason={final.stop_reason}  output_tokens={final.usage.output_tokens}  max_tokens={max_tokens}", flush=True)
             return
-        except Exception as e:
-            if "overloaded" in str(e).lower() and attempt < 2:
-                time.sleep(2 ** attempt)
+        except anthropic.InternalServerError as e:
+            if attempt < 3:
+                time.sleep(10 * (attempt + 1))
             else:
-                raise
+                raise RuntimeError("Claude is currently overloaded — please try again in a moment.") from e
 
 
 def synthesize_with_gpt(prompt, max_tokens, history=None, system=None, model=None):
@@ -324,12 +344,24 @@ def synthesize_with_gpt(prompt, max_tokens, history=None, system=None, model=Non
     if system:
         messages.append({"role": "system", "content": system})
     messages += list(history or []) + [{"role": "user", "content": prompt}]
-    stream = openai_client.chat.completions.create(
-        model=model,
-        max_completion_tokens=max_tokens,
-        messages=messages,
-        stream=True,
-    )
+    try:
+        stream = openai_client.chat.completions.create(
+            model=model,
+            max_completion_tokens=max_tokens,
+            messages=messages,
+            stream=True,
+        )
+    except Exception as e:
+        err = str(e)
+        print(f"[GPT synth] {model} max_completion_tokens={max_tokens} failed: {err}", flush=True)
+        if "max_completion_tokens" in err or "unknown" in err.lower() or "unsupported" in err.lower():
+            stream = openai_client.chat.completions.create(
+                model=model,
+                messages=messages,
+                stream=True,
+            )
+        else:
+            raise
     for chunk in stream:
         delta = chunk.choices[0].delta.content
         if delta:
@@ -346,20 +378,29 @@ def synthesize_with_gemini(prompt, max_tokens, history=None, system=None, model=
     config = {"maxOutputTokens": max_tokens}
     if system:
         config["system_instruction"] = system
-    for chunk in gemini_client.models.generate_content_stream(
-        model=model,
-        config=config,
-        contents=contents,
-    ):
-        try:
-            if chunk.text:
-                yield chunk.text
-        except ValueError:
-            candidate = chunk.candidates[0] if chunk.candidates else None
-            parts = candidate.content.parts if candidate and candidate.content else []
-            text = "".join(p.text for p in parts if hasattr(p, "text") and p.text)
-            if text:
-                yield text
+    def _stream(cfg):
+        for chunk in gemini_client.models.generate_content_stream(
+            model=model, config=cfg, contents=contents,
+        ):
+            try:
+                if chunk.text:
+                    yield chunk.text
+            except ValueError:
+                candidate = chunk.candidates[0] if chunk.candidates else None
+                parts = candidate.content.parts if candidate and candidate.content else []
+                text = "".join(p.text for p in parts if hasattr(p, "text") and p.text)
+                if text:
+                    yield text
+    try:
+        yield from _stream(config)
+    except Exception as e:
+        err = str(e)
+        print(f"[Gemini synth] maxOutputTokens={max_tokens} failed: {err} — retrying without cap", flush=True)
+        if "maxOutputTokens" in err or "invalid" in err.lower() or "exceed" in err.lower():
+            fallback_config = {k: v for k, v in config.items() if k != "maxOutputTokens"}
+            yield from _stream(fallback_config)
+        else:
+            raise
 
 
 def synthesize_with_grok(prompt, max_tokens, history=None, system=None, model=None):
@@ -442,9 +483,13 @@ class StreamRequest(BaseModel):
     attachments: List[Attachment] = []
     mode: str = "general"  # "general" or "intensive"
     web_search: bool = False
+    artifact_mode: bool = False
+    forced_artifact_type: str = ""  # "code" | "research" | "" (auto-detect)
+    research_depth: str = "standard"  # "quick" | "standard" | "deep"
 
 class FeedbackRequest(BaseModel):
     message: str = ""
+    sentiment: str = ""
 
 class AdminVerifyRequest(BaseModel):
     code: str = ""
@@ -485,6 +530,618 @@ def build_attachment_context(attachments: list) -> str:
         lines.append(att.content)
         lines.append("---\n")
     return "\n".join(lines)
+
+
+# ── Artifact mode helpers ─────────────────────────────────────────────────────
+
+_ARTIFACT_KEYWORDS = (
+    'compare', 'contrast', 'explain', 'write', 'create', 'outline',
+    'analyze', 'analyse', 'summarize', 'summarise', 'guide', 'tutorial',
+    'essay', 'plan', 'design', 'strategy', 'framework', 'breakdown', 'research',
+)
+
+
+def should_create_artifact(question: str) -> bool:
+    q = (question or "").lower()
+    return any(kw in q for kw in _ARTIFACT_KEYWORDS)
+
+
+_CODE_ACTIONS = ('build', 'create', 'make', 'generate', 'develop', 'code', 'implement', 'design')
+_CODE_TARGETS = (
+    'website', 'web app', 'webapp', 'application', 'app', 'landing page', 'page',
+    'dashboard', 'tool', 'game', 'calculator', 'component', 'ui', 'interface',
+    'portfolio', 'blog', 'form', 'site', 'frontend', 'prototype',
+)
+
+
+def detect_artifact_type(question: str) -> str:
+    q = (question or "").lower()
+    # Code generation: action verb + product noun, or "build/create/make me a …"
+    if (any(a in q for a in _CODE_ACTIONS) and any(t in q for t in _CODE_TARGETS)):
+        return "code"
+    if any(phrase in q for phrase in ('build me', 'create me', 'make me', 'generate me', 'code me')):
+        return "code"
+    if any(w in q for w in ('compare', ' vs ', 'versus', 'difference')):
+        return "comparison"
+    if any(w in q for w in ('explain', 'how does', 'what is', 'what are')):
+        return "explanation"
+    if any(w in q for w in ('essay', 'article')) or q.startswith('write'):
+        return "essay"
+    if any(w in q for w in ('guide', 'tutorial', 'how to')):
+        return "guide"
+    if any(w in q for w in ('analyze', 'analyse', 'breakdown', 'analysis')):
+        return "analysis"
+    return "research"
+
+
+def suggest_artifact_name(question: str, artifact_type: str) -> str:
+    words = (question or "").split()
+    key_words = [w.strip(".,!?;:'\"") for w in words if len(w) > 4][:3]
+    suggestion = " ".join(key_words).title()
+    return suggestion if suggestion else f"Untitled {artifact_type}"
+
+
+def search_web_for_artifact(question: str) -> list:
+    """Run Perplexity to gather live sources for an artifact. Returns list of {url,title,content}."""
+    try:
+        prompt = (
+            f"Research this topic and provide a concise, factual brief with citations: {question}\n\n"
+            "Pull the most authoritative and current sources. Cite each major claim with [1], [2], etc."
+        )
+        content, citations = synthesize_with_perplexity(prompt, 1500, search_query=question)
+    except Exception as e:
+        print(f"[ARTIFACT] web search failed: {e}", flush=True)
+        return []
+    sources = []
+    summary = (content or "").strip()
+    for i, url in enumerate((citations or [])[:8]):
+        domain = ""
+        try:
+            domain = urllib.parse.urlparse(url).netloc.replace("www.", "")
+        except Exception:
+            pass
+        sources.append({
+            "url": url,
+            "title": domain or url,
+            "content": summary[:400] if i == 0 else "",
+        })
+    return sources
+
+
+_DEPTH_TARGETS = {"quick": 6, "standard": 10, "deep": 18}
+
+
+def search_for_research_papers(question: str, depth: str = "standard") -> list:
+    """
+    Use Perplexity to find specific peer-reviewed papers, returning structured metadata.
+    Returns a list of dicts: {authors, year, title, journal, doi, finding}.
+    """
+    target = _DEPTH_TARGETS.get(depth, 10)
+    search_prompt = (
+        "You are searching academic databases for peer-reviewed research.\n\n"
+        f"Question: {question}\n\n"
+        f"Find up to {target} specific papers that directly address different angles of this question.\n\n"
+        "SOURCE QUALITY RULES — strictly enforced:\n"
+        "ONLY return sources from the following categories:\n"
+        "  1. Peer-reviewed papers published in academic journals or conferences relevant to "
+        "the question's domain. Examples by field (not exhaustive):\n"
+        "     - General/multidisciplinary: Science, Nature, PNAS, PLOS ONE, Cell\n"
+        "     - Medicine/health: The Lancet, NEJM, JAMA, BMJ, Nature Medicine\n"
+        "     - Psychology/neuroscience: Psychological Science, Nature Neuroscience, Neuron\n"
+        "     - Economics/finance: American Economic Review, QJE, Journal of Finance, NBER\n"
+        "     - Computer science/AI: arXiv, NeurIPS, ICML, ICLR, CVPR, ACL, IEEE, ACM\n"
+        "     - Climate/environment: Nature Climate Change, GRL, Global Environmental Change\n"
+        "     - Social science/policy: World Development, American Political Science Review\n"
+        "  2. Authoritative institutional reports — first-tier sources for policy, economics, "
+        "public health, and geopolitical questions:\n"
+        "     - UN agencies: WHO, FAO, UNHCR, UNDP, UNEP, UNICEF, ILO, UNESCO\n"
+        "     - Financial institutions: World Bank, IMF (Working Papers, WEO, Fiscal Monitor)\n"
+        "     - Energy/climate: IEA, IRENA, IPCC Assessment Reports and Special Reports\n"
+        "     - OECD Economic Surveys, Health at a Glance, Education at a Glance\n"
+        "     - Central bank research papers (Federal Reserve, ECB, BIS working papers)\n"
+        "     - Government statistics offices (Census Bureau, ONS, Eurostat, etc.)\n"
+        "  3. Official technical reports from major research institutions with primary empirical "
+        "data (RAND, Brookings research with data, peer-reviewed think-tank working papers)\n\n"
+        "DO NOT return any of the following — exclude entirely:\n"
+        "  - Company blogs or marketing content\n"
+        "  - Personal blogs, Substack posts, or Medium articles\n"
+        "  - YouTube videos or video content of any kind\n"
+        "  - Course overview pages or syllabi\n"
+        "  - Library research guides (e.g., LibGuides)\n"
+        "  - General explainer websites (Wikipedia, Investopedia, Towards Data Science)\n"
+        "  - News articles without a direct link to a primary research source\n"
+        "  - Think-tank opinion pieces without primary empirical data\n\n"
+        "Prioritise among qualifying sources:\n"
+        "1. Empirical studies and reports with real quantitative data, projections with confidence intervals\n"
+        "2. Meta-analyses, systematic reviews, and multi-study assessments (e.g., IPCC syntheses)\n"
+        "3. Sources that challenge or complicate the mainstream consensus\n"
+        "4. Recent publications (2020-2026) that may update or contradict older findings\n"
+        "5. Sources from different disciplines that bring different methodological approaches\n"
+        "6. Sources that provide specific regional or comparative data (not only global aggregates)\n\n"
+        "If you cannot find peer-reviewed sources for a claim or sub-question, "
+        "include an entry with title 'NO PEER-REVIEWED SOURCE FOUND' and finding set to "
+        "'No qualifying peer-reviewed source was found for: <the specific claim>'. "
+        "Do NOT substitute a blog post, explainer, or non-peer-reviewed source.\n\n"
+        "For EACH qualifying paper return: Author(s), Year, Title, Journal/Conference, DOI or URL, "
+        "and a one-sentence factual finding from the paper.\n\n"
+        "Output ONLY a JSON array (no prose, no code fences) shaped like:\n"
+        '[{"authors":"Vosoughi et al.","year":2018,"title":"...","journal":"Science",'
+        '"doi":"10.1126/science.aap9559","finding":"..."}]\n\n'
+        "CRITICAL: Only include papers you are confident actually exist. If unsure, exclude it. "
+        "If the finding is unclear, write 'finding unclear from abstract' rather than inventing one."
+    )
+    try:
+        response = perplexity_client.chat.completions.create(
+            model="sonar",
+            messages=[{"role": "user", "content": search_prompt}],
+            max_tokens=2500,
+        )
+        raw = response.choices[0].message.content or ""
+    except Exception as e:
+        print(f"[RESEARCH] Perplexity paper search failed: {e}", flush=True)
+        return []
+
+    # Strip code fences if Perplexity wrapped the JSON
+    text = raw.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        # Remove a leading "json" tag if present
+        if text.lower().startswith("json"):
+            text = text[4:].lstrip()
+    # Find the first '[' and last ']' as a fallback
+    if not text.startswith("["):
+        first = text.find("[")
+        last = text.rfind("]")
+        if first != -1 and last > first:
+            text = text[first:last + 1]
+    try:
+        papers = json.loads(text)
+        if not isinstance(papers, list):
+            return []
+        # Normalise each entry
+        out = []
+        for p in papers:
+            if not isinstance(p, dict):
+                continue
+            out.append({
+                "authors": str(p.get("authors", "") or "").strip(),
+                "year":    p.get("year") or "",
+                "title":   str(p.get("title", "") or "").strip(),
+                "journal": str(p.get("journal", "") or "").strip(),
+                "doi":     str(p.get("doi", "") or "").strip(),
+                "finding": str(p.get("finding", "") or "").strip(),
+            })
+        return out
+    except Exception as e:
+        print(f"[RESEARCH] paper JSON parse failed: {e}", flush=True)
+        return []
+
+
+def format_papers_for_prompt(papers: list) -> str:
+    """Format the paper list as a numbered citation block for model/synthesis prompts."""
+    if not papers:
+        return ""
+    lines = []
+    for i, p in enumerate(papers):
+        authors = p.get("authors") or "Unknown"
+        year = p.get("year") or "n.d."
+        title = p.get("title") or "Untitled"
+        journal = p.get("journal") or ""
+        doi = p.get("doi") or ""
+        finding = p.get("finding") or ""
+        meta = f"{authors} ({year}). \"{title}\""
+        if journal:
+            meta += f". {journal}"
+        if doi:
+            meta += f" (DOI: {doi})"
+        line = f"[{i+1}] {meta}"
+        if finding:
+            line += f"\n     Finding: {finding}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def verify_artifact_citations(synthesis_text: str, papers: list) -> tuple:
+    """
+    Check that every [N] citation maps to a paper in the list and flag unsupported claims.
+    Returns (is_valid, errors).
+    """
+    import re as _re
+    errors = []
+    n_papers = len(papers)
+    cites = _re.findall(r'\[(\d+)\]', synthesis_text or "")
+    for c in cites:
+        try:
+            num = int(c)
+        except ValueError:
+            continue
+        if num < 1 or num > n_papers:
+            errors.append(f"Citation [{num}] is out of range (only {n_papers} papers available).")
+
+    # Flag unqualified claims that don't have a citation within ~80 chars
+    unqualified = [
+        r'\bresearch shows\b',
+        r'\bstudies (?:show|find|indicate)\b',
+        r'\bit is (?:known|established)\b',
+        r'\bexperts agree\b',
+        r'\bevidence shows\b',
+    ]
+    for pat in unqualified:
+        for m in _re.finditer(pat, synthesis_text or "", _re.IGNORECASE):
+            window = (synthesis_text or "")[m.start():m.end() + 80]
+            if not _re.search(r'\[\d+\]', window):
+                errors.append(f"Unqualified claim near \"{window[:48]}…\" — add citation or rephrase.")
+                break  # one warning per pattern is enough
+
+    return (len(errors) == 0, errors)
+
+
+def format_sources_for_context(sources: list) -> str:
+    if not sources:
+        return ""
+    lines = ["Live web research (cite as [1], [2], etc when you use these facts):"]
+    for i, s in enumerate(sources):
+        title = s.get("title", "") or ""
+        url = s.get("url", "") or ""
+        content = (s.get("content") or "")[:300]
+        suffix = f" — {content}" if content else ""
+        lines.append(f"[{i+1}] {title} ({url}){suffix}")
+    return "\n".join(lines)
+
+
+# Research artifact: each model answers the FULL question from a distinct lens.
+# These are treated as raw research inputs — the synthesizer extracts substance,
+# not model opinions. The reader never sees which model said what.
+_ARTIFACT_ROLES_RESEARCH = {
+    "GPT": (
+        "You are a domain expert producing a rigorous research input on the topic given. "
+        "Your mandate is quantitative empirical grounding.\n\n"
+        "SCOPE NOTE (write 2-3 sentences at the top): Define what time horizon, geographic scope, "
+        "and evidence base you are drawing from for this specific topic. Name the primary datasets, "
+        "report series, or authoritative sources that are the foundation of your input "
+        "(e.g., for neuroscience: key journals and meta-analyses; for economics: central bank or "
+        "IMF datasets; for climate: IPCC reports; for public health: WHO or Lancet studies). "
+        "This prevents the output from appearing as cherry-picked anecdotes.\n\n"
+        "CONTENT REQUIREMENTS:\n"
+        "- Every major claim must carry a quantitative anchor where empirical data exists for this "
+        "topic. Replace vague statements with specific figures: not 'outcomes improved' but "
+        "'outcomes improved by X% over Y years in population Z (source)'. If no quantitative data "
+        "exists for a claim, say so explicitly.\n"
+        "- Distinguish clearly between: (a) scientific consensus supported by multiple independent "
+        "studies, (b) findings from individual studies, (c) projections or models with stated "
+        "confidence intervals or uncertainty ranges, and (d) genuine open questions. Label each.\n"
+        "- Name the authoritative source for each key figure. Specify the report, journal, edition, "
+        "or institutional body — not just the institution name alone.\n"
+        "- Cover the primary mechanisms and established evidence at the depth required for someone "
+        "building on this for their own research or decision-making.\n\n"
+        "Aim for 600-800 words of authoritative, citation-anchored prose."
+    ),
+    "Claude": (
+        "You are a domain expert producing a rigorous research input on the topic given. "
+        "Your mandate is critical analysis and counter-argument engagement.\n\n"
+        "CONTENT REQUIREMENTS:\n"
+        "- Identify the strongest counter-arguments and objections to the mainstream view on this "
+        "topic. Do not dismiss them — steelman them. If the dominant framework has a known "
+        "weakness, name it explicitly and explain what it would take to resolve it.\n"
+        "- Distinguish what the evidence actually supports from what is commonly claimed. Point to "
+        "specific cases where the dominant narrative overstates, oversimplifies, or misrepresents "
+        "the underlying findings.\n"
+        "- Address high-impact, low-probability risk scenarios (tail risks) relevant to this topic "
+        "as primary analytical variables, not as peripheral footnotes. For each: describe the "
+        "plausible mechanism, assess the potential magnitude, and explain why mainstream analysis "
+        "tends to underweight it (short-term incentives, measurement difficulty, etc.).\n"
+        "- Identify the assumptions that underlie the mainstream position on this topic. What would "
+        "have to be true for the dominant view to be wrong? What evidence would falsify it?\n"
+        "- Operationalize any heuristic or conceptual shorthand terms relevant to this topic. If "
+        "you introduce or use a coined label, define the specific measurable criteria by which "
+        "something qualifies — do not leave it as an impressionistic phrase.\n"
+        "- Acknowledge genuine uncertainty honestly. If the evidence is mixed or the literature is "
+        "sparse, say so rather than projecting false confidence.\n\n"
+        "Aim for 500-700 words. Intellectual honesty over comprehensiveness."
+    ),
+    "Gemini": (
+        "You are a domain expert producing a rigorous research input on the topic given. "
+        "Your mandate is empirical comparative analysis.\n\n"
+        "CONTENT REQUIREMENTS:\n"
+        "- Ground every claim in a specific named example, data point, case study, or mechanism. "
+        "Generic statements are unacceptable. Replace 'outcomes vary' with a concrete named "
+        "instance of that variation — who, where, by how much, and according to which study.\n"
+        "- Provide at least one comparative analysis: contrast two cases, actors, countries, "
+        "institutions, or approaches that faced the same challenge with different methods or "
+        "starting conditions. Explain what the comparison reveals that a single case would not.\n"
+        "- Where the topic involves policy, regulation, or institutional mechanisms, name the "
+        "specific instruments and explain how they function — not just that they exist. Trace the "
+        "mechanism from design intent to real-world effect, including any documented gaps.\n"
+        "- Quantify impacts wherever empirical data exists. Name the figure, the source, and any "
+        "important methodology caveats (sample size, time period, geographic scope).\n"
+        "- Identify who is concretely affected, how, and what the downstream consequences are for "
+        "practitioners, policymakers, or the populations directly involved.\n\n"
+        "Aim for 500-700 words. Every paragraph must have a concrete empirical anchor."
+    ),
+    "Grok": (
+        "You are a domain expert producing a rigorous research input on the topic given. "
+        "Your mandate is the research frontier, structural gaps, and conceptual operationalization.\n\n"
+        "CONTENT REQUIREMENTS:\n"
+        "- Surface the active debates researchers are currently having in this specific field. "
+        "Be specific: name the competing positions, the evidence cited on each side, and what "
+        "makes the debate genuinely unresolved rather than merely controversial.\n"
+        "- Identify structural or systemic dynamics that standard analyses of this topic tend to "
+        "miss or underweight. This might include second-order effects, perverse incentives, "
+        "interdependencies across systems, or the gap between stated rationale and actual "
+        "mechanisms in relevant policies or institutions.\n"
+        "- Treat high-impact risk scenarios as primary variables with their appropriate analytical "
+        "weight — not as footnotes. For each relevant tail-risk scenario: what is the plausible "
+        "trigger, what is the realistic magnitude of impact, and what makes it structurally "
+        "underrepresented in conventional analysis of this topic?\n"
+        "- Operationalize any conceptual shorthand or coined terms with specific measurable "
+        "criteria. A useful heuristic label is only useful if you can say precisely when something "
+        "qualifies and when it does not.\n"
+        "- Flag recent findings (2021-2026) that challenge established views in this field, "
+        "and explain why they matter.\n\n"
+        "Aim for 500-600 words. Prioritize specificity and intellectual honesty over breadth."
+    ),
+}
+
+# Code artifact: each model acts as a specialist giving creative/technical direction
+_ARTIFACT_ROLES_CODE = {
+    "GPT": (
+        "You are a software architect. Your job is creative and technical direction ONLY — do NOT write code.\n"
+        "Cover: overall architecture, recommended tech stack, file structure, key design decisions and trade-offs.\n"
+        "Be specific and opinionated. 300-500 words."
+    ),
+    "Claude": (
+        "You are a UX and frontend engineer. Your job is creative and technical direction ONLY — do NOT write code.\n"
+        "Cover: component breakdown, user flows, visual design principles, interactions, and accessibility.\n"
+        "Be specific and opinionated. 300-500 words."
+    ),
+    "Gemini": (
+        "You are a performance and data engineer. Your job is creative and technical direction ONLY — do NOT write code.\n"
+        "Cover: data models, animations/visual effects worth including, performance considerations, "
+        "and any libraries or CDN resources that would elevate the result.\n"
+        "Be specific and opinionated. 300-500 words."
+    ),
+    "Grok": (
+        "You are a creative director. Your job is creative direction ONLY — do NOT write code.\n"
+        "Cover: visual identity, colour palette, typography, unique features that would make this stand out, "
+        "and any unexpected angles worth exploring.\n"
+        "Be specific and opinionated. 300-400 words."
+    ),
+}
+
+
+def build_artifact_model_prompt(model_name: str, question: str, web_context: str,
+                                 artifact_type: str = "", papers: list = None) -> str:
+    if artifact_type == "code":
+        role = _ARTIFACT_ROLES_CODE.get(model_name, "Provide creative direction for this build request. Do NOT write code.")
+        parts = [role, "", f"Build request: {question}"]
+        return "\n".join(parts)
+
+    role = _ARTIFACT_ROLES_RESEARCH.get(model_name, "Answer the following question thoroughly.")
+
+    # If we have a paper list, force source-grounded analysis
+    if papers:
+        papers_text = format_papers_for_prompt(papers)
+        return (
+            f"{role}\n\n"
+            f"Question: {question}\n\n"
+            f"Below are {len(papers)} peer-reviewed papers retrieved for this question. "
+            "These are your ONLY allowed sources for factual claims:\n\n"
+            f"{papers_text}\n\n"
+            "RULES:\n"
+            "1. Synthesise what THESE papers actually found. Do not speculate or use general knowledge to fill gaps.\n"
+            "2. Use [1], [2], [3] citations corresponding to the paper numbers above EVERY TIME you reference a finding.\n"
+            "3. If a paper's finding is unclear from what is provided, say so explicitly — do not invent.\n"
+            "4. Mark claims with their support level:\n"
+            "   - 'Consensus across multiple studies' if 3+ papers agree\n"
+            "   - 'Supported by research [N]' if 1-2 papers support it\n"
+            "   - 'Debated in the literature' if papers disagree\n"
+            "   - 'Speculative' if it requires inference beyond the papers\n"
+            "5. Do NOT cite any paper not in the list above.\n"
+            "6. If the papers do not address something, write 'The provided research does not directly address...'\n"
+            "7. Organise your response by themes that emerge from the papers, not arbitrary topics.\n\n"
+            "Write as if for a literature review. Every factual claim must be traceable to a numbered source."
+        )
+
+    # Fallback (no papers): old behaviour with general web context
+    parts = [role, ""]
+    if web_context:
+        parts += [web_context, ""]
+    parts.append(f"Topic: {question}")
+    return "\n".join(parts)
+
+
+def get_artifact_synthesis_prompt(question: str, model_responses: dict, web_sources: list,
+                                   artifact_type: str = "", papers: list = None) -> str:
+    if artifact_type == "code":
+        directions_block = "\n\n---\n\n".join(
+            f"### {name}:\n{truncate(r, 3500)}"
+            for name, r in model_responses.items() if r
+        )
+        return (
+            "You are an expert engineer. You have received creative and architectural direction from "
+            "multiple specialists. Your ONLY job is to write the complete, working code.\n"
+            "Rules: output a single self-contained HTML file with all CSS and JS embedded inline. "
+            "No placeholders. No TODOs. No prose explanations — only brief inline code comments where logic is non-obvious. "
+            "Start your response with ```html and end with ```.\n\n"
+            f"Build request: {question}\n\n"
+            f"Creative direction from the council:\n\n{directions_block}\n\n"
+            "Write the complete implementation now. All CSS in a <style> block. All JS in a <script> block. "
+            "Use CDN links for libraries (Tailwind, Three.js, GSAP, Chart.js etc). "
+            "Make it visually polished and fully functional."
+        )
+
+    # Research / document synthesis — authoritative single-voice format
+    responses_block = "\n\n---\n\n".join(
+        f"[Research input {i+1}]\n{truncate(text, 5000)}"
+        for i, (_, text) in enumerate(model_responses.items()) if text
+    )
+
+    # Paper-grounded path: the synthesizer must cite ONLY from the verified paper list
+    if papers:
+        papers_text = format_papers_for_prompt(papers)
+        return (
+            "You are creating a research artifact from multiple analyses of peer-reviewed papers "
+            "and authoritative institutional reports. Your output will be read by someone using it "
+            "as the basis for their own research or writing. It must read like a well-researched "
+            "scholarly document by a single authoritative voice, not a summary of opinions.\n\n"
+            "CRITICAL RULE: Never mention AI models, which input said what, or that this came from "
+            "multiple sources. Extract the substance. Write as one expert. The machinery is invisible.\n\n"
+            f"Research question: {question}\n\n"
+            f"Verified sources (your ONLY allowed citation pool):\n\n{papers_text}\n\n"
+            f"Independent expert analyses (treat as raw material, not as positions to compare):\n\n"
+            f"{responses_block}\n\n"
+            "=== HOW TO USE THESE INPUTS ===\n"
+            "1. Where multiple analyses cite the SAME source for the same claim: high-confidence consensus — present it as such\n"
+            "2. Where analyses cite DIFFERENT sources for different conclusions: genuine field debate — frame it as 'researchers debate...'\n"
+            "3. Where one analysis makes a claim no other analysis and no source supports: drop it\n"
+            "4. If an analysis overstates a source's finding, defer to what the source actually says\n"
+            "5. Extract quantitative figures from the inputs and anchor them to their sources\n\n"
+            "=== OUTPUT FORMAT ===\n\n"
+            "## Executive Summary\n"
+            "120-160 words. Direct answer to the question. Must include at least two quantitative "
+            "anchors (specific figures with sources). No vague generalities.\n\n"
+            "## Methodology Note\n"
+            "80-120 words. Define the scope of this document: time horizon, geographic focus, "
+            "and type of evidence drawn from. Name the primary datasets, report series, or "
+            "authoritative sources that anchor this document's claims. State explicitly what falls "
+            "outside this document's scope. This prevents the paper from appearing as a collection "
+            "of cherry-picked anecdotes.\n\n"
+            "## [Section title — a specific dimension of the question]\n"
+            "Write 3-5 substantive sections organized by themes that emerge from the sources.\n"
+            "Each section must:\n"
+            "- Open with a quantified empirical anchor: a specific figure, projection, or finding "
+            "with a citation. If no quantitative data exists for a sub-claim, say so explicitly.\n"
+            "- Explain underlying mechanisms clearly.\n"
+            "- Mark confidence with: 'Consensus across studies [1][2][3]', 'One study suggests [4]', "
+            "'Debated in the literature [5][6]', or 'The current evidence base does not support...'\n"
+            "- Where genuine debate exists IN THE FIELD, present it as 'researchers debate...' or "
+            "'some studies find... while others find...' — never as 'inputs disagree'.\n"
+            "- Close with a brief counter-evidence note: the strongest objection or limitation "
+            "specific to this section's claim (1-3 sentences). Label it **Counter-evidence:**\n"
+            "Each section: 300-500 words.\n\n"
+            "## High-Impact Risk Scenarios\n"
+            "150-250 words. Treat tail-risk events specific to this topic as primary analytical "
+            "variables, not peripheral open questions. Identify the scenarios most relevant to "
+            "this subject area. For each:\n"
+            "- Describe the plausible mechanism and trigger\n"
+            "- Assess the magnitude of impact if it materializes\n"
+            "- Explain why conventional analysis structurally underweights it\n"
+            "Cite sources where they exist; acknowledge explicitly where the evidence base is thin.\n\n"
+            "## Structural and Policy Dimensions\n"
+            "150-200 words. Address the structural, institutional, or policy forces shaping this "
+            "topic. Where relevant, name specific mechanisms and explain how they function in "
+            "practice, not just in theory. Provide at least one comparative example contrasting "
+            "two actors, institutions, or approaches with different methods or outcomes.\n\n"
+            "## Counter-Arguments and Limitations\n"
+            "200-300 words. Engage directly with the strongest objections to the paper's central "
+            "claims. Do not dismiss them — present them fairly and explain what evidence would "
+            "resolve them. Also address:\n"
+            "- What assumptions underlie the analysis presented here\n"
+            "- Where the evidence base is weakest or most contested\n"
+            "- What this paper does NOT claim (scope boundaries)\n\n"
+            "## Practical Implications\n"
+            "100-150 words. Concrete, actionable takeaways for policymakers, researchers, "
+            "or practitioners. Avoid generic recommendations.\n\n"
+            "## Open Questions\n"
+            "80-120 words. What remains genuinely unresolved in the field. Be intellectually "
+            "honest — distinguish 'not yet studied' from 'studied but inconclusive'.\n\n"
+            "## Sources\n"
+            "List ONLY the sources actually cited above, in the format already provided "
+            "(authors, year, title, journal/institution, DOI or URL). Renumber sequentially.\n\n"
+            "=== CITATION RULES (follow strictly) ===\n"
+            "- Use [N] citations corresponding ONLY to the numbered source list above.\n"
+            "- Every factual claim must trace to a specific source [N] OR be explicitly marked "
+            "as inference, projection, or speculation.\n"
+            "- Describe what each source actually found — do not exceed the 'Finding:' line.\n"
+            "- Never cite a source not in the list. Never invent findings, authors, or DOIs.\n"
+            "- If a source's finding is unclear, write 'one study suggests...' rather than overstating.\n"
+            "- For general claims with no source support, use 'Research suggests...' without [N].\n"
+            "- Exclude YouTube links, personal blogs, Substack posts, and non-primary-source "
+            "opinion pieces from citations. If such a source appeared in the inputs, drop it.\n\n"
+            "=== QUALITY RULES ===\n"
+            "- 2500-5000 words total. Never pad. Never truncate substance.\n"
+            "- Every paragraph must earn its place: does it change how the reader understands the topic?\n"
+            "- Every major claim needs a quantitative anchor where one exists in the literature.\n"
+            "- Operationalize all heuristic or coined terms. If you use a conceptual label "
+            "(e.g., 'threat multiplier', 'electrostate'), define it with specific measurable criteria "
+            "in the text — do not leave it as an impressionistic phrase.\n"
+            "- Field debates: 'researchers debate X' — never 'sources differ' or 'models disagree'.\n"
+            "- Counter-arguments must be engaged with, not dismissed.\n"
+            "- One authoritative voice throughout. Avoid hedging phrases like 'it could be argued' "
+            "or 'some might say'.\n"
+            "- A reader without the original question should fully understand the topic.\n"
+        )
+
+    # Fallback path: no verified papers found, use general web sources
+    sources_text = "\n".join(
+        f"[{i+1}] {s.get('title','')}: {(s.get('content','') or '')[:200]}".rstrip(": ")
+        + (f" ({s.get('url','')})" if s.get('url') else '')
+        for i, s in enumerate(web_sources)
+    ) or "(no live sources retrieved)"
+
+    return (
+        "You are producing a standalone research document from multiple expert research inputs "
+        "and live web sources. Your output will be read by someone using it as the basis for "
+        "their own research or writing. It must read like a well-researched scholarly document "
+        "by a single authoritative voice, not a summary of different opinions.\n\n"
+        "CRITICAL RULE: Never mention AI models, which input said what, or that this came from "
+        "multiple sources. Extract the substance. Write as one expert. The machinery is invisible.\n\n"
+        f"Research question: {question}\n\n"
+        f"Expert research inputs (treat as raw material, not as positions to compare):\n\n{responses_block}\n\n"
+        f"Live web sources:\n{sources_text}\n\n"
+        "=== OUTPUT FORMAT ===\n\n"
+        "## Executive Summary\n"
+        "120-160 words. Direct answer to the question. Include at least two quantitative anchors "
+        "(specific figures with sources). No vague generalities.\n\n"
+        "## Methodology Note\n"
+        "80-120 words. Define the scope of this document: time horizon, geographic focus, and "
+        "type of evidence used. Name the primary datasets, report series, or authoritative sources "
+        "that anchor this document's claims. State explicitly what falls outside scope.\n\n"
+        "## [Section title — a specific dimension of the question]\n"
+        "Write 3-5 substantive sections of 300-500 words each.\n"
+        "Each section must:\n"
+        "- Open with a quantified empirical anchor: a specific figure, projection, or finding "
+        "with a citation. Cite [N] where a web source supports the claim.\n"
+        "- Explain underlying mechanisms clearly.\n"
+        "- Present genuine field debates as 'researchers debate...' — never 'inputs disagree'.\n"
+        "- Close with a brief **Counter-evidence:** note (1-3 sentences) naming the strongest "
+        "objection or limitation for this section's central claim.\n\n"
+        "## High-Impact Risk Scenarios\n"
+        "150-250 words. Treat tail-risk events specific to this topic as primary analytical "
+        "variables, not peripheral footnotes. Identify the scenarios most relevant to this subject. "
+        "For each: describe the plausible mechanism, assess the magnitude of impact, and explain "
+        "why conventional analysis structurally underweights it.\n\n"
+        "## Structural and Policy Dimensions\n"
+        "150-200 words. Address the structural, institutional, or policy forces shaping this topic. "
+        "Name specific mechanisms and explain how they function in practice. Provide at least one "
+        "comparative example contrasting two actors, institutions, or approaches.\n\n"
+        "## Counter-Arguments and Limitations\n"
+        "200-300 words. Engage with the strongest objections to this document's central claims. "
+        "Address what assumptions underlie the analysis and where the evidence base is weakest.\n\n"
+        "## Practical Implications\n"
+        "100-150 words. Concrete, actionable takeaways. Avoid generic recommendations.\n\n"
+        "## Open Questions\n"
+        "80-120 words. What remains genuinely unresolved. Distinguish 'not yet studied' from "
+        "'studied but inconclusive'.\n\n"
+        "## Sources\n"
+        "[1] Authors, Year. Title. Journal/Institution. URL\n\n"
+        "=== CITATION RULES (follow strictly) ===\n"
+        "- Only cite [N] if you are confident about the specific content of that source.\n"
+        "- Describe what a study actually found, not what you assume it found.\n"
+        "- Never cite by institution name alone — include author, year, and specific finding.\n"
+        "- If you cannot verify what a source says, do NOT use [N] — write 'Research suggests...' instead.\n"
+        "- Do not fabricate findings from a domain name alone.\n"
+        "- Exclude YouTube links, personal blogs, Substack posts, and non-primary-source "
+        "opinion pieces. If such a source appears in the inputs, drop it from citations.\n\n"
+        "=== QUALITY RULES ===\n"
+        "- 2500-5000 words total. Never pad. Never truncate substance.\n"
+        "- Every paragraph must earn its place.\n"
+        "- Every major claim needs a quantitative anchor where one exists in the literature.\n"
+        "- Operationalize all heuristic or coined terms with specific measurable criteria.\n"
+        "- Counter-arguments must be engaged with honestly, not dismissed.\n"
+        "- Field debates: 'researchers debate X' — never 'sources differ on X'.\n"
+        "- One authoritative voice throughout.\n"
+    )
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -576,15 +1233,17 @@ async def feedback(req: FeedbackRequest, request: Request):
     if not check_feedback_rate_limit(ip):
         return {"ok": False, "rate_limited": True, "error": "Too many submissions. Please wait before sending again."}
 
-    host = request.headers.get("host", "")
-    is_local = host.startswith("localhost") or host.startswith("127.")
-    if is_local:
-        print(f"[feedback] {message}")
-        return {"ok": True}
-
     gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
     if not gmail_pass:
         return {"ok": False, "error": "Email not configured"}
+
+    sentiment = req.sentiment.strip()
+    if sentiment == "up":
+        sentiment_label = "[👍 Positive]"
+    elif sentiment == "down":
+        sentiment_label = "[👎 Negative]"
+    else:
+        sentiment_label = ""
 
     def send_email():
         import smtplib, email.mime.text, email.mime.multipart
@@ -593,7 +1252,7 @@ async def feedback(req: FeedbackRequest, request: Request):
         msg = email.mime.multipart.MIMEMultipart()
         msg["From"] = sender
         msg["To"] = recipient
-        msg["Subject"] = "Opclave — Feedback"
+        msg["Subject"] = f"Opclave — Feedback {sentiment_label}".strip()
         msg.attach(email.mime.text.MIMEText(
             f"Feedback received:\n\n{message}\n\n---\nSent via Opclave", "plain"
         ))
@@ -693,12 +1352,21 @@ def stream(req: StreamRequest, request: Request):
     attachment_ctx = build_attachment_context(attachments)
     effective_question = question or "Please review the attached file(s)."
     augmented_question = f"{attachment_ctx}\n{effective_question}" if attachment_ctx else effective_question
-    do_perplexity = req.web_search and not image_mode and not is_intensive
+    artifact_mode = bool(req.artifact_mode) and not image_mode
+    do_perplexity = req.web_search and not image_mode and not is_intensive and not artifact_mode
 
     def generate():
         nonlocal augmented_question
+        artifact_type = ""
         model_tokens = estimate_max_tokens(effective_question)
-        synthesis_tokens = min(max(model_tokens * 2, 3000), 6000)
+        if artifact_mode:
+            model_tokens = max(model_tokens, 4000)
+            synthesis_tokens = 32000
+        elif is_intensive:
+            model_tokens = max(model_tokens, 4000)
+            synthesis_tokens = 32000
+        else:
+            synthesis_tokens = min(max(model_tokens * 2, 3000), 8000)
         print(f"[DEBUG] Question: {repr(effective_question[:80])}", flush=True)
         print(f"[DEBUG] model_tokens={model_tokens}  synthesis_tokens={synthesis_tokens}", flush=True)
         print(f"[DEBUG] Active models: {requested_models}  Synthesizer: {synthesizer}", flush=True)
@@ -707,6 +1375,33 @@ def stream(req: StreamRequest, request: Request):
         results = {}
         usages = {}
         lock = threading.Lock()
+
+        web_sources = []
+        papers = []
+        if artifact_mode:
+            artifact_type = req.forced_artifact_type or detect_artifact_type(effective_question)
+            artifact_name = suggest_artifact_name(effective_question, artifact_type)
+            if artifact_type == "code":
+                synthesis_tokens = 32000
+            yield f"data: {json.dumps({'type': 'artifact_mode', 'enabled': True, 'artifact_type': artifact_type, 'suggested_name': artifact_name})}\n\n"
+
+            if artifact_type == "code":
+                # Code artifacts: keep regular web search for context (frameworks, libs, etc.)
+                yield f"data: {json.dumps({'type': 'searching_web'})}\n\n"
+                web_sources = search_web_for_artifact(effective_question)
+                yield f"data: {json.dumps({'type': 'web_search_complete', 'sources': web_sources})}\n\n"
+            else:
+                # Research artifacts: hunt for real peer-reviewed papers
+                yield f"data: {json.dumps({'type': 'searching_research', 'depth': req.research_depth})}\n\n"
+                papers = search_for_research_papers(effective_question, req.research_depth)
+                yield f"data: {json.dumps({'type': 'papers_found', 'count': len(papers), 'papers': papers})}\n\n"
+                if len(papers) < 5:
+                    yield f"data: {json.dumps({'type': 'insufficient_research', 'count': len(papers), 'message': f'Only found {len(papers)} relevant papers — falling back to general web research.'})}\n\n"
+                    yield f"data: {json.dumps({'type': 'searching_web'})}\n\n"
+                    web_sources = search_web_for_artifact(effective_question)
+                    yield f"data: {json.dumps({'type': 'web_search_complete', 'sources': web_sources})}\n\n"
+
+        web_ctx = format_sources_for_context(web_sources) if web_sources else ""
 
         if image_mode:
             model_question = (
@@ -722,7 +1417,11 @@ def stream(req: StreamRequest, request: Request):
         def run_model(name, func):
             event_queue.put({'type': 'progress', 'model': name, 'status': 'running'})
             try:
-                result, usage = func(model_question, model_tokens, history)
+                if artifact_mode:
+                    q = build_artifact_model_prompt(name, augmented_question, web_ctx, artifact_type, papers)
+                else:
+                    q = model_question
+                result, usage = func(q, model_tokens, history)
                 print(f"[DEBUG] {name} response length: {len(result) if result else 0} chars", flush=True)
                 with lock:
                     results[name] = result
@@ -772,6 +1471,23 @@ def stream(req: StreamRequest, request: Request):
         if image_mode:
             synthesis_system = SYNTHESIS_SYSTEM_IMAGE
             synthesis_prompt = f"Original user request: {augmented_question}\n\n{active_responses}"
+        elif artifact_mode:
+            synthesis_system = (
+                "You are an expert engineer writing complete, working code."
+                if artifact_type == "code" else
+                "You are a research editor producing a structured, publishable artifact. "
+                "Follow the output format in the prompt exactly. Every section must earn its place — "
+                "include something only if understanding it changes how you think about the topic. "
+                "Show genuine consensus AND genuine disagreement across perspectives. "
+                "Write as a single expert author. Use inline citations [1], [2] throughout."
+            )
+            synthesis_prompt = get_artifact_synthesis_prompt(
+                augmented_question,
+                {n: r for n, r in results.items() if r},
+                web_sources,
+                artifact_type,
+                papers,
+            )
         else:
             synthesis_system = SYNTHESIS_SYSTEM_TEXT
             synthesis_prompt = f"Original question: {augmented_question}\n\n{active_responses}"
@@ -813,10 +1529,22 @@ def stream(req: StreamRequest, request: Request):
                 }
                 synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
                 synth_model_str = model_map.get(actual_synth) or MODELS_GENERAL.get(actual_synth, MODELS_GENERAL["claude"])
-                for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, history, system=synthesis_system, model=synth_model_str):
+                synth_history = [] if artifact_mode else history
+                for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, synth_history, system=synthesis_system, model=synth_model_str):
                     council_text += text_chunk
                     yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
                 yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
+                if artifact_mode:
+                    if papers:
+                        # Verify citations are within the paper list and flag unsupported claims
+                        is_valid, errors = verify_artifact_citations(council_text, papers)
+                        if is_valid:
+                            yield f"data: {json.dumps({'type': 'citation_verified', 'valid': True})}\n\n"
+                        else:
+                            yield f"data: {json.dumps({'type': 'citation_warning', 'valid': False, 'errors': errors[:8]})}\n\n"
+                        yield f"data: {json.dumps({'type': 'artifact_papers', 'papers': papers})}\n\n"
+                    elif web_sources:
+                        yield f"data: {json.dumps({'type': 'artifact_sources', 'sources': web_sources})}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'council_error', 'error': str(e)})}\n\n"
 

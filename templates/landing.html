@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpClave: Ask Voyance</title>
-  <meta name="description" content="Ask once. Get independent answers from four AI models, synthesized into one.">
+  <title>OpClave: Voyance and Studio</title>
+  <meta name="description" content="Ask once. Get independent answers from four AI models, synthesized into one. Or build complete applications and research documents with Studio.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -115,7 +115,7 @@
     }
     .nav-cta:hover { background: var(--accent-soft); }
 
-    /* ── Hero ── */
+    /* Hero */
     .splash {
       position: relative;
       min-height: calc(100vh - 56px);
@@ -138,7 +138,7 @@
     }
 
     .splash-inner {
-      max-width: 560px;
+      max-width: 580px;
       margin: 0 auto;
       position: relative;
     }
@@ -163,7 +163,7 @@
       font-weight: 300;
       font-size: 14px;
       color: var(--text-dim);
-      max-width: 380px;
+      max-width: 420px;
       margin: 0 auto 28px;
       line-height: 1.65;
     }
@@ -261,9 +261,9 @@
     .splash-card--primary .card-arrow { color: var(--accent); opacity: 0.7; }
     .splash-card:hover .card-arrow { opacity: 1; }
     .splash-card--primary:hover .card-arrow { transform: translateX(5px); }
-    .splash-card--secondary:hover .card-arrow { transform: translateY(5px); }
+    .splash-card--secondary:hover .card-arrow { transform: translateX(5px); }
 
-    /* ── About section ── */
+    /* About section */
     #about {
       border-top: 1px solid var(--line);
     }
@@ -510,7 +510,138 @@
       font-weight: 400;
     }
 
-    /* Features grid */
+    /* Mode split (Voyance vs Studio) */
+    .mode-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--line);
+      margin-bottom: 0;
+    }
+    .mode-panel {
+      background: var(--bg);
+      padding: 40px 36px;
+    }
+    .mode-badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(201, 167, 122, 0.35);
+      border-radius: 999px;
+      padding: 3px 12px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .mode-title {
+      font-family: var(--serif);
+      font-weight: 300;
+      font-size: 26px;
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+      font-variation-settings: "opsz" 72;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .mode-title em { font-style: italic; color: var(--accent); }
+    .mode-desc {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
+      font-weight: 300;
+    }
+    .mode-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mode-tag-item {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      border: 1px solid var(--line-hover);
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+
+    /* Studio code mockup */
+    .studio-mock {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 48px;
+      background: var(--bg-raised);
+    }
+    .studio-mock-header {
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .studio-cmd-chip {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border: 1px solid rgba(201, 167, 122, 0.3);
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+    .studio-mock-prompt {
+      font-family: var(--sans);
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 300;
+    }
+    .studio-mock-body {
+      padding: 24px 28px 28px;
+    }
+    .studio-artifact-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .studio-artifact-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+    .studio-code-block {
+      background: #0d0d0f;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 8px;
+      padding: 18px 20px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      line-height: 1.65;
+      overflow: hidden;
+    }
+    .ck { color: #c792ea; }
+    .ct { color: #89ddff; }
+    .cs { color: #c3e88d; }
+    .cm { color: #546e7a; }
+    .cp { color: #ffcb6b; }
+    .cn { color: var(--text-dim); }
+
+    /* Features grid: 2x3 */
     .features-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -524,8 +655,8 @@
       border-bottom: 1px solid var(--line);
     }
     .feature-cell:nth-child(2n)   { border-right: none; }
-    .feature-cell:nth-child(3),
-    .feature-cell:nth-child(4)    { border-bottom: none; }
+    .feature-cell:nth-child(5),
+    .feature-cell:nth-child(6)    { border-bottom: none; }
 
     .feature-num {
       font-family: var(--mono);
@@ -566,6 +697,7 @@
       border-bottom: 1px solid var(--line);
       align-items: start;
     }
+    .step:last-child { border-bottom: none; }
     .step-num {
       font-family: var(--mono);
       font-size: 11px;
@@ -596,6 +728,27 @@
       max-width: 500px;
     }
 
+    /* Studio how-it-works sub-section */
+    .studio-steps-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 48px 0 0;
+      margin-bottom: 0;
+    }
+    .studio-steps-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .studio-steps-line {
+      flex: 1;
+      height: 1px;
+      background: rgba(201, 167, 122, 0.18);
+    }
+
     /* CTA */
     .cta-section {
       padding: 96px 24px;
@@ -624,6 +777,13 @@
       color: var(--text-faint);
       margin-bottom: 36px;
     }
+    .cta-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
     .cta-btn {
       display: inline-block;
       font-family: var(--sans);
@@ -637,6 +797,11 @@
       transition: background 0.2s;
     }
     .cta-btn:hover { background: var(--accent-soft); }
+    .cta-btn--ghost {
+      color: var(--text-dim);
+      border-color: var(--line-hover);
+    }
+    .cta-btn--ghost:hover { background: rgba(255,255,255,0.04); color: var(--text); }
 
     /* Footer */
     footer {
@@ -704,6 +869,9 @@
       .section-title { font-size: 28px; margin-bottom: 32px; }
       .preview-section { padding: 64px 16px; }
 
+      .mode-split { grid-template-columns: 1fr; }
+      .mode-panel { padding: 28px 24px; }
+
       .features-grid { grid-template-columns: 1fr; }
       .feature-cell { border-right: none; border-bottom: 1px solid var(--line) !important; }
       .feature-cell:last-child { border-bottom: none !important; }
@@ -754,6 +922,7 @@
   </a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
+    <li><a href="#studio">Studio</a></li>
     <li><a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">GitHub</a></li>
   </ul>
   <a href="/app" class="nav-cta">Try for free</a>
@@ -765,23 +934,23 @@
     <h1 class="splash-wordmark fade-in">Four minds. <em>One answer.</em></h1>
 
     <p class="splash-tagline fade-in" style="transition-delay:.1s">
-      Ask once. Get independent answers from four AI models, synthesized into one.
+      Ask Voyance for answers synthesized from GPT, Claude, Gemini, and Grok. Or switch to Studio to build complete applications and research documents.
     </p>
 
     <div class="splash-cards fade-in" style="transition-delay:.2s">
-      <a href="/app" class="splash-card splash-card--primary">
+      <a href="/app?mode=chat" class="splash-card splash-card--primary">
         <div class="card-text">
           <div class="card-label">Try Voyance</div>
-          <div class="card-sub">Free · No account required</div>
+          <div class="card-sub">Synthesis and analysis · Free · No account required</div>
         </div>
         <div class="card-arrow">→</div>
       </a>
-      <a href="#about" class="splash-card splash-card--secondary">
+      <a href="/app?mode=studio" class="splash-card splash-card--secondary">
         <div class="card-text">
-          <div class="card-label">About</div>
-          <div class="card-sub">How it works</div>
+          <div class="card-label">Try Studio</div>
+          <div class="card-sub">Build applications and research documents</div>
         </div>
-        <div class="card-arrow">↓</div>
+        <div class="card-arrow">→</div>
       </a>
     </div>
   </div>
@@ -790,11 +959,11 @@
 <!-- About -->
 <div id="about">
 
-  <!-- App Preview -->
+  <!-- App Preview: Voyance -->
   <section class="preview-section">
     <div class="preview-inner">
       <div class="preview-header fade-in">
-        <p class="eyebrow">In action</p>
+        <p class="eyebrow">Voyance in action</p>
         <h2 class="section-title" style="margin-bottom:0">See the difference <em>four voices</em> make.</h2>
       </div>
 
@@ -805,7 +974,7 @@
             <div class="browser-dot dot-yellow"></div>
             <div class="browser-dot dot-green"></div>
           </div>
-          <div class="browser-url">opclave.com</div>
+          <div class="browser-url">opclave.com/app</div>
         </div>
         <div class="browser-tabs" id="previewTabs">
           <div class="browser-tab active" data-tab="synthesis">Synthesis</div>
@@ -831,11 +1000,99 @@
     </div>
   </section>
 
+  <!-- Two modes -->
+  <section class="section" id="modes">
+    <div class="section-inner">
+      <p class="eyebrow fade-in">Two modes</p>
+      <h2 class="section-title fade-in" style="transition-delay:.05s;margin-bottom:32px">Ask questions. <em>Build things.</em></h2>
+      <div class="mode-split fade-in" style="transition-delay:.1s">
+        <div class="mode-panel">
+          <div class="mode-badge">Voyance</div>
+          <div class="mode-title">Synthesized <em>answers</em></div>
+          <p class="mode-desc">Ask any question and get four independent responses from GPT, Claude, Gemini, and Grok. A fifth model reads all four and produces one unified answer, surfacing where the models agree, flagging where they diverge, and finding what no single model said on its own.</p>
+          <div class="mode-tags">
+            <span class="mode-tag-item">Q and A</span>
+            <span class="mode-tag-item">Analysis</span>
+            <span class="mode-tag-item">Research</span>
+            <span class="mode-tag-item">Web search</span>
+            <span class="mode-tag-item">File upload</span>
+          </div>
+        </div>
+        <div class="mode-panel" style="border-left:1px solid rgba(255,255,255,0.06)">
+          <div class="mode-badge">Studio</div>
+          <div class="mode-title">Complete <em>artifacts</em></div>
+          <p class="mode-desc">Give a build prompt and get a finished, polished artifact. Studio coordinates GPT, Claude, and Gemini in parallel, then synthesizes their contributions into one complete output. Every artifact is saved to your library and can be opened, exported, or followed up on at any time.</p>
+          <div class="mode-tags">
+            <span class="mode-tag-item">/code</span>
+            <span class="mode-tag-item">/research</span>
+            <span class="mode-tag-item">Artifact library</span>
+            <span class="mode-tag-item">Follow-up</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Studio section -->
+  <section class="section" id="studio" style="padding-top:0">
+    <div class="section-inner">
+      <p class="eyebrow fade-in">Studio</p>
+      <h2 class="section-title fade-in" style="transition-delay:.05s">Build in one <em>prompt.</em></h2>
+
+      <!-- Studio code mockup -->
+      <div class="studio-mock fade-in" style="transition-delay:.1s">
+        <div class="studio-mock-header">
+          <span class="studio-cmd-chip">/code</span>
+          <span class="studio-mock-prompt">Build a personal finance dashboard with spending by category and monthly trend charts</span>
+        </div>
+        <div class="studio-mock-body">
+          <div class="studio-artifact-label">
+            <div class="studio-artifact-dot"></div>
+            Artifact
+          </div>
+          <div class="studio-code-block">
+<span class="cm">&lt;!-- Finance Dashboard, generated by Studio --&gt;</span><br>
+<span class="ct">&lt;!DOCTYPE</span> <span class="cp">html</span><span class="ct">&gt;</span><br>
+<span class="ct">&lt;html</span> <span class="cp">lang</span><span class="cn">=</span><span class="cs">"en"</span><span class="ct">&gt;</span><br>
+<span class="ct">&lt;head&gt;</span><br>
+&nbsp;&nbsp;<span class="ct">&lt;meta</span> <span class="cp">charset</span><span class="cn">=</span><span class="cs">"UTF-8"</span><span class="ct">&gt;</span><br>
+&nbsp;&nbsp;<span class="ct">&lt;title&gt;</span><span class="cn">Finance Dashboard</span><span class="ct">&lt;/title&gt;</span><br>
+&nbsp;&nbsp;<span class="ct">&lt;script</span> <span class="cp">src</span><span class="cn">=</span><span class="cs">"https://cdn.jsdelivr.net/npm/chart.js"</span><span class="ct">&gt;&lt;/script&gt;</span><br>
+<span class="ct">&lt;/head&gt;</span><br>
+<span class="ct">&lt;body&gt;</span><br>
+&nbsp;&nbsp;<span class="ct">&lt;div</span> <span class="cp">class</span><span class="cn">=</span><span class="cs">"dashboard"</span><span class="ct">&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;h1&gt;</span><span class="cn">Monthly Overview</span><span class="ct">&lt;/h1&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;div</span> <span class="cp">class</span><span class="cn">=</span><span class="cs">"cards"</span><span class="ct">&gt;</span><span class="cm">&lt;!-- KPI cards --&gt;</span><span class="ct">&lt;/div&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;canvas</span> <span class="cp">id</span><span class="cn">=</span><span class="cs">"spendingChart"</span><span class="ct">&gt;&lt;/canvas&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;canvas</span> <span class="cp">id</span><span class="cn">=</span><span class="cs">"trendChart"</span><span class="ct">&gt;&lt;/canvas&gt;</span><br>
+&nbsp;&nbsp;<span class="ct">&lt;/div&gt;</span><br>
+<span class="ct">&lt;/body&gt;</span><br>
+<span class="ct">&lt;/html&gt;</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Studio capability cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px">
+        <div class="fade-in" style="border:1px solid var(--line);border-radius:10px;padding:28px 28px;transition-delay:.12s">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">/code</div>
+          <div style="font-family:var(--serif);font-weight:300;font-size:20px;letter-spacing:-.01em;font-variation-settings:'opsz' 72;color:var(--text);margin-bottom:10px">Applications</div>
+          <p style="font-size:13px;color:var(--text-dim);line-height:1.7;font-weight:300">Build full HTML, CSS, and JavaScript applications in a single prompt. Dashboards, games, landing pages, data visualizers, interactive tools, and more. All four models collaborate on architecture, UX, and performance before the final artifact is synthesized.</p>
+        </div>
+        <div class="fade-in" style="border:1px solid var(--line);border-radius:10px;padding:28px 28px;transition-delay:.18s">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">/research</div>
+          <div style="font-family:var(--serif);font-weight:300;font-size:20px;letter-spacing:-.01em;font-variation-settings:'opsz' 72;color:var(--text);margin-bottom:10px">Documents</div>
+          <p style="font-size:13px;color:var(--text-dim);line-height:1.7;font-weight:300">Generate comprehensive research documents with structured sections, citations, and analysis. Multiple models contribute independent findings, and the synthesis model assembles them into a single cohesive report. Follow up on any saved artifact to extend, transform, or build on it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Features -->
   <section class="section" id="features">
     <div class="section-inner">
       <p class="eyebrow fade-in">Features</p>
-      <h2 class="section-title fade-in" style="transition-delay:.05s">One question. <em>Every perspective.</em></h2>
+      <h2 class="section-title fade-in" style="transition-delay:.05s">Everything you need. <em>Nothing you don't.</em></h2>
       <div class="features-grid">
         <div class="feature-cell fade-in">
           <div class="feature-num">01</div>
@@ -847,15 +1104,25 @@
           <div class="feature-title"><em>Voyance</em> synthesis</div>
           <p class="feature-desc">A fifth model reads all four responses and produces one unified answer, surfacing where the models converge, flagging where they diverge, and finding what no single model said alone.</p>
         </div>
-        <div class="feature-cell fade-in" style="transition-delay:.12s">
+        <div class="feature-cell fade-in" style="transition-delay:.08s">
           <div class="feature-num">03</div>
+          <div class="feature-title">Studio <em>code generation</em></div>
+          <p class="feature-desc">Switch to Studio and type a build prompt. GPT, Claude, and Gemini work in parallel, each contributing different strengths, and a synthesis model composes the final complete application. Works for dashboards, games, tools, landing pages, and anything that runs in a browser.</p>
+        </div>
+        <div class="feature-cell fade-in" style="transition-delay:.12s">
+          <div class="feature-num">04</div>
+          <div class="feature-title">Research <em>documents</em></div>
+          <p class="feature-desc">Studio's research mode produces structured, multi-section documents from a single prompt. Each model contributes independent findings and the synthesizer assembles them into one cohesive artifact. Use the follow-up feature to extend any saved document or turn research into a working application.</p>
+        </div>
+        <div class="feature-cell fade-in" style="transition-delay:.14s">
+          <div class="feature-num">05</div>
           <div class="feature-title">File <em>attachments</em></div>
-          <p class="feature-desc">Upload a PDF, image, or document. All four models reason over your file simultaneously, useful for homework, research, or anything where context matters.</p>
+          <p class="feature-desc">Upload a PDF, image, or document and all active models reason over it simultaneously. Attach a research paper to Voyance for multi-perspective analysis, or attach a design mockup to Studio to inform how it builds your application.</p>
         </div>
         <div class="feature-cell fade-in" style="transition-delay:.18s">
-          <div class="feature-num">04</div>
-          <div class="feature-title">Prompt <em>engineering</em></div>
-          <p class="feature-desc">Using OpClave to generate prompts before building with tools like Lovable or Claude produces significantly better results. Four models debating an approach catches angles a single prompt misses.</p>
+          <div class="feature-num">06</div>
+          <div class="feature-title">Saved <em>artifact library</em></div>
+          <p class="feature-desc">Every Studio output is automatically saved to your artifact library. Open any artifact at any time, export it as Markdown or HTML, or follow up on it with a new prompt. Attach a saved research document to your next Studio session and the models will use it as full context for what they build.</p>
         </div>
       </div>
     </div>
@@ -866,26 +1133,57 @@
     <div class="section-inner">
       <p class="eyebrow fade-in">How it works</p>
       <h2 class="section-title fade-in" style="transition-delay:.05s">Simple by <em>design.</em></h2>
+
+      <!-- Voyance steps -->
       <div class="steps">
         <div class="step fade-in">
           <span class="step-num">01</span>
           <div>
             <div class="step-title">Ask your <em>question</em></div>
-            <p class="step-desc">Type anything: a hard question, a decision you're wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p>
+            <p class="step-desc">Type anything: a hard question, a decision you are wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p>
           </div>
         </div>
         <div class="step fade-in">
           <span class="step-num">02</span>
           <div>
-            <div class="step-title"><em>Voyance</em> responds</div>
-            <p class="step-desc">All four models answer independently and in parallel. You get each perspective in its own tab, unfiltered, unmerged, and fully attributable to its source.</p>
+            <div class="step-title"><em>Four models</em> respond</div>
+            <p class="step-desc">GPT, Claude, Gemini, and Grok answer independently and in parallel. You get each perspective in its own tab, unfiltered and fully attributable to its source.</p>
           </div>
         </div>
         <div class="step fade-in">
           <span class="step-num">03</span>
           <div>
             <div class="step-title">One <em>synthesis</em></div>
-            <p class="step-desc">A synthesis model reads everything and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p>
+            <p class="step-desc">A synthesis model reads all four responses and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Studio steps -->
+      <div class="studio-steps-header fade-in">
+        <span class="studio-steps-label">Studio</span>
+        <div class="studio-steps-line"></div>
+      </div>
+      <div class="steps" style="border-top:none">
+        <div class="step fade-in">
+          <span class="step-num">01</span>
+          <div>
+            <div class="step-title">Give a <em>build prompt</em></div>
+            <p class="step-desc">Use the /code command to describe an application, or /research to describe a document. Be as specific or as broad as you want. Attach a saved artifact to give the models full context from your previous work.</p>
+          </div>
+        </div>
+        <div class="step fade-in">
+          <span class="step-num">02</span>
+          <div>
+            <div class="step-title">Models <em>collaborate</em></div>
+            <p class="step-desc">GPT, Claude, and Gemini each work on the build simultaneously, contributing different strengths. For code, they each produce working implementations. For research, they each contribute independent findings.</p>
+          </div>
+        </div>
+        <div class="step fade-in">
+          <span class="step-num">03</span>
+          <div>
+            <div class="step-title">Complete <em>artifact</em></div>
+            <p class="step-desc">A synthesis model reads all three contributions and composes a single polished artifact, resolving conflicts and combining the best of each. The result is saved to your library automatically.</p>
           </div>
         </div>
       </div>
@@ -896,8 +1194,11 @@
   <section class="cta-section">
     <svg class="cta-logo fade-in" width="40" height="40" aria-hidden="true"><use href="#lm-lg"/></svg>
     <h2 class="cta-title fade-in" style="transition-delay:.05s">Stop asking <em>one.</em><br>Ask all of them.</h2>
-    <p class="cta-sub fade-in" style="transition-delay:.1s">Free to use. No account required.</p>
-    <a href="/app" class="cta-btn fade-in" style="transition-delay:.15s">Ask Voyance</a>
+    <p class="cta-sub fade-in" style="transition-delay:.1s">Free to use. No account required. Voyance and Studio both included.</p>
+    <div class="cta-btns fade-in" style="transition-delay:.15s">
+      <a href="/app?mode=chat" class="cta-btn">Ask Voyance</a>
+      <a href="/app?mode=studio" class="cta-btn cta-btn--ghost">Open Studio</a>
+    </div>
   </section>
 
 </div>
@@ -971,14 +1272,15 @@
     });
   });
 
-  // Fade transition for /app links
-  document.querySelectorAll('a[href="/app"]').forEach(function(link) {
+  // Fade transition for /app links (handles ?mode=studio too)
+  document.querySelectorAll('a[href^="/app"]').forEach(function(link) {
     link.addEventListener('click', function(e) {
       e.preventDefault();
+      var dest = link.getAttribute('href');
       var overlay = document.getElementById('pt-overlay');
       overlay.style.pointerEvents = 'all';
       overlay.style.opacity = '1';
-      setTimeout(function() { window.location.href = '/app'; }, 450);
+      setTimeout(function() { window.location.href = dest; }, 450);
     });
   });
 </script>

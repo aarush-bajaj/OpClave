@@ -8,5 +8,10 @@
     { "source": "/logs",        "destination": "/api/index" },
     { "source": "/app",         "destination": "/api/index" },
     { "source": "/(.*)",        "destination": "/api/index" }
-  ]
+  ],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300
+    }
+  }
 }

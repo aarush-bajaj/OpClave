@@ -110,7 +110,124 @@
     .dark #web-search-btn.active { color: #c9a77a; border-color: rgba(201,167,122,0.45); background: rgba(201,167,122,0.08); }
     #web-search-btn.active:hover { background: rgba(201,167,122,0.13); }
 
+    /* ── App mode nav (Voyance / Studio) ─────────────────────── */
+    .app-mode-nav {
+      display: flex; flex-direction: column; gap: 5px; padding: 10px 10px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
+    }
+    .app-mode-btn {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid transparent;
+      cursor: pointer; font-family: 'Inter',sans-serif;
+      transition: all .15s; display: flex; align-items: center; gap: 10px; text-align: left;
+      background: none; color: #55555a;
+    }
+    .app-mode-btn-icon {
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.04); transition: background .15s;
+    }
+    .app-mode-btn-text { display: flex; flex-direction: column; gap: 1px; }
+    .app-mode-btn-name { font-size: 13px; font-weight: 500; color: #888; line-height: 1.2; }
+    .app-mode-btn-desc { font-size: 10px; color: #444; line-height: 1.2; }
+    .app-mode-btn.active .app-mode-btn-icon {
+      background: rgba(201,167,122,0.15);
+    }
+    .app-mode-btn.active .app-mode-btn-name { color: #c9a77a; }
+    .app-mode-btn.active .app-mode-btn-desc { color: rgba(201,167,122,0.6); }
+    .app-mode-btn.active { border-color: rgba(201,167,122,0.2); background: rgba(201,167,122,0.05); }
+    .app-mode-btn:not(.active):hover { background: rgba(255,255,255,0.03); }
+    .app-mode-btn:not(.active):hover .app-mode-btn-name { color: #aaa; }
+
+    /* ── Studio workspace ─────────────────────────────────────── */
+    #studio-workspace {
+      flex: 1; overflow-y: auto; display: none; flex-direction: column;
+    }
+    #studio-workspace.active { display: flex; }
+    #studio-empty {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; text-align: center; padding: 40px 24px; gap: 6px;
+    }
+    .studio-headline {
+      font-family: 'Fraunces',serif; font-size: clamp(32px,5vw,52px);
+      font-weight: 400; letter-spacing: -0.02em; color: #ededed; line-height: 1.1;
+      margin-bottom: 8px;
+    }
+    .studio-sub {
+      color: #55555a; font-size: 13px; max-width: 340px; line-height: 1.6;
+      margin-bottom: 22px;
+    }
+    .studio-chips {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+      max-width: 520px;
+    }
+    .studio-chip {
+      padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);
+      background: none; color: #888; font-size: 12.5px; cursor: pointer;
+      font-family: 'Inter',sans-serif; transition: all .15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .studio-chip:hover { border-color: rgba(201,167,122,0.4); color: #c9a77a; background: rgba(201,167,122,0.06); }
+    .studio-chip-cmd {
+      font-family: var(--mono,'JetBrains Mono',monospace); font-size: 10px;
+      color: #c9a77a; letter-spacing: 0.04em;
+    }
+
+    /* Studio command mode buttons in composer */
+    .studio-cmd-bar {
+      display: none; gap: 6px; padding: 4px 2px 6px; flex-shrink: 0;
+    }
+    .studio-cmd-bar.visible { display: flex; }
+    .studio-cmd-btn {
+      padding: 4px 11px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.09);
+      background: none; color: #78787e; font-size: 11px;
+      font-family: var(--mono,'JetBrains Mono',monospace); letter-spacing: 0.05em;
+      cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 5px;
+    }
+    .studio-cmd-btn:hover { color: #b8b8c0; border-color: rgba(255,255,255,0.2); }
+    .studio-cmd-btn.active { color: #c9a77a; border-color: rgba(201,167,122,0.45); background: rgba(201,167,122,0.07); }
+
     /* Sources panel */
+    /* ── Turn metadata (contributing models + lead synthesizer) ── */
+    .turn-meta {
+      display: flex; align-items: center; gap: 7px;
+      margin-bottom: 9px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 10.5px; letter-spacing: 0.02em;
+    }
+    .turn-meta-models { color: #46464e; }
+    .turn-meta-sep { color: #35353b; font-size: 10px; }
+    .turn-meta-synth {
+      color: #7a6a58;
+      border: 1px solid rgba(201,167,122,0.2);
+      border-radius: 4px; padding: 1px 6px;
+    }
+    /* ── Analysis toggle ─────────────────────────────── */
+    .analysis-toggle-row {
+      margin-top: 14px;
+    }
+    .analysis-toggle-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.09); cursor: pointer;
+      color: #78787e; font-size: 11px; padding: 5px 12px; border-radius: 6px;
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Inter',sans-serif; transition: all .15s;
+    }
+    .analysis-toggle-btn:hover { color: #d4d4d8; border-color: rgba(255,255,255,0.2); }
+    .analysis-toggle-btn.open { color: #c9a77a; border-color: rgba(201,167,122,0.4); background: rgba(201,167,122,0.07); }
+    .analysis-toggle-chev { transition: transform .2s; }
+    .analysis-toggle-btn.open .analysis-toggle-chev { transform: rotate(180deg); }
+    .analysis-panel {
+      margin-top: 12px; padding: 14px 16px;
+      background: #0e0e10; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px; font-size: 13px; line-height: 1.65; color: #b8b8c0;
+    }
+    .analysis-panel h2, .analysis-panel h3 {
+      font-family: 'Fraunces',serif; color: #d4d4d8; font-weight: 400;
+      font-size: 14px; margin: 14px 0 6px;
+    }
+    .analysis-panel p { margin: 6px 0 10px; }
+    .analysis-panel ul, .analysis-panel ol { margin: 6px 0 10px 18px; }
+    .analysis-panel strong { color: #ededed; font-weight: 500; }
+
     .sources-panel {
       margin-top: 12px; padding-top: 12px;
       border-top: 1px solid var(--line, rgba(255,255,255,0.07));
@@ -142,6 +259,452 @@
     .tab-btn[data-tab="Perplexity"] .tab-dot.done    { background: #2dd4bf; }
     .tab-btn[data-tab="Perplexity"] .tab-dot.loading { background: #2dd4bf; }
 
+    /* Artifact toggle button (mirrors web-search-btn) */
+    #artifact-btn {
+      background: none; border: 1px solid transparent; cursor: pointer;
+      padding: 4px 8px; border-radius: 6px;
+      display: flex; align-items: center; gap: 5px; flex-shrink: 0;
+      transition: color .15s, background .15s, border-color .15s;
+      color: #9ca3af; font-size: 11px;
+      font-family: var(--mono, 'JetBrains Mono', monospace); letter-spacing: 0.04em;
+    }
+    .dark #artifact-btn { color: #565869; }
+    #artifact-btn:hover { color: #6b7280; background: #f3f4f6; }
+    .dark #artifact-btn:hover { color: #8e8ea0; background: #3a3a3a; }
+    #artifact-btn.active {
+      color: #c9a77a; border-color: rgba(201,167,122,0.45);
+      background: rgba(201,167,122,0.07);
+    }
+    .dark #artifact-btn.active { color: #c9a77a; border-color: rgba(201,167,122,0.45); background: rgba(201,167,122,0.08); }
+    #artifact-btn.active:hover { background: rgba(201,167,122,0.13); }
+
+    /* Artifacts sidebar button */
+    /* Artifacts header button */
+    #artifacts-header-btn {
+      display: none; align-items: center; gap: 7px;
+      padding: 6px 12px; border-radius: 8px; cursor: pointer;
+      background: rgba(201,167,122,0.08); border: 1px solid rgba(201,167,122,0.28);
+      color: #c9a77a; font-size: 12.5px; font-family: 'Inter',sans-serif; font-weight: 500;
+      transition: all .18s; white-space: nowrap; flex-shrink: 0;
+      letter-spacing: 0.01em;
+    }
+    #artifacts-header-btn:hover {
+      background: rgba(201,167,122,0.15); border-color: rgba(201,167,122,0.45);
+      box-shadow: 0 0 12px rgba(201,167,122,0.12);
+    }
+    #artifacts-header-btn.panel-open {
+      background: rgba(201,167,122,0.18); border-color: rgba(201,167,122,0.55); color: #d6b98a;
+      box-shadow: 0 0 16px rgba(201,167,122,0.18);
+    }
+    #artifacts-header-btn .ahb-count {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 10px; color: #c9a77a; background: rgba(201,167,122,0.15);
+      border: 1px solid rgba(201,167,122,0.35); border-radius: 4px; padding: 1px 6px;
+    }
+
+    /* Artifacts right-side panel */
+    #artifacts-panel {
+      position: fixed; top: 0; right: 0; width: 300px; height: 100vh;
+      background: #080808; border-left: 1px solid rgba(255,255,255,0.08);
+      transform: translateX(100%);
+      transition: transform 0.26s cubic-bezier(0.4,0,0.2,1);
+      z-index: 120; display: flex; flex-direction: column;
+      box-shadow: -16px 0 56px rgba(0,0,0,0.55);
+    }
+    #artifacts-panel.open { transform: translateX(0); }
+    .apanel-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 18px 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .apanel-title {
+      font-family: 'Fraunces', serif; font-size: 18px; font-weight: 400;
+      color: #ededed; letter-spacing: -0.01em; flex: 1;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .apanel-count {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 10px; color: #c9a77a; background: rgba(201,167,122,0.12);
+      border: 1px solid rgba(201,167,122,0.25); border-radius: 4px; padding: 1px 6px;
+    }
+    .apanel-close {
+      background: none; border: none; cursor: pointer; color: #55555a;
+      padding: 4px; border-radius: 6px; transition: color .15s;
+      display: flex; align-items: center;
+    }
+    .apanel-close:hover { color: #b8b8c0; }
+    .apanel-body { overflow-y: auto; padding: 8px 8px 16px; flex: 1; }
+    .apanel-empty {
+      text-align: center; padding: 56px 20px;
+      color: #55555a; font-size: 13px; line-height: 1.65;
+    }
+    .apanel-empty svg { margin: 0 auto 14px; display: block; opacity: .25; }
+    .apanel-section-label {
+      font-family: var(--mono,'JetBrains Mono',monospace); font-size: 9.5px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: #444;
+      padding: 10px 10px 6px; user-select: none;
+    }
+    .aitem {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 10px; border-radius: 10px; cursor: pointer;
+      transition: background .15s; border: 1px solid transparent;
+    }
+    .aitem:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.05); }
+    .aitem.active { background: rgba(201,167,122,0.08); border-color: rgba(201,167,122,0.2); }
+    .aitem-icon {
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; margin-top: 1px;
+      background: rgba(201,167,122,0.1); border: 1px solid rgba(201,167,122,0.2);
+      display: flex; align-items: center; justify-content: center; color: #c9a77a;
+    }
+    .aitem-info { flex: 1; min-width: 0; }
+    .aitem-name {
+      font-size: 13px; color: #d4d4d8; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; font-weight: 500;
+    }
+    .aitem-preview {
+      font-size: 11.5px; color: #4a4a52; line-height: 1.45;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 5px;
+    }
+    .aitem-meta {
+      font-family: var(--mono,'JetBrains Mono',monospace); font-size: 9.5px;
+      color: #44444c; display: flex; gap: 7px; align-items: center;
+    }
+    .aitem-type-badge {
+      color: #c9a77a; border: 1px solid rgba(201,167,122,0.3);
+      border-radius: 3px; padding: 1px 5px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .aitem-delete, .aitem-rename {
+      opacity: 0; background: none; border: 1px solid transparent; cursor: pointer;
+      color: #55555a; padding: 5px; border-radius: 6px; margin-top: 2px;
+      transition: all .15s; display: flex; align-items: center; flex-shrink: 0;
+    }
+    .aitem:hover .aitem-delete, .aitem:hover .aitem-rename { opacity: 1; }
+    .aitem-delete:hover { color: #f87171; border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.07); }
+    .aitem-rename:hover { color: #c9a77a; border-color: rgba(201,167,122,0.3); background: rgba(201,167,122,0.07); }
+    .aitem-name-input {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(201,167,122,0.4);
+      border-radius: 5px; padding: 2px 6px; color: #d4d4d8; font-size: 13px;
+      font-family: 'Inter', sans-serif; font-weight: 500; outline: none;
+      width: 100%; min-width: 0;
+    }
+    .artifact-title-input {
+      font-family: 'Fraunces', serif; font-size: 32px; font-weight: 400;
+      letter-spacing: -0.02em; color: #ededed; background: transparent;
+      border: none; border-bottom: 1px solid rgba(201,167,122,0.45);
+      outline: none; width: 100%; margin-bottom: 6px; padding: 0 0 2px;
+    }
+
+    /* Confirm delete modal */
+    #confirm-delete-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200;
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    #confirm-delete-overlay.visible { display: flex; }
+    #confirm-delete-modal {
+      background: #0d0d0d; border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px; padding: 24px 24px 20px; max-width: 360px; width: 100%;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+    }
+    .cdm-title { font-size: 15px; font-weight: 600; color: #ededed; margin-bottom: 8px; }
+    .cdm-sub { font-size: 13px; color: #78787e; margin-bottom: 20px; line-height: 1.5; }
+    .cdm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .cdm-cancel {
+      background: none; border: 1px solid rgba(255,255,255,0.1); color: #b8b8c0;
+      padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+      font-family: 'Inter',sans-serif; transition: all .15s;
+    }
+    .cdm-cancel:hover { background: rgba(255,255,255,0.05); color: #ededed; }
+    .cdm-confirm {
+      background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.35);
+      color: #f87171; padding: 7px 16px; border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-family: 'Inter',sans-serif; transition: all .15s;
+    }
+    .cdm-confirm:hover { background: rgba(248,113,113,0.25); }
+
+    /* Save-artifact modal */
+    #artifact-save-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 130;
+      align-items: center; justify-content: center; padding: 16px; display: none;
+    }
+    #artifact-save-overlay.visible { display: flex; }
+    #artifact-save-modal {
+      background: #0d0d0d; border: 1px solid #1e1e1e; border-radius: 16px;
+      padding: 22px 22px 18px; max-width: 460px; width: 100%;
+      display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 0 60px rgba(201,167,122,0.18);
+    }
+    #artifact-save-modal h3 {
+      font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: #c9a77a;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #artifact-save-modal label {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #78787e; margin-bottom: 4px; display: block;
+    }
+    #artifact-save-modal input, #artifact-save-modal textarea {
+      width: 100%; background: #141417; border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 8px; padding: 8px 10px; color: #ededed; font-size: 13px;
+      font-family: 'Inter', sans-serif; outline: none;
+      transition: border-color .15s;
+    }
+    #artifact-save-modal input:focus, #artifact-save-modal textarea:focus {
+      border-color: rgba(201,167,122,0.45);
+    }
+    .artifact-preview {
+      background: #141417; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+      padding: 8px 10px; color: #b8b8c0; font-size: 12px; line-height: 1.55;
+      max-height: 80px; overflow: hidden;
+    }
+    #artifact-save-actions { display: flex; gap: 8px; margin-top: 6px; }
+    .btn-primary, .btn-secondary {
+      flex: 1; padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: #c9a77a; color: #18120a; border-color: #c9a77a; }
+    .btn-primary:hover { background: #d6b586; }
+    .btn-secondary { background: transparent; color: #b8b8c0; border-color: rgba(255,255,255,0.12); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.04); color: #ededed; }
+
+    /* Artifact view (full) */
+    #artifact-view { display: none; flex: 1; overflow-y: auto; }
+    #artifact-view.visible { display: block; }
+    .artifact-view-inner {
+      max-width: 760px; margin: 0 auto; padding: 18px 16px 80px;
+    }
+    #artifact-view .artifact-back {
+      background: none; border: 1px solid rgba(255,255,255,0.1);
+      color: #b8b8c0; font-size: 11px; font-family: var(--mono, 'JetBrains Mono', monospace);
+      letter-spacing: 0.06em; padding: 5px 10px; border-radius: 6px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px;
+    }
+    #artifact-view .artifact-back:hover { background: rgba(255,255,255,0.04); color: #ededed; }
+    #artifact-view .artifact-title {
+      font-family: 'Fraunces', serif; font-size: 32px; font-weight: 400; letter-spacing: -0.02em;
+      color: #ededed; margin-bottom: 6px;
+    }
+    #artifact-view .artifact-meta {
+      font-family: var(--mono, 'JetBrains Mono', monospace); font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase; color: #78787e;
+      margin-bottom: 18px; display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    #artifact-view .artifact-tag {
+      color: #c9a77a; padding: 2px 8px; border: 1px solid rgba(201,167,122,0.35);
+      border-radius: 4px; font-size: 9.5px;
+    }
+    .artifact-body { font-size: 14.5px; line-height: 1.7; color: #d4d4d8; }
+    .artifact-body h1, .artifact-body h2, .artifact-body h3 {
+      font-family: 'Fraunces', serif; color: #ededed; margin: 22px 0 8px; font-weight: 400;
+    }
+    .artifact-body h1 { font-size: 22px; }
+    .artifact-body h2 { font-size: 19px; }
+    .artifact-body h3 { font-size: 16px; }
+    .artifact-body p { margin: 8px 0 12px; }
+    .artifact-body ul, .artifact-body ol { margin: 8px 0 14px 22px; }
+    .artifact-body code { background: #1a1a1d; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
+    .citation-link {
+      color: #c9a77a; text-decoration: none; font-weight: 500;
+      padding: 0 1px; border-radius: 2px; transition: background .15s;
+    }
+    .citation-link:hover { background: rgba(201,167,122,0.15); text-decoration: underline; }
+
+    .artifact-collapse {
+      margin-top: 22px; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px;
+      overflow: hidden;
+    }
+    .artifact-collapse-header {
+      padding: 10px 14px; background: #131316; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 13px; color: #d4d4d8; user-select: none;
+    }
+    .artifact-collapse-header:hover { background: #181820; }
+    .artifact-collapse-body { padding: 14px; display: none; background: #0e0e10; }
+    .artifact-collapse.open .artifact-collapse-body { display: block; }
+    .artifact-collapse.open .artifact-collapse-chev { transform: rotate(180deg); }
+    .artifact-collapse-chev { transition: transform .15s; opacity: 0.5; }
+
+    .artifact-source-row {
+      display: flex; gap: 10px; padding: 7px 8px; border-radius: 6px;
+      text-decoration: none; color: inherit; transition: background .15s;
+      align-items: flex-start;
+    }
+    .artifact-source-row:hover { background: rgba(255,255,255,0.04); }
+    .artifact-source-num {
+      color: #c9a77a; font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 11px; min-width: 28px; padding-top: 2px;
+    }
+    .artifact-source-text { display: flex; flex-direction: column; min-width: 0; }
+    .artifact-source-title { font-size: 13px; color: #d4d4d8; }
+    .artifact-source-domain {
+      font-size: 10.5px; color: #78787e;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .artifact-export-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+    .artifact-export-btn {
+      background: transparent; border: 1px solid rgba(255,255,255,0.12);
+      color: #b8b8c0; font-size: 11.5px; padding: 6px 12px; border-radius: 7px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Inter', sans-serif; transition: all .15s;
+    }
+    .artifact-export-btn:hover { background: rgba(255,255,255,0.05); color: #ededed; border-color: rgba(201,167,122,0.45); }
+
+    .model-perspective {
+      margin-bottom: 14px; padding: 10px 12px; background: #0e0e10;
+      border: 1px solid rgba(255,255,255,0.06); border-radius: 8px;
+    }
+    .model-perspective-name {
+      font-family: var(--mono, 'JetBrains Mono', monospace); font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase; color: #c9a77a;
+      margin-bottom: 6px;
+    }
+    .model-perspective-text { font-size: 13px; line-height: 1.6; color: #b8b8c0; }
+    .model-perspective-text h1,.model-perspective-text h2,.model-perspective-text h3 { font-family:'Fraunces',serif; color:#d4d4d8; margin:12px 0 6px; font-weight:400; font-size:15px; }
+    .model-perspective-text p { margin:6px 0 10px; }
+    .model-perspective-text ul,.model-perspective-text ol { margin:6px 0 10px 18px; }
+    .model-perspective-text code { background:#1a1a1d; padding:1px 5px; border-radius:3px; font-size:12px; }
+    .model-perspective-text pre { background:#1a1a1d; padding:10px 12px; border-radius:7px; overflow-x:auto; margin:8px 0; }
+    .model-perspective-text strong { color:#ededed; font-weight:500; }
+
+    /* ── Model perspective tabs ──────────────────────────────── */
+    .persp-tabs {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .persp-tab {
+      background: none; border: 1px solid rgba(255,255,255,0.09); cursor: pointer;
+      color: #78787e; font-size: 10.5px; padding: 5px 13px; border-radius: 6px;
+      font-family: var(--mono,'JetBrains Mono',monospace); text-transform: uppercase;
+      letter-spacing: 0.07em; transition: all .15s;
+    }
+    .persp-tab:hover { color: #d4d4d8; border-color: rgba(255,255,255,0.2); }
+    .persp-tab.active {
+      color: #c9a77a; border-color: rgba(201,167,122,0.45);
+      background: rgba(201,167,122,0.08);
+    }
+    .persp-pane { display: none; }
+    .persp-pane.active { display: block; }
+
+    /* ── Header mode switcher ─────────────────────────────────── */
+    #header-mode-switch {
+      display: flex; align-items: center; gap: 2px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; padding: 3px; flex-shrink: 0;
+    }
+    .hms-btn {
+      padding: 4px 11px; border-radius: 6px; border: none; cursor: pointer;
+      font-size: 12px; font-family: 'Inter',sans-serif; font-weight: 400;
+      transition: all .15s; background: none; color: #55555a; white-space: nowrap;
+    }
+    .hms-btn.active {
+      background: rgba(201,167,122,0.14); color: #c9a77a;
+    }
+    .hms-btn:not(.active):hover { color: #888; background: rgba(255,255,255,0.04); }
+
+    /* ── Pane footer actions ─────────────────────────────────── */
+    .pane-footer {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 2px 2px;
+    }
+    .copy-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+      color: #78787e; font-size: 11.5px; padding: 4px 10px; border-radius: 6px;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-family: 'Inter',sans-serif; transition: all .15s;
+    }
+    .copy-btn:hover { color: #ededed; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+    .copy-btn.copied { color: #4ade80; border-color: rgba(74,222,128,0.35); }
+    .thumb-btn {
+      background: none; border: 1px solid transparent; cursor: pointer;
+      color: #55555a; padding: 4px 6px; border-radius: 6px;
+      display: inline-flex; align-items: center; transition: all .15s;
+    }
+    .thumb-btn:hover { color: #b8b8c0; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+    .thumb-btn.active-up   { color: #4ade80; border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.07); }
+    .thumb-btn.active-down { color: #f87171; border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.07); }
+
+    /* ── Collapsible code blocks ──────────────────────────────── */
+    .code-block {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 12px 0;
+      background: #0e0e10;
+      font-size: 13px;
+    }
+    html:not(.dark) .code-block {
+      border-color: rgba(0,0,0,0.1);
+      background: #f6f8fa;
+    }
+    .code-block-hdr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      background: #181820;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      user-select: none;
+    }
+    html:not(.dark) .code-block-hdr {
+      background: #eaeef2;
+      border-bottom-color: rgba(0,0,0,0.08);
+    }
+    .code-lang-badge {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #c9a77a; background: rgba(201,167,122,0.1);
+      border: 1px solid rgba(201,167,122,0.25);
+      padding: 2px 7px; border-radius: 4px;
+    }
+    .code-lines-count {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 10px; color: #78787e; letter-spacing: 0.03em;
+    }
+    .code-hdr-copy, .code-hdr-toggle {
+      background: none; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+      color: #b8b8c0; font-size: 11px; padding: 3px 9px; border-radius: 5px;
+      display: flex; align-items: center; gap: 5px;
+      font-family: 'Inter',sans-serif; transition: all .15s;
+    }
+    html:not(.dark) .code-hdr-copy, html:not(.dark) .code-hdr-toggle {
+      border-color: rgba(0,0,0,0.15); color: #555;
+    }
+    .code-hdr-copy:hover, .code-hdr-toggle:hover {
+      background: rgba(255,255,255,0.06); color: #ededed;
+      border-color: rgba(201,167,122,0.4);
+    }
+    .code-hdr-toggle.expanded { color: #c9a77a; border-color: rgba(201,167,122,0.4); }
+    .code-hdr-chev { transition: transform .2s; }
+    .code-hdr-toggle.expanded .code-hdr-chev { transform: rotate(180deg); }
+
+    .code-block-body {
+      position: relative;
+      overflow: hidden;
+    }
+    .code-block-body.collapsed {
+      max-height: 220px;
+    }
+    .code-block-body.collapsed::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 64px;
+      background: linear-gradient(transparent, #0e0e10);
+      pointer-events: none;
+    }
+    html:not(.dark) .code-block-body.collapsed::after {
+      background: linear-gradient(transparent, #f6f8fa);
+    }
+    .code-block-body pre {
+      margin: 0 !important;
+      border-radius: 0 !important;
+      border: none !important;
+      background: transparent !important;
+    }
+    .code-block-body code {
+      font-size: 12.5px !important;
+      line-height: 1.6 !important;
+    }
+
     /* Intensive usage pips */
     #intensive-pips { display:none; }
     .i-pip {
@@ -162,6 +725,18 @@
       border-color:#ef4444;
     }
 
+    /* Text compression chip */
+    .attach-pill.text-pill {
+      background: rgba(201,167,122,0.07);
+      border: 1px solid rgba(201,167,122,0.22);
+      color: #a89070; max-width: 320px;
+    }
+    .attach-pill.text-pill .attach-pill-name { max-width: 200px; color: #c4a882; }
+    .text-pill-chars {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 9.5px; color: #7a6a58; flex-shrink: 0; white-space: nowrap;
+    }
+
   </style>
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -175,6 +750,26 @@
       <img src="/assets/logo.png" alt="OpClave" style="width:28px;height:28px;object-fit:contain;display:block;flex-shrink:0">
       <span style="font-family:'Fraunces',serif;font-weight:400;font-size:16px;letter-spacing:-0.01em;color:#ffffff;line-height:1;margin-top:1px">OpClave</span>
     </div>
+    <div class="app-mode-nav">
+      <button class="app-mode-btn active" data-mode="chat" onclick="switchAppMode('chat')">
+        <span class="app-mode-btn-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <span class="app-mode-btn-text">
+          <span class="app-mode-btn-name">Voyance</span>
+          <span class="app-mode-btn-desc">Ask the council anything</span>
+        </span>
+      </button>
+      <button class="app-mode-btn" data-mode="studio" onclick="switchAppMode('studio')">
+        <span class="app-mode-btn-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+        </span>
+        <span class="app-mode-btn-text">
+          <span class="app-mode-btn-name">Studio</span>
+          <span class="app-mode-btn-desc">Build and research artifacts</span>
+        </span>
+      </button>
+    </div>
     <div class="p-3 shrink-0">
       <button id="new-thread-btn" onclick="createNewThread()"
         class="w-full flex items-center gap-2 px-3 py-2 rounded-lg border dark:border-[#2a2a2a] border-gray-200 dark:text-[#888] text-gray-600 dark:hover:bg-[#1a1a1a] hover:bg-gray-50 transition-colors text-sm font-medium font-sans cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none">
@@ -184,7 +779,7 @@
         New Thread
       </button>
     </div>
-    <div id="thread-list" class="flex-1 overflow-y-auto px-2 pb-3 flex flex-col gap-0.5"></div>
+    <div id="thread-list" class="flex-1 overflow-y-auto px-2 pb-1 flex flex-col gap-0.5"></div>
   </div>
 
   <!-- Main content -->
@@ -194,10 +789,20 @@
   <div id="header" class="flex items-center gap-2.5 px-3 sm:px-6 py-3 shrink-0">
     <img src="/assets/logo.png" alt="OpClave" style="width:28px;height:28px;object-fit:contain;display:block">
     <span style="font-family:'Fraunces',serif;font-weight:400;font-size:17px;letter-spacing:-0.01em">OpClave</span>
+    <div id="header-mode-switch">
+      <button class="hms-btn active" data-mode="chat" onclick="switchAppMode('chat')">Voyance</button>
+      <button class="hms-btn" data-mode="studio" onclick="switchAppMode('studio')">Studio</button>
+    </div>
     <span id="perplexity-pill" style="display:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:#2dd4bf;border:1px solid rgba(45,212,191,0.35);border-radius:4px;padding:2px 7px;letter-spacing:0.06em;align-items:center;gap:4px;">
       <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       PERPLEXITY
     </span>
+    <!-- Artifacts panel trigger (Studio only) -->
+    <button id="artifacts-header-btn" onclick="toggleArtifactsPanel()" title="My Artifacts" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c9a77a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+      Artifacts
+      <span class="ahb-count" id="artifacts-count">0</span>
+    </button>
 
     <!-- Home link -->
     <a href="/" title="Back to home" class="ml-auto flex items-center gap-1 px-2 py-1.5 rounded-lg dark:text-[#55555a] text-gray-400 dark:hover:text-gray-300 hover:text-gray-600 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 text-[12px]" style="text-decoration:none;letter-spacing:0.02em">
@@ -208,15 +813,6 @@
     <!-- About button -->
     <button onclick="document.getElementById('about-modal-overlay').classList.add('visible')" title="How it works"
       class="p-1.5 rounded-lg dark:text-gray-400 text-gray-500 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 text-[13px] font-bold w-7 h-7 flex items-center justify-center border dark:border-[#1e1e1e] border-gray-200">?</button>
-
-    <!-- Feedback button (always in navbar) -->
-    <button onclick="openFeedbackModal()" title="Give feedback"
-      class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg dark:text-gray-400 text-gray-500 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 border dark:border-[#1e1e1e] border-gray-200 text-[13px]">
-      <svg class="w-[15px] h-[15px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-      <span class="hidden sm:inline">Feedback</span>
-    </button>
 
     <!-- Sidebar toggle -->
     <button id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle threads"
@@ -301,22 +897,49 @@
   </div>
 
   <!-- Feedback modal -->
-  <div id="feedback-modal-overlay" class="fixed inset-0 dark:bg-black/60 bg-black/40 z-[100] items-center justify-center p-4" style="align-items:center;justify-content:center;display:none;">
+  <div id="feedback-modal-overlay" class="fixed inset-0 dark:bg-black/60 bg-black/40 z-[100] items-center justify-center p-4" style="align-items:center;justify-content:center;display:none;" onclick="if(event.target===this)closeFeedbackModal()">
     <div class="dark:bg-[#0d0d0d] bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-2xl px-6 py-6 max-w-md w-full mx-auto flex flex-col gap-4 shadow-2xl" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between">
-        <h2 class="text-[16px] font-semibold tracking-tight">Share feedback</h2>
+        <h2 id="feedback-modal-title" class="text-[16px] font-semibold tracking-tight">Share feedback</h2>
         <button onclick="closeFeedbackModal()" class="p-1 rounded-lg dark:text-gray-500 text-gray-400 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <p class="dark:text-gray-400 text-gray-500 text-sm">What should be improved? Any bugs, ideas, or general thoughts.</p>
-      <textarea id="feedback-textarea" placeholder="Your feedback…" maxlength="2000"></textarea>
+      <p id="feedback-modal-sub" class="dark:text-gray-400 text-gray-500 text-sm">Tell us more — any detail helps.</p>
+      <textarea id="feedback-textarea" placeholder="Your thoughts…" maxlength="2000"></textarea>
       <div class="flex items-center justify-between gap-3">
         <span id="feedback-status" class="text-sm dark:text-gray-500 text-gray-400"></span>
         <button id="feedback-submit-btn" onclick="submitFeedback()"
           class="px-5 py-2 rounded-full bg-[#c9a77a] text-white text-sm font-semibold transition-opacity disabled:opacity-40 disabled:cursor-not-allowed font-sans cursor-pointer">
           Send
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Artifacts right-side panel -->
+  <div id="artifacts-panel">
+    <div class="apanel-header">
+      <div class="apanel-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c9a77a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Artifacts
+        <span class="apanel-count" id="artifacts-panel-count">0</span>
+      </div>
+      <button class="apanel-close" onclick="closeArtifactsModal()" title="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="apanel-body" id="artifacts-modal-body"></div>
+  </div>
+
+  <!-- Confirm delete modal -->
+  <div id="confirm-delete-overlay" onclick="if(event.target===this)closeConfirmDelete()">
+    <div id="confirm-delete-modal">
+      <div class="cdm-title">Delete artifact?</div>
+      <div class="cdm-sub" id="confirm-delete-sub">This cannot be undone.</div>
+      <div class="cdm-actions">
+        <button class="cdm-cancel" onclick="closeConfirmDelete()">Cancel</button>
+        <button class="cdm-confirm" id="confirm-delete-btn" onclick="confirmDeleteArtifact()">Delete</button>
       </div>
     </div>
   </div>
@@ -381,6 +1004,24 @@
     <div class="max-w-[760px] mx-auto flex flex-col" id="messages"></div>
   </div>
 
+  <!-- Studio workspace -->
+  <div id="studio-workspace">
+    <div id="studio-empty">
+      <h2 class="studio-headline">Studio.</h2>
+      <p class="studio-sub">Give a build prompt, get a complete polished artifact — code, research, or both.</p>
+      <div class="studio-chips">
+        <button class="studio-chip" onclick="fillStudio('Build a landing page for ','code')"><span class="studio-chip-cmd">/code</span> Build a landing page</button>
+        <button class="studio-chip" onclick="fillStudio('Create a dashboard for ','code')"><span class="studio-chip-cmd">/code</span> Create a dashboard</button>
+        <button class="studio-chip" onclick="fillStudio('Research ','research')"><span class="studio-chip-cmd">/research</span> Research a topic</button>
+        <button class="studio-chip" onclick="fillStudio('Build a game where ','code')"><span class="studio-chip-cmd">/code</span> Build a game</button>
+        <button class="studio-chip" onclick="fillStudio('Compare ','research')"><span class="studio-chip-cmd">/research</span> Compare technologies</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Artifact full view (Studio only) -->
+  <div id="artifact-view" style="display:none;flex:1;overflow-y:auto;"></div>
+
   <!-- Input area -->
   <input type="file" id="file-input" accept=".pdf,.txt,.md,.png,.jpg,.jpeg,.webp" multiple style="display:none" onchange="handleFileSelect(event)">
   <div id="input-area" class="px-3 sm:px-8 pt-2 pb-10 sm:pb-14 shrink-0">
@@ -393,11 +1034,18 @@
       </div>
       <!-- Input box -->
       <div id="input-box">
+        <!-- Studio command mode selector (shown only in studio mode) -->
+        <div class="studio-cmd-bar" id="studio-cmd-bar">
+          <button class="studio-cmd-btn" id="cmd-btn-code" data-cmd="code" onclick="setStudioCmd('code')">/code — Build</button>
+          <button class="studio-cmd-btn" id="cmd-btn-research" data-cmd="research" onclick="setStudioCmd('research')">/research — Document</button>
+        </div>
         <!-- Textarea row -->
         <textarea id="input" rows="1" placeholder="Ask Voyance…"
           class="w-full bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[28px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
         <!-- Attachment chips (inside the box) -->
         <div id="attachment-pills" class="hidden"></div>
+        <!-- Artifact follow-up context pill -->
+        <div id="followup-context-pill" style="display:none;align-items:center;gap:6px;padding:5px 2px 3px;flex-wrap:wrap;"></div>
         <!-- Button bar -->
       <div id="input-bottom" class="flex items-center gap-2">
         <!-- Left: attach + configure -->
@@ -416,29 +1064,12 @@
         </button>
         <div class="relative shrink-0" id="cfg-wrapper">
             <button id="cfg-btn" onclick="toggleCfgDropdown()">
-              <span id="cfg-label">General</span>
+              Configure
               <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3L4.5 6L7.5 3"/></svg>
             </button>
             <div id="cfg-dropdown" class="hidden">
-              <!-- Main view: 3 options -->
-              <div id="cfg-main">
-                <div class="cfg-option active" data-preset="malic" onclick="selectPreset('malic')">
-                  General Purpose<svg class="cfg-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-                </div>
-                <div class="cfg-option" data-preset="crystalis" onclick="selectPreset('crystalis')">
-                  Coding<svg class="cfg-check" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7.5L5.5 11L12 3.5"/></svg>
-                </div>
-                <div class="cfg-option cfg-has-sub" onclick="showCfgDetail()">
-                  Configure
-                  <svg width="10" height="10" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity:.5"><path d="M3 1.5L6 4.5L3 7.5"/></svg>
-                </div>
-              </div>
-              <!-- Detail view: model toggles + synthesis -->
-              <div id="cfg-detail" class="hidden">
-                <button class="cfg-back" onclick="showCfgMain()">
-                  <svg width="10" height="10" viewBox="0 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1.5L3 4.5L6 7.5"/></svg>
-                  Back
-                </button>
+              <!-- Model toggles + synthesis -->
+              <div id="cfg-detail">
                 <div class="cfg-divider"></div>
                 <div class="cfg-section-label">Active Models</div>
                 <div class="cfg-model-row" data-model="gpt">
@@ -512,6 +1143,33 @@
     <img id="lightbox-img" src="" alt="Generated image" />
   </div>
 
+  <!-- Artifact save modal -->
+  <div id="artifact-save-overlay" onclick="closeArtifactSaveModal(event)">
+    <div id="artifact-save-modal" onclick="event.stopPropagation()">
+      <h3>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+        Save as artifact
+      </h3>
+      <div>
+        <label>Name</label>
+        <input type="text" id="artifact-save-name" maxlength="120" placeholder="Untitled artifact" />
+      </div>
+      <div>
+        <label>Tags <span style="text-transform:none;letter-spacing:0;color:#55555a">(comma-separated, optional)</span></label>
+        <input type="text" id="artifact-save-tags" maxlength="200" placeholder="research, comparison" />
+      </div>
+      <div>
+        <label>Preview</label>
+        <div id="artifact-save-preview" class="artifact-preview"></div>
+      </div>
+      <div id="artifact-save-actions">
+        <button class="btn-secondary" onclick="closeArtifactSaveModal()">Just keep in chat</button>
+        <button class="btn-primary" onclick="saveArtifactFromModal()">Save as artifact</button>
+      </div>
+    </div>
+  </div>
+
+
 
   </div><!-- /#main -->
 </div>
@@ -525,6 +1183,11 @@
   const inputEl = document.getElementById('input');
   const sendBtn = document.getElementById('send-btn');
   const newThreadBtn = document.getElementById('new-thread-btn');
+
+  // Stop auto-scroll the moment the user manually scrolls up
+  chatArea.addEventListener('scroll', () => {
+    if (_autoScrollActive && !isNearBottom()) _autoScrollActive = false;
+  }, { passive: true });
 
   const MAX_PROMPTS = 15;
   const CIRCUMFERENCE = 2 * Math.PI * 10; // r=10 → ~62.83
@@ -589,13 +1252,24 @@
   let activeSSE = null;
   let isLoading = false;
   let activeStreams = {};
+  let _genId = 0;
+  let _autoScrollActive = false; // true while current stream should auto-scroll
   let selectedSynthesizer = 'grok';
   let enabledModels = new Set(['gpt', 'claude', 'gemini', 'grok']);
   let imageMode = false;
   let webSearchEnabled = false;
+  let artifactModeEnabled = false;
+  let appMode = 'chat';         // 'chat' | 'studio'
+  let studioCmd = '';           // '' | 'code' | 'research'
   let currentPreset = 'malic';
   let promptCount = 0;
   let conversationHistory = []; // [{role:'user'|'assistant', content:'...'}]
+  let artifactBuffers = {}; // turn-id -> { question, type, name, modelResponses, synthesis, sources }
+  let pendingArtifactSave = null; // { id, question, type, name, modelResponses, synthesis, sources, turnId }
+  let savedArtifacts = {}; // id -> artifact object
+  let savedArtifactOrder = [];
+  let viewingArtifactId = null;
+  let turnArtifactTypes = {}; // turn-id -> artifact_type (for showing preview button in artifact mode)
 
   const ctxFill  = document.getElementById('ctx-fill');
   const ctxLabel = document.getElementById('ctx-label');
@@ -643,13 +1317,6 @@
 
   // ── Pipeline / configure functions ───────────────
   function syncPipelineUI() {
-    // Configure button label
-    const presetLabels = { malic: 'General', crystalis: 'Coding' };
-    document.getElementById('cfg-label').textContent = presetLabels[currentPreset] || 'Custom';
-    // Preset option active states
-    document.querySelectorAll('.cfg-option[data-preset]').forEach(o =>
-      o.classList.toggle('active', o.dataset.preset === currentPreset)
-    );
     // Model toggles
     ALL_MODELS.forEach(m => {
       const toggle = document.querySelector(`.cfg-toggle[data-model="${m}"]`);
@@ -676,20 +1343,6 @@
   function toggleCfgDropdown() {
     const dd = document.getElementById('cfg-dropdown');
     dd.classList.toggle('hidden');
-    if (!dd.classList.contains('hidden')) {
-      document.getElementById('cfg-main').classList.remove('hidden');
-      document.getElementById('cfg-detail').classList.add('hidden');
-    }
-  }
-
-  function showCfgDetail() {
-    document.getElementById('cfg-main').classList.add('hidden');
-    document.getElementById('cfg-detail').classList.remove('hidden');
-  }
-
-  function showCfgMain() {
-    document.getElementById('cfg-detail').classList.add('hidden');
-    document.getElementById('cfg-main').classList.remove('hidden');
   }
 
   function selectPreset(name) {
@@ -775,6 +1428,9 @@
   // ── Attachment state ──────────────────────────────
   let attachedFiles = [];
   let attachIdCounter = 0;
+  let followUpArtifactId = null;
+  let compressedText = null;
+  const TEXT_COMPRESS_THRESHOLD = 300;
 
   let limitReached = false;
 
@@ -804,13 +1460,19 @@
     sendBtn.title = 'Send';
     sendBtn.innerHTML = '↑';
     if (limitReached) { sendBtn.disabled = true; return; }
-    const hasContent = !!inputEl.value.trim() || attachedFiles.some(a => a.status === 'done');
+    const hasContent = !!inputEl.value.trim() || !!compressedText || attachedFiles.some(a => a.status === 'done') || !!followUpArtifactId;
     const isExtracting = attachedFiles.some(a => a.status === 'extracting' || a.status === 'pending');
     sendBtn.disabled = !hasContent || isExtracting;
   }
 
   function stopGeneration() {
     if (activeSSE) { activeSSE.abort(); activeSSE = null; }
+    _genId++; // invalidate any in-flight event handlers from the stopped stream
+    _autoScrollActive = false;
+    // Remove the unanswered user question so history stays clean for the next submission
+    if (conversationHistory.length > 0 && conversationHistory[conversationHistory.length - 1].role === 'user') {
+      conversationHistory.pop();
+    }
 
     // Clean up in-progress panes on the active message
     const activeId = msgCounter - 1;
@@ -850,15 +1512,31 @@
     updateSendBtn();
   }
 
+  function removeTextChip() {
+    compressedText = null;
+    renderPills();
+    updateSendBtn();
+    inputEl.focus();
+  }
+
   function renderPills() {
     const container = document.getElementById('attachment-pills');
-    if (attachedFiles.length === 0) {
+    if (attachedFiles.length === 0 && !compressedText) {
       container.classList.add('hidden');
       container.innerHTML = '';
       return;
     }
     container.classList.remove('hidden');
     container.innerHTML = '';
+
+    if (compressedText) {
+      const pill = document.createElement('div');
+      pill.className = 'attach-pill text-pill';
+      const preview = compressedText.slice(0, 36) + (compressedText.length > 36 ? '…' : '');
+      pill.innerHTML = `<svg class="attach-pill-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="13" y1="18" x2="3" y2="18"/></svg><span class="attach-pill-name" title="${escapeHtml(compressedText)}">${escapeHtml(preview)}</span><span class="text-pill-chars">${compressedText.length} chars</span><button class="attach-pill-remove" onclick="removeTextChip()">×</button>`;
+      container.appendChild(pill);
+    }
+
     for (const a of attachedFiles) {
       const pill = document.createElement('div');
       let cls = 'attach-pill';
@@ -926,7 +1604,31 @@
   inputEl.addEventListener('input', () => {
     inputEl.style.height = 'auto';
     inputEl.style.height = Math.min(inputEl.scrollHeight, 200) + 'px';
+    // Compress if user has typed past the threshold
+    if (inputEl.value.length > TEXT_COMPRESS_THRESHOLD) {
+      compressedText = compressedText
+        ? compressedText + '\n\n' + inputEl.value
+        : inputEl.value;
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      renderPills();
+    }
     updateSendBtn();
+  });
+
+  inputEl.addEventListener('paste', (e) => {
+    const pasted = (e.clipboardData || window.clipboardData).getData('text');
+    const combined = inputEl.value + pasted;
+    if (combined.length > TEXT_COMPRESS_THRESHOLD) {
+      e.preventDefault();
+      compressedText = compressedText
+        ? compressedText + '\n\n' + combined.trim()
+        : combined.trim();
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      renderPills();
+      updateSendBtn();
+    }
   });
 
   inputEl.addEventListener('keydown', (e) => {
@@ -947,34 +1649,222 @@
     inputEl.focus();
   }
 
-  function toggleWebSearch() {
-    webSearchEnabled = !webSearchEnabled;
+  function applyWebSearchUI(enabled) {
     const btn = document.getElementById('web-search-btn');
     const label = document.getElementById('web-search-label');
     const pill = document.getElementById('perplexity-pill');
     const synthNotice = document.getElementById('synth-web-notice');
     const synthRows = document.getElementById('synth-selector-rows');
-    btn.classList.toggle('active', webSearchEnabled);
-    label.style.display = webSearchEnabled ? 'inline' : 'none';
-    pill.style.display = webSearchEnabled ? 'inline-flex' : 'none';
-    if (synthNotice) synthNotice.style.display = webSearchEnabled ? 'flex' : 'none';
-    if (synthRows) synthRows.style.display = webSearchEnabled ? 'none' : 'block';
+    if (btn) btn.classList.toggle('active', enabled);
+    if (label) label.style.display = enabled ? 'inline' : 'none';
+    if (pill) pill.style.display = enabled ? 'inline-flex' : 'none';
+    if (synthNotice) synthNotice.style.display = enabled ? 'flex' : 'none';
+    if (synthRows) synthRows.style.display = enabled ? 'none' : 'block';
+  }
+
+  function toggleWebSearch() {
+    webSearchEnabled = !webSearchEnabled;
+    applyWebSearchUI(webSearchEnabled);
+  }
+
+
+  // ── App mode (Voyance / Studio) ───────────────────
+  const _lastThread = { chat: null, studio: null };
+  let _voyanceSnapshot = null;
+  let _studioSnapshot  = null; // saved Studio pipeline config (models + synthesizer)
+
+  function switchAppMode(mode) {
+    if (appMode === mode) return;
+
+    // Save departure state
+    saveCurrentThread();
+    _lastThread[appMode] = currentThreadId;
+    if (appMode === 'chat') {
+      _voyanceSnapshot = { currentMode, enabledModels: new Set(enabledModels), selectedSynthesizer, currentPreset, webSearchEnabled };
+    }
+    if (appMode === 'studio') {
+      _studioSnapshot = { enabledModels: new Set(enabledModels), selectedSynthesizer };
+      // Clean up transient studio thread — studio sessions are never persisted
+      if (currentThreadId && !threadOrder.includes(currentThreadId)) {
+        delete threads[currentThreadId];
+      }
+    }
+
+    // Abort any in-flight request
+    if (activeSSE) { activeSSE.abort(); activeSSE = null; isLoading = false; }
+
+    // Close artifact view silently
+    if (viewingArtifactId) {
+      viewingArtifactId = null;
+      const av = document.getElementById('artifact-view');
+      av.style.display = 'none';
+      av.innerHTML = '';
+    }
+
+    // Always restore input area — openArtifactView hides it and only closeArtifactView
+    // normally restores it, so a mode switch without closing the artifact would leave it hidden.
+    document.getElementById('input-area').style.display = '';
+
+    // Clear shared message state completely
+    currentThreadId = null;
+    conversationHistory = [];
+    messagesEl.innerHTML = '';
+
+    appMode = mode;
+    document.querySelectorAll('.app-mode-btn, .hms-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.mode === mode));
+
+    const chatArea       = document.getElementById('chat-area');
+    const studioWs       = document.getElementById('studio-workspace');
+    const artifactHeaderBtn = document.getElementById('artifacts-header-btn');
+    const cmdBar         = document.getElementById('studio-cmd-bar');
+    const webBtn         = document.getElementById('web-search-btn');
+    const newThreadBtnEl = document.getElementById('new-thread-btn');
+    const grokModelRow   = document.querySelector('.cfg-model-row[data-model="grok"]');
+    const grokSynthRow   = document.querySelector('.cfg-synth-row[data-model="grok"]');
+    const intensiveNotice = document.getElementById('intensive-notice');
+    const intensivePips   = document.getElementById('intensive-pips');
+
+    if (mode === 'studio') {
+      // ── ENTER STUDIO ──
+      chatArea.style.display = 'none';
+      studioWs.classList.add('active');
+      newThreadBtnEl.style.display = 'none';
+      if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'inline-flex';
+      cmdBar.classList.add('visible');
+      if (!studioCmd) setStudioCmd('code');
+      inputEl.value = ''; inputEl.style.height = 'auto';
+      compressedText = null; renderPills();
+      inputEl.placeholder = 'Describe what you want to build…';
+      artifactModeEnabled = true;
+      if (webBtn) webBtn.style.display = 'none';
+      currentMode = 'intensive';
+      if (_studioSnapshot) {
+        enabledModels = new Set(_studioSnapshot.enabledModels);
+        selectedSynthesizer = _studioSnapshot.selectedSynthesizer;
+      } else {
+        enabledModels = new Set(['gpt', 'claude', 'gemini']);
+        selectedSynthesizer = 'claude';
+      }
+      currentPreset = null;
+      // Studio never uses web search — clear it regardless of Voyance state
+      webSearchEnabled = false;
+      applyWebSearchUI(false);
+      if (grokModelRow)    grokModelRow.style.display = 'none';
+      if (grokSynthRow)    grokSynthRow.style.display = 'none';
+      if (intensiveNotice) intensiveNotice.style.display = 'none';
+      if (intensivePips)   intensivePips.style.display = 'none';
+      syncPipelineUI();
+
+    } else {
+      // ── ENTER VOYANCE ──
+      studioWs.classList.remove('active');
+      chatArea.style.display = '';
+      newThreadBtnEl.style.display = '';
+      if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'none';
+      closeArtifactsModal();
+      cmdBar.classList.remove('visible');
+      studioCmd = '';
+      inputEl.value = ''; inputEl.style.height = 'auto';
+      compressedText = null; renderPills();
+      inputEl.placeholder = 'Ask Voyance…';
+      artifactModeEnabled = false;
+      if (webBtn) webBtn.style.display = '';
+      if (grokModelRow) grokModelRow.style.display = '';
+      if (grokSynthRow) grokSynthRow.style.display = '';
+
+      // Restore Voyance pipeline config
+      if (_voyanceSnapshot) {
+        currentMode = _voyanceSnapshot.currentMode === 'intensive' ? 'general' : _voyanceSnapshot.currentMode;
+        enabledModels = new Set(_voyanceSnapshot.enabledModels);
+        selectedSynthesizer = _voyanceSnapshot.selectedSynthesizer;
+        currentPreset = _voyanceSnapshot.currentPreset;
+        webSearchEnabled = _voyanceSnapshot.webSearchEnabled || false;
+      } else {
+        loadConfig();
+        webSearchEnabled = false;
+      }
+      applyWebSearchUI(webSearchEnabled);
+      syncPipelineUI();
+
+      // Restore last Voyance thread, or fall back to newest chat thread, or empty state
+      const last = _lastThread.chat;
+      const target = (last && threads[last]?.mode === 'chat') ? last
+        : threadOrder.find(id => threads[id]?.mode === 'chat') || null;
+      if (target) {
+        const t = threads[target];
+        currentThreadId = target;
+        conversationHistory = [...(t.history || [])];
+        messagesEl.innerHTML = t.messagesHTML || '';
+        emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
+        scrollToBottom(true);
+      } else {
+        emptyState.style.display = '';
+      }
+      updateSendBtn();
+      newThreadBtnEl.disabled = false;
+      inputEl.focus();
+    }
+
+    renderThreadList();
+    renderArtifactList();
+  }
+
+  function setStudioCmd(cmd) {
+    studioCmd = cmd;
+    document.querySelectorAll('.studio-cmd-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.cmd === cmd));
+    inputEl.placeholder = cmd === 'code'
+      ? 'Describe what you want to build…'
+      : 'What do you want to research?';
+    inputEl.focus();
+  }
+
+  function fillStudio(text, cmd) {
+    if (appMode !== 'studio') switchAppMode('studio');
+    setStudioCmd(cmd);
+    inputEl.value = text;
+    inputEl.dispatchEvent(new Event('input'));
+    inputEl.focus();
+    inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+  }
+
+  // Parse /code or /research command prefix from a question string.
+  // Returns { question, forcedType } — question has prefix stripped.
+  function parseCommand(raw) {
+    const lower = raw.trim().toLowerCase();
+    if (lower.startsWith('/code ') || lower === '/code') {
+      return { question: raw.trim().slice(5).trim(), forcedType: 'code' };
+    }
+    if (lower.startsWith('/research ') || lower === '/research') {
+      return { question: raw.trim().slice(9).trim(), forcedType: 'research' };
+    }
+    return { question: raw.trim(), forcedType: studioCmd || '' };
   }
 
   // ── Submit ────────────────────────────────────────
   async function submitQuestion() {
-    const question = inputEl.value.trim();
+    const typedRaw = inputEl.value.trim();
+    const raw = compressedText
+      ? compressedText + (typedRaw ? '\n\n' + typedRaw : '')
+      : typedRaw;
     const doneAttachments = attachedFiles.filter(a => a.status === 'done');
-    if ((!question && doneAttachments.length === 0) || isLoading) return;
+    if ((!raw && doneAttachments.length === 0 && !followUpArtifactId) || isLoading) return;
+    const { question, forcedType } = parseCommand(raw);
+    // Any command prefix or studio mode triggers artifact mode
+    const useArtifactMode = artifactModeEnabled || forcedType !== '';
+    if (forcedType) artifactModeEnabled = true;
 
     // Create a thread lazily on first message
     if (!currentThreadId) {
       const id = generateThreadId();
-      threads[id] = { id, name: 'New Thread', history: [], messagesHTML: '' };
-      threadOrder.unshift(id);
+      threads[id] = { id, name: 'New Thread', history: [], messagesHTML: '', mode: appMode };
+      if (appMode !== 'studio') {
+        threadOrder.unshift(id);
+        renderThreadList();
+        saveToLocalStorage();
+      }
       currentThreadId = id;
-      renderThreadList();
-      saveToLocalStorage();
     }
 
     // Verify admin code server-side so the secret is never in the page source
@@ -1009,9 +1899,15 @@
       return;
     }
 
+    // In studio mode, reveal the chat area for streaming output
+    if (appMode === 'studio') {
+      document.getElementById('studio-workspace').classList.remove('active');
+      document.getElementById('chat-area').style.display = '';
+    }
     emptyState.style.display = 'none';
     inputEl.value = '';
     inputEl.style.height = 'auto';
+    compressedText = null;
     newThreadBtn.disabled = true;
     isLoading = true;
     updateSendBtn();
@@ -1020,8 +1916,18 @@
       content: a.result.content,
       filename: a.file.name,
     }));
+    if (followUpArtifactId && savedArtifacts[followUpArtifactId]) {
+      const fa = savedArtifacts[followUpArtifactId];
+      attachmentsPayload.unshift({
+        type: 'text',
+        content: fa.synthesis || '',
+        filename: fa.name || 'artifact',
+      });
+    }
     attachedFiles = [];
+    followUpArtifactId = null;
     renderPills();
+    renderFollowUpPill();
 
     if (currentMode === 'intensive') {
       intensiveCount++;
@@ -1034,8 +1940,8 @@
     }
 
 
-    // Auto-name thread on first message
-    if (currentThreadId && conversationHistory.length === 0) {
+    // Auto-name thread on first message (chat only \u2014 studio threads are transient)
+    if (appMode !== 'studio' && currentThreadId && conversationHistory.length === 0) {
       threads[currentThreadId].name = question.slice(0, 32) + (question.length > 32 ? '\u2026' : '');
       renderThreadList();
     }
@@ -1050,15 +1956,40 @@
     addUserMessage(question, turn, attachmentsPayload.map(a => a.filename));
     const id = msgCounter++;
     const turnModels = [...enabledModels];
-    createAssistantMessage(id, turn, turnModels, imageMode, webSearchEnabled);
-    scrollToBottom(true);
+    // Determine the effective synthesizer (Perplexity takes over when web search is on)
+    const turnSynthesizer = (webSearchEnabled && !imageMode && !artifactModeEnabled)
+      ? 'perplexity'
+      : selectedSynthesizer;
+    createAssistantMessage(id, turn, turnModels, imageMode, webSearchEnabled, currentMode === 'intensive', turnSynthesizer);
+
+    // Pin the new turn to the top of the viewport so previous exchange slides away
+    requestAnimationFrame(() => {
+      const offset = turn.offsetTop - messagesEl.offsetTop;
+      chatArea.scrollTop = Math.max(0, offset - 12);
+      _autoScrollActive = true;
+    });
 
     if (activeSSE) { activeSSE.abort(); activeSSE = null; }
 
     const controller = new AbortController();
     activeSSE = controller;
+    const myGenId = ++_genId;
 
     const historyToSend = conversationHistory.slice(0, -1);
+
+    if (artifactModeEnabled) {
+      artifactBuffers[id] = {
+        question,
+        type: 'research',
+        name: '',
+        modelResponses: {},
+        synthesis: '',
+        sources: [],
+        papers: [],
+        citationValid: null,
+        citationErrors: [],
+      };
+    }
 
     fetch('/stream', {
       method: 'POST',
@@ -1072,6 +2003,8 @@
         attachments: attachmentsPayload,
         mode: currentMode,
         web_search: webSearchEnabled,
+        artifact_mode: useArtifactMode,
+        forced_artifact_type: forcedType,
       }),
       signal: controller.signal,
     }).then(async (res) => {
@@ -1080,14 +2013,20 @@
       let buf = '';
       let councilAnswer = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
+      outer: while (true) {
+        let done, value;
+        try {
+          ({ done, value } = await reader.read());
+        } catch (e) {
+          break; // AbortError or network error — exit cleanly
+        }
         if (done) break;
         buf += decoder.decode(value, { stream: true });
         const lines = buf.split('\n');
         buf = lines.pop();
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
+          if (myGenId !== _genId) break outer; // stale — exit the entire stream loop
           const event = JSON.parse(line.slice(6));
           handleEvent(id, event);
           if (event.type === 'council_chunk') councilAnswer += event.chunk;
@@ -1103,6 +2042,7 @@
             if (!isAdminMode && (hitGeneralLimit || hitIntensiveLimit)) {
               lockInput();
             }
+            break outer;
           }
         }
       }
@@ -1131,13 +2071,25 @@
     container.appendChild(div);
   }
 
-  function createAssistantMessage(id, container, turnModels, imageModeOn, webSearchOn) {
+  function createAssistantMessage(id, container, turnModels, imageModeOn, webSearchOn, intensiveOn, turnSynthesizer) {
     const tabModels = imageModeOn ? turnModels.filter(m => !enabledImageModels.has(m)) : turnModels;
     const tabs = ['Voyance', ...tabModels.map(m => MODEL_TAB[m])];
 
     const div = document.createElement('div');
     div.className = 'msg-assistant';
     div.id = `msg-${id}`;
+
+    // ── Contributing models + lead synthesizer meta row ──────────
+    const SYNTH_LABEL = { gpt: 'GPT', claude: 'Claude', gemini: 'Gemini', grok: 'Grok', perplexity: 'Perplexity' };
+    const modelList = turnModels.map(m => MODEL_TAB[m] || m).join(' · ');
+    const synthLabel = SYNTH_LABEL[turnSynthesizer] || turnSynthesizer || '';
+    if (modelList) {
+      const metaRow = document.createElement('div');
+      metaRow.className = 'turn-meta';
+      metaRow.innerHTML = `<span class="turn-meta-models">${modelList}</span>`
+        + (synthLabel ? `<span class="turn-meta-sep">→</span><span class="turn-meta-synth">${synthLabel}</span>` : '');
+      div.appendChild(metaRow);
+    }
 
     const tabBar = document.createElement('div');
     tabBar.className = 'tab-bar';
@@ -1174,7 +2126,9 @@
       pane.className = 'tab-pane' + (i === 0 ? ' active' : '');
       pane.id = `pane-${id}-${tab}`;
 
-      const placeholderText = tab === 'Voyance' ? 'Waiting for all models…' : 'Waiting…';
+      const placeholderText = tab === 'Voyance'
+        ? (intensiveOn ? 'Waiting for creative directions…' : 'Waiting for all models…')
+        : (intensiveOn ? 'Writing creative direction…' : 'Waiting…');
       const clipIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
       const sourcesSlot = tab === 'Voyance'
         ? `<div class="sources-panel" id="citations-${id}-Voyance" style="display:none"></div>`
@@ -1186,6 +2140,12 @@
       <div class="md-content" id="content-${id}-${tab}" style="display:none"></div>
       <div class="pane-footer" id="footer-${id}-${tab}" style="display:none">
         <button class="copy-btn" id="copy-btn-${id}-${tab}" onclick="copyContent('${id}', '${tab}')">${clipIcon} Copy</button>
+        <button class="thumb-btn" id="thumb-up-${id}-${tab}" title="Good response" onclick="handleThumb('${id}','${tab}','up')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+        </button>
+        <button class="thumb-btn" id="thumb-down-${id}-${tab}" title="Could be better" onclick="handleThumb('${id}','${tab}','down')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+        </button>
       </div>${sourcesSlot}`;
 
       div.appendChild(pane);
@@ -1230,6 +2190,58 @@
       case 'model_done':
         setDotStatus(id, event.model, 'done');
         setContent(id, event.model, event.response);
+        if (artifactBuffers[id]) artifactBuffers[id].modelResponses[event.model] = event.response || '';
+        break;
+
+      case 'artifact_mode':
+        if (artifactBuffers[id]) {
+          artifactBuffers[id].type = event.artifact_type || artifactBuffers[id].type;
+          artifactBuffers[id].name = event.suggested_name || artifactBuffers[id].name;
+        }
+        turnArtifactTypes[id] = event.artifact_type || '';
+        setPlaceholderText(id, 'Voyance',
+          event.artifact_type === 'code' ? 'Artifact mode — gathering creative direction…' : 'Artifact mode — preparing research…');
+        break;
+
+      case 'searching_web':
+        setPlaceholderText(id, 'Voyance', 'Searching the web for current sources…');
+        break;
+
+      case 'web_search_complete':
+        if (artifactBuffers[id]) artifactBuffers[id].sources = event.sources || [];
+        setPlaceholderText(id, 'Voyance', `Found ${event.sources?.length || 0} sources — running models…`);
+        break;
+
+      case 'searching_research':
+        setPlaceholderText(id, 'Voyance', 'Searching for peer-reviewed papers…');
+        break;
+
+      case 'papers_found':
+        if (artifactBuffers[id]) artifactBuffers[id].papers = event.papers || [];
+        setPlaceholderText(id, 'Voyance', `Found ${event.count || 0} papers — running models…`);
+        break;
+
+      case 'insufficient_research':
+        setPlaceholderText(id, 'Voyance', `${event.count || 0} papers — falling back to general web research…`);
+        break;
+
+      case 'artifact_papers':
+        if (artifactBuffers[id]) artifactBuffers[id].papers = event.papers || [];
+        break;
+
+      case 'artifact_sources':
+        if (artifactBuffers[id]) artifactBuffers[id].sources = event.sources || [];
+        break;
+
+      case 'citation_verified':
+        if (artifactBuffers[id]) artifactBuffers[id].citationValid = true;
+        break;
+
+      case 'citation_warning':
+        if (artifactBuffers[id]) {
+          artifactBuffers[id].citationValid = false;
+          artifactBuffers[id].citationErrors = event.errors || [];
+        }
         break;
 
       case 'model_error':
@@ -1260,21 +2272,30 @@
 
       case 'synthesis_start':
         setDotStatus(id, 'Voyance', 'loading');
-        setPlaceholderText(id, 'Voyance', 'Synthesizing…');
+        setPlaceholderText(id, 'Voyance', currentMode === 'intensive'
+          ? (turnArtifactTypes[id] === 'research' ? 'Synthesizing research from council findings…' : 'Writing code from council directions…')
+          : 'Synthesizing…');
         activeStreams[id] = '';
         break;
 
       case 'council_chunk':
         if (activeStreams[id] === undefined) activeStreams[id] = '';
         activeStreams[id] += event.chunk;
+        if (artifactBuffers[id]) artifactBuffers[id].synthesis = activeStreams[id];
         setStreamingContent(id, 'Voyance', event.chunk);
         break;
 
       case 'council_done':
+        _autoScrollActive = false;
         setDotStatus(id, 'Voyance', 'done');
         if (activeStreams[id] !== undefined) {
           setContent(id, 'Voyance', activeStreams[id]);
+          if (artifactBuffers[id]) artifactBuffers[id].synthesis = activeStreams[id];
           delete activeStreams[id];
+        }
+        if (artifactBuffers[id]) {
+          // Defer the modal slightly so artifact_sources (sent right after council_done) can land.
+          setTimeout(() => promptArtifactSave(id), 120);
         }
         break;
 
@@ -1348,27 +2369,151 @@
     }
   }
 
+  // ── Collapsible code block helpers ───────────────
+  const _copyIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+  const _checkIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const _chevIcon = `<svg class="code-hdr-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+  function processCodeBlocks(el) {
+    el.querySelectorAll('pre').forEach(pre => {
+      if (pre.closest('.code-block')) return;
+      const code = pre.querySelector('code');
+      if (!code) return;
+
+      const langClass = [...code.classList].find(c => c.startsWith('language-'));
+      const lang = langClass ? langClass.replace('language-', '') : '';
+      const text = code.textContent || '';
+      const lineCount = text.split('\n').filter((l, i, a) => !(i === a.length - 1 && l === '')).length;
+      const needsCollapse = lineCount > 12;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block';
+
+      const hdr = document.createElement('div');
+      hdr.className = 'code-block-hdr';
+      hdr.innerHTML = `
+        ${lang ? `<span class="code-lang-badge">${escapeHtml(lang)}</span>` : ''}
+        <span class="code-lines-count">${lineCount} line${lineCount !== 1 ? 's' : ''}</span>
+        <span style="flex:1"></span>
+        <button class="code-hdr-copy">${_copyIcon} Copy</button>
+        ${needsCollapse ? `<button class="code-hdr-toggle">${_chevIcon} <span>Expand</span></button>` : ''}
+      `;
+
+      const body = document.createElement('div');
+      body.className = 'code-block-body' + (needsCollapse ? ' collapsed' : '');
+
+      const preClone = pre.cloneNode(true);
+      body.appendChild(preClone);
+
+      hdr.querySelector('.code-hdr-copy').addEventListener('click', () => {
+        navigator.clipboard.writeText(text).catch(() => {});
+        const btn = hdr.querySelector('.code-hdr-copy');
+        btn.innerHTML = `${_checkIcon} Copied`;
+        setTimeout(() => { btn.innerHTML = `${_copyIcon} Copy`; }, 1800);
+      });
+
+      if (needsCollapse) {
+        hdr.querySelector('.code-hdr-toggle').addEventListener('click', function() {
+          const isCollapsed = body.classList.contains('collapsed');
+          body.classList.toggle('collapsed', !isCollapsed);
+          this.classList.toggle('expanded', isCollapsed);
+          this.querySelector('span').textContent = isCollapsed ? 'Collapse' : 'Expand';
+        });
+      }
+
+      wrapper.appendChild(hdr);
+      wrapper.appendChild(body);
+      pre.replaceWith(wrapper);
+    });
+  }
+
+  const _chevDown = `<svg class="analysis-toggle-chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+
   function setContent(id, model, markdown) {
     const ph = document.getElementById(`placeholder-${id}-${model}`);
     const content = document.getElementById(`content-${id}-${model}`);
     const footer = document.getElementById(`footer-${id}-${model}`);
     if (ph) ph.style.display = 'none';
     if (content) {
+      delete content.dataset.streaming;
+      content.style.whiteSpace = '';
+      content.style.fontFamily = '';
+      content.style.fontSize = '';
+      if (_streamRenderTimers[id]) { clearTimeout(_streamRenderTimers[id]); delete _streamRenderTimers[id]; }
       content.style.display = 'block';
-      content.innerHTML = marked.parse(markdown || '');
       content.dataset.raw = markdown || '';
+
+      // Split Voyance synthesis into answer + hidden analysis panel
+      const SPLIT = '%%ANALYSIS%%';
+      if (model === 'Voyance' && markdown && markdown.includes(SPLIT)) {
+        const idx = markdown.indexOf(SPLIT);
+        const answerMd = markdown.slice(0, idx).trim();
+        const analysisMd = markdown.slice(idx + SPLIT.length).trim();
+        content.innerHTML = `
+          ${marked.parse(answerMd)}
+          <div class="analysis-toggle-row">
+            <button class="analysis-toggle-btn" onclick="toggleAnalysisPanel(this)">
+              ${_chevDown} Show model analysis
+            </button>
+          </div>
+          <div class="analysis-panel" style="display:none">${marked.parse(analysisMd)}</div>`;
+      } else {
+        content.innerHTML = marked.parse(markdown || '');
+      }
+      processCodeBlocks(content);
     }
-    if (footer) footer.style.display = 'flex';
+    if (footer) {
+      footer.style.display = 'flex';
+    }
   }
+
+  function toggleAnalysisPanel(btn) {
+    const panel = btn.closest('.analysis-toggle-row').nextElementSibling;
+    const open = panel.style.display === 'none';
+    panel.style.display = open ? 'block' : 'none';
+    btn.classList.toggle('open', open);
+    btn.innerHTML = `${_chevDown} ${open ? 'Hide' : 'Show'} model analysis`;
+  }
+
+  const _streamRenderTimers = {};
 
   function setStreamingContent(id, model, chunk) {
     const ph = document.getElementById(`placeholder-${id}-${model}`);
     const content = document.getElementById(`content-${id}-${model}`);
     if (ph) ph.style.display = 'none';
-    if (content) {
-      content.style.display = 'block';
-      content.innerHTML = marked.parse(activeStreams[id] || '');
+    if (!content) return;
+    content.style.display = 'block';
+
+    // For large outputs (code-heavy), re-rendering full markdown on every token
+    // bogs down the browser. Use a throttled render: update the raw text immediately
+    // (fast, no parse overhead) and schedule a full markdown re-render at most
+    // once every 250ms. setContent() does the final full render when streaming ends.
+    const fullRaw = activeStreams[id] || '';
+    // Strip everything from the analysis marker onward so it never appears while streaming
+    const splitIdx = fullRaw.indexOf('%%ANALYSIS%%');
+    const raw = splitIdx !== -1 ? fullRaw.slice(0, splitIdx) : fullRaw;
+    const isCodeHeavy = raw.includes('```');
+
+    if (isCodeHeavy) {
+      if (!content.dataset.streaming) {
+        content.dataset.streaming = '1';
+        content.style.whiteSpace = 'pre-wrap';
+        content.style.fontFamily = 'var(--mono, "JetBrains Mono", monospace)';
+        content.style.fontSize = '12.5px';
+      }
+      content.textContent = raw;
+    } else {
+      if (!_streamRenderTimers[id]) {
+        _streamRenderTimers[id] = setTimeout(() => {
+          const el = document.getElementById(`content-${id}-${model}`);
+          if (el) el.innerHTML = marked.parse(raw);
+          delete _streamRenderTimers[id];
+        }, 250);
+      }
     }
+
+    // Keep the streaming response visible as it grows
+    if (_autoScrollActive) scrollToBottom(true);
   }
 
   function setError(id, model, error) {
@@ -1523,6 +2668,14 @@
     if (cfgWrapper && !cfgWrapper.contains(e.target)) {
       document.getElementById('cfg-dropdown').classList.add('hidden');
     }
+    // Close artifacts panel when clicking outside it
+    const panel = document.getElementById('artifacts-panel');
+    const headerBtn = document.getElementById('artifacts-header-btn');
+    if (panel && panel.classList.contains('open') &&
+        !panel.contains(e.target) &&
+        !(headerBtn && headerBtn.contains(e.target))) {
+      closeArtifactsModal();
+    }
   });
 
   // ── Thread management ─────────────────────────────
@@ -1543,17 +2696,81 @@
 
   function switchThread(id) {
     if (currentThreadId === id) return;
+    if (viewingArtifactId) closeArtifactView();
     if (activeSSE) { activeSSE.abort(); activeSSE = null; isLoading = false; }
+    followUpArtifactId = null;
+    renderFollowUpPill();
     saveCurrentThread();
     currentThreadId = id;
     const t = threads[id];
     conversationHistory = [...(t.history || [])];
     messagesEl.innerHTML = t.messagesHTML || '';
     updateRing(promptCount);
-    emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
     isLoading = false;
     updateSendBtn();
     newThreadBtn.disabled = false;
+
+    const threadMode = t.mode || 'chat';
+
+    // Sync appMode and all mode-specific UI when the thread's mode differs from the current mode.
+    // This happens during initial page load when localStorage restores a thread from the other mode.
+    if (threadMode !== appMode) {
+      appMode = threadMode;
+      document.querySelectorAll('.app-mode-btn, .hms-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.mode === appMode));
+      const cmdBar         = document.getElementById('studio-cmd-bar');
+      const artifactHeaderBtn = document.getElementById('artifacts-header-btn');
+      const webBtn         = document.getElementById('web-search-btn');
+      const grokModelRow   = document.querySelector('.cfg-model-row[data-model="grok"]');
+      const grokSynthRow   = document.querySelector('.cfg-synth-row[data-model="grok"]');
+      const intensiveNotice = document.getElementById('intensive-notice');
+      const intensivePips   = document.getElementById('intensive-pips');
+      if (threadMode === 'studio') {
+        if (cmdBar)        cmdBar.classList.add('visible');
+        if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'inline-flex';
+        if (webBtn)        webBtn.style.display = 'none';
+        newThreadBtn.style.display = 'none';
+        inputEl.placeholder = 'Describe what you want to build…';
+        artifactModeEnabled = true;
+        currentMode = 'intensive';
+        if (!studioCmd) setStudioCmd('code');
+        if (grokModelRow)  grokModelRow.style.display = 'none';
+        if (grokSynthRow)  grokSynthRow.style.display = 'none';
+        if (intensiveNotice) intensiveNotice.style.display = 'none';
+        if (intensivePips)   intensivePips.style.display = 'none';
+      } else {
+        if (cmdBar)        cmdBar.classList.remove('visible');
+        if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'none';
+        if (webBtn)        webBtn.style.display = '';
+        newThreadBtn.style.display = '';
+        inputEl.placeholder = 'Ask Voyance…';
+        artifactModeEnabled = false;
+        if (grokModelRow)  grokModelRow.style.display = '';
+        if (grokSynthRow)  grokSynthRow.style.display = '';
+      }
+      // Record this thread as the last-seen thread for its mode so switchAppMode can restore it
+      _lastThread[threadMode] = id;
+    }
+
+    const studioWs = document.getElementById('studio-workspace');
+    const chatArea = document.getElementById('chat-area');
+    if (threadMode === 'studio') {
+      // Studio thread with messages → show chat; empty → show workspace
+      if (conversationHistory.length > 0) {
+        chatArea.style.display = '';
+        studioWs.classList.remove('active');
+        emptyState.style.display = 'none';
+      } else {
+        chatArea.style.display = 'none';
+        studioWs.classList.add('active');
+        emptyState.style.display = 'none';
+      }
+    } else {
+      chatArea.style.display = '';
+      studioWs.classList.remove('active');
+      emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
+    }
+
     renderThreadList();
     saveToLocalStorage();
     scrollToBottom(true);
@@ -1564,25 +2781,27 @@
   function createNewThread() {
     saveCurrentThread();
     const id = generateThreadId();
-    const num = threadOrder.length + 1;
-    threads[id] = { id, name: 'New Thread', history: [], messagesHTML: '' };
+    threads[id] = { id, name: 'New Thread', history: [], messagesHTML: '', mode: appMode };
     threadOrder.unshift(id);
-    // Use a temp var trick to bypass the early-return in switchThread
     currentThreadId = null;
     switchThread(id);
   }
 
   function deleteThread(id, e) {
     e.stopPropagation();
+    const deletedMode = threads[id]?.mode || 'chat';
     threadOrder = threadOrder.filter(tid => tid !== id);
     delete threads[id];
     localStorage.removeItem('opclave-html-' + id);
-    if (threadOrder.length === 0) {
+    if (currentThreadId === id) {
       currentThreadId = null;
-      createNewThread();
-    } else if (currentThreadId === id) {
-      currentThreadId = null;
-      switchThread(threadOrder[0]);
+      // Find the next thread in the same mode so we stay in context
+      const nextId = threadOrder.find(tid => (threads[tid]?.mode || 'chat') === deletedMode);
+      if (nextId) {
+        switchThread(nextId);
+      } else {
+        createNewThread(); // creates a fresh thread in the current appMode
+      }
     } else {
       renderThreadList();
       saveToLocalStorage();
@@ -1623,7 +2842,10 @@
   function renderThreadList() {
     const listEl = document.getElementById('thread-list');
     listEl.innerHTML = '';
-    threadOrder.forEach(id => {
+    // Only show Voyance (chat) threads — Studio sessions are transient and never listed
+    if (appMode === 'studio') return;
+    const modeThreads = threadOrder.filter(id => threads[id] && (threads[id].mode || 'chat') === 'chat');
+    modeThreads.forEach(id => {
       const t = threads[id];
       const isActive = id === currentThreadId;
       const item = document.createElement('div');
@@ -1649,7 +2871,7 @@
 
       item.appendChild(nameSpan);
       item.appendChild(delBtn);
-      listEl.appendChild(item);
+        listEl.appendChild(item);
     });
   }
 
@@ -1675,9 +2897,38 @@
   }
 
   // ── Feedback ──────────────────────────────────────
-  function openFeedbackModal() {
+  let _feedbackCtx = null;
+
+  function handleThumb(msgId, tab, sentiment) {
+    // Toggle off if already active
+    const upBtn   = document.getElementById(`thumb-up-${msgId}-${tab}`);
+    const downBtn = document.getElementById(`thumb-down-${msgId}-${tab}`);
+    const already = (sentiment === 'up' && upBtn?.classList.contains('active-up'))
+                 || (sentiment === 'down' && downBtn?.classList.contains('active-down'));
+    if (already) {
+      upBtn?.classList.remove('active-up');
+      downBtn?.classList.remove('active-down');
+      _feedbackCtx = null;
+      return;
+    }
+    // Mark active
+    upBtn?.classList.toggle('active-up',   sentiment === 'up');
+    upBtn?.classList.toggle('active-down', false);
+    downBtn?.classList.toggle('active-down', sentiment === 'down');
+    downBtn?.classList.toggle('active-up',   false);
+    openFeedbackModal(msgId, tab, sentiment);
+  }
+
+  function openFeedbackModal(msgId, tab, sentiment) {
+    _feedbackCtx = { msgId, tab, sentiment };
     const overlay = document.getElementById('feedback-modal-overlay');
     overlay.style.display = 'flex';
+    document.getElementById('feedback-modal-title').textContent =
+      sentiment === 'up' ? 'What worked well?' : 'What could be better?';
+    document.getElementById('feedback-modal-sub').textContent =
+      sentiment === 'up'
+        ? 'Great to hear — any details help us keep it that way.'
+        : 'Tell us what fell short. Any detail helps.';
     document.getElementById('feedback-status').textContent = '';
     document.getElementById('feedback-textarea').value = '';
     document.getElementById('feedback-submit-btn').disabled = false;
@@ -1696,10 +2947,12 @@
     btn.disabled = true;
     status.textContent = 'Sending…';
     try {
+      const payload = { message };
+      if (_feedbackCtx?.sentiment) payload.sentiment = _feedbackCtx.sentiment;
       const res = await fetch('/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.ok) {
@@ -1709,7 +2962,6 @@
       } else if (data.rate_limited) {
         status.textContent = 'Too many submissions. Please wait a while before trying again.';
         status.style.color = '#f87171';
-        // keep button disabled; no point retrying immediately
       } else {
         status.textContent = data.error ? `Error: ${data.error}` : 'Failed to send. Try again.';
         status.style.color = '#f87171';
@@ -1723,6 +2975,8 @@
   }
 
   function saveConfig() {
+    // Studio has its own in-memory snapshot; only persist Voyance config
+    if (appMode !== 'chat') return;
     localStorage.setItem('opclave-config', JSON.stringify({
       preset: currentPreset,
       models: [...enabledModels],
@@ -1739,7 +2993,8 @@
       if (cfg.models && cfg.models.length) enabledModels = new Set(cfg.models);
       if (cfg.synthesizer) selectedSynthesizer = cfg.synthesizer;
       if (cfg.preset !== undefined) currentPreset = cfg.preset;
-      if (cfg.mode) currentMode = cfg.mode;
+      // 'intensive' is Studio-only — never restore it into Voyance
+      if (cfg.mode && cfg.mode !== 'intensive') currentMode = cfg.mode;
     } catch (_) {}
   }
 
@@ -1775,8 +3030,8 @@
       if (t && o) {
         threads = JSON.parse(t);
         threadOrder = JSON.parse(o);
-        // Restore valid threads only
-        threadOrder = threadOrder.filter(id => threads[id]);
+        // Restore valid chat threads only (studio threads are never persisted)
+        threadOrder = threadOrder.filter(id => threads[id] && (threads[id].mode || 'chat') !== 'studio');
         Object.keys(threads).forEach(id => { if (!threadOrder.includes(id)) delete threads[id]; });
         // Restore per-thread HTML
         threadOrder.forEach(id => {
@@ -1796,6 +3051,571 @@
     renderThreadList();
     updateSendBtn();
     inputEl.focus();
+  }
+
+  // ── Artifact storage & UI ─────────────────────────
+  function generateArtifactId() {
+    return 'art-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  }
+
+  function loadArtifactsFromStorage() {
+    try {
+      const order = JSON.parse(localStorage.getItem('opclave-artifact-order') || '[]');
+      const items = {};
+      order.forEach(aid => {
+        const raw = localStorage.getItem('opclave-artifact-' + aid);
+        if (raw) { try { items[aid] = JSON.parse(raw); } catch(_) {} }
+      });
+      savedArtifacts = items;
+      savedArtifactOrder = order.filter(aid => items[aid]);
+    } catch(_) {
+      savedArtifacts = {};
+      savedArtifactOrder = [];
+    }
+    renderArtifactList();
+  }
+
+  function persistArtifact(art) {
+    try {
+      localStorage.setItem('opclave-artifact-' + art.id, JSON.stringify(art));
+      localStorage.setItem('opclave-artifact-order', JSON.stringify(savedArtifactOrder));
+    } catch(_) {}
+  }
+
+  // ── Artifacts panel ───────────────────────────────
+  let _pendingDeleteId = null;
+
+  function renderArtifactList() {
+    const n = savedArtifactOrder.length;
+    const countEl = document.getElementById('artifacts-count');
+    if (countEl) countEl.textContent = n;
+    const panelCountEl = document.getElementById('artifacts-panel-count');
+    if (panelCountEl) panelCountEl.textContent = n;
+    if (document.getElementById('artifacts-panel').classList.contains('open')) {
+      renderArtifactsModalBody();
+    }
+  }
+
+  function toggleArtifactsPanel() {
+    const panel = document.getElementById('artifacts-panel');
+    if (panel.classList.contains('open')) {
+      closeArtifactsModal();
+    } else {
+      openArtifactsModal();
+    }
+  }
+
+  function openArtifactsModal() {
+    document.getElementById('artifacts-panel').classList.add('open');
+    const btn = document.getElementById('artifacts-header-btn');
+    if (btn) btn.classList.add('panel-open');
+    renderArtifactsModalBody();
+  }
+
+  function closeArtifactsModal() {
+    document.getElementById('artifacts-panel').classList.remove('open');
+    const btn = document.getElementById('artifacts-header-btn');
+    if (btn) btn.classList.remove('panel-open');
+  }
+
+  function renderArtifactsModalBody() {
+    const body = document.getElementById('artifacts-modal-body');
+    if (!body) return;
+    body.innerHTML = '';
+    if (!savedArtifactOrder.length) {
+      body.innerHTML = `<div class="apanel-empty">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+        No artifacts yet.<br>Generate one from Studio to get started.
+      </div>`;
+      return;
+    }
+    body.innerHTML = '<div class="apanel-section-label">Saved artifacts</div>';
+    savedArtifactOrder.forEach(aid => {
+      const a = savedArtifacts[aid];
+      if (!a) return;
+      const item = document.createElement('div');
+      item.className = 'aitem' + (viewingArtifactId === aid ? ' active' : '');
+      item.id = 'aitem-' + aid;
+      const date = new Date(a.createdAt || Date.now());
+      const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const typeIcon = a.type === 'code'
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+      item.innerHTML = `
+        <div class="aitem-icon">${typeIcon}</div>
+        <div class="aitem-info">
+          <div class="aitem-name">${escapeHtml(a.name || 'Untitled')}</div>
+          <div class="aitem-meta">
+            <span class="aitem-type-badge">${escapeHtml(a.type || 'research')}</span>
+            ${escapeHtml(dateStr)}
+          </div>
+        </div>
+        <button class="aitem-rename" title="Rename artifact">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="aitem-delete" title="Delete artifact">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>`;
+      item.querySelector('.aitem-rename').onclick = (e) => {
+        e.stopPropagation();
+        startRenameArtifact(aid);
+      };
+      item.querySelector('.aitem-delete').onclick = (e) => {
+        e.stopPropagation();
+        openConfirmDelete(aid, a.name || 'Untitled');
+      };
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.aitem-delete') || e.target.closest('.aitem-rename')) return;
+        closeArtifactsModal();
+        openArtifactView(aid);
+      });
+      body.appendChild(item);
+    });
+  }
+
+  function openConfirmDelete(aid, name) {
+    _pendingDeleteId = aid;
+    document.getElementById('confirm-delete-sub').textContent =
+      `"${name}" will be permanently removed. This cannot be undone.`;
+    document.getElementById('confirm-delete-overlay').classList.add('visible');
+  }
+
+  function closeConfirmDelete() {
+    _pendingDeleteId = null;
+    document.getElementById('confirm-delete-overlay').classList.remove('visible');
+  }
+
+  function confirmDeleteArtifact() {
+    if (!_pendingDeleteId) return;
+    deleteArtifact(_pendingDeleteId);
+    closeConfirmDelete();
+  }
+
+  function startRenameArtifact(aid) {
+    const item = document.getElementById('aitem-' + aid);
+    if (!item) return;
+    const nameEl = item.querySelector('.aitem-name');
+    if (!nameEl) return;
+    const oldName = savedArtifacts[aid]?.name || 'Untitled';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = oldName;
+    inp.className = 'aitem-name-input';
+    nameEl.replaceWith(inp);
+    inp.focus();
+    inp.select();
+    function finish() {
+      const newName = inp.value.trim() || oldName;
+      if (savedArtifacts[aid]) {
+        savedArtifacts[aid].name = newName;
+        persistArtifact(savedArtifacts[aid]);
+      }
+      renderArtifactsModalBody();
+      // Update title if artifact view is open
+      if (viewingArtifactId === aid) {
+        const titleEl = document.querySelector('#artifact-view .artifact-title');
+        if (titleEl) titleEl.textContent = newName;
+      }
+    }
+    inp.addEventListener('blur', finish);
+    inp.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') inp.blur();
+      if (ev.key === 'Escape') { inp.value = oldName; inp.blur(); }
+    });
+  }
+
+  function startRenameArtifactInView(aid) {
+    const titleEl = document.querySelector('#artifact-view .artifact-title');
+    if (!titleEl || !savedArtifacts[aid]) return;
+    const oldName = savedArtifacts[aid].name || 'Untitled';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.value = oldName;
+    inp.className = 'artifact-title-input';
+    titleEl.replaceWith(inp);
+    inp.focus();
+    inp.select();
+    function finish() {
+      const newName = inp.value.trim() || oldName;
+      savedArtifacts[aid].name = newName;
+      persistArtifact(savedArtifacts[aid]);
+      const newTitle = document.createElement('div');
+      newTitle.className = 'artifact-title';
+      newTitle.textContent = newName;
+      inp.replaceWith(newTitle);
+      renderArtifactList();
+    }
+    inp.addEventListener('blur', finish);
+    inp.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter') inp.blur();
+      if (ev.key === 'Escape') { inp.value = oldName; inp.blur(); }
+    });
+  }
+
+  function deleteArtifact(aid) {
+    delete savedArtifacts[aid];
+    savedArtifactOrder = savedArtifactOrder.filter(x => x !== aid);
+    try {
+      localStorage.removeItem('opclave-artifact-' + aid);
+      localStorage.setItem('opclave-artifact-order', JSON.stringify(savedArtifactOrder));
+    } catch(_) {}
+    if (viewingArtifactId === aid) closeArtifactView();
+    renderArtifactList();
+  }
+
+  function promptArtifactSave(turnId) {
+    const buf = artifactBuffers[turnId];
+    if (!buf || !buf.synthesis) return;
+    pendingArtifactSave = { ...buf, turnId, id: generateArtifactId() };
+    const overlay = document.getElementById('artifact-save-overlay');
+    document.getElementById('artifact-save-name').value = '';
+    document.getElementById('artifact-save-tags').value = '';
+    const preview = (buf.synthesis || '').replace(/[#>*`_]/g, '').replace(/\s+/g, ' ').trim().slice(0, 220);
+    document.getElementById('artifact-save-preview').textContent = preview || '(empty)';
+    overlay.classList.add('visible');
+    setTimeout(() => document.getElementById('artifact-save-name').focus(), 50);
+  }
+
+  function suggestNameFromQuestion(q) {
+    const words = (q || '').split(/\s+/).filter(w => w.length > 4).slice(0, 3);
+    const s = words.join(' ').replace(/[^\w\s-]/g, '').trim();
+    return s ? s.replace(/\b\w/g, c => c.toUpperCase()) : 'Untitled artifact';
+  }
+
+  function closeArtifactSaveModal(e) {
+    if (e && e.target && e.target.id !== 'artifact-save-overlay') return;
+    document.getElementById('artifact-save-overlay').classList.remove('visible');
+    if (pendingArtifactSave) {
+      delete artifactBuffers[pendingArtifactSave.turnId];
+      pendingArtifactSave = null;
+    }
+  }
+
+  function saveArtifactFromModal() {
+    if (!pendingArtifactSave) return;
+    const name = document.getElementById('artifact-save-name').value.trim() || 'Untitled artifact';
+    const tagsRaw = document.getElementById('artifact-save-tags').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const art = {
+      id: pendingArtifactSave.id,
+      name,
+      type: pendingArtifactSave.type || 'research',
+      question: pendingArtifactSave.question,
+      synthesis: pendingArtifactSave.synthesis,
+      modelResponses: pendingArtifactSave.modelResponses || {},
+      webSources: pendingArtifactSave.sources || [],
+      papers: pendingArtifactSave.papers || [],
+      citationValid: pendingArtifactSave.citationValid,
+      citationErrors: pendingArtifactSave.citationErrors || [],
+      tags,
+      createdAt: new Date().toISOString(),
+    };
+    savedArtifacts[art.id] = art;
+    savedArtifactOrder.unshift(art.id);
+    persistArtifact(art);
+    renderArtifactList();
+    document.getElementById('artifact-save-overlay').classList.remove('visible');
+    delete artifactBuffers[pendingArtifactSave.turnId];
+    pendingArtifactSave = null;
+  }
+
+  function renderCitations(text, sources) {
+    if (!text) return '';
+    let html = marked.parse(text);
+    if (!sources || !sources.length) return html;
+    sources.forEach((s, i) => {
+      const n = i + 1;
+      const re = new RegExp('\\[' + n + '\\]', 'g');
+      // Papers expose `doi`; web sources expose `url`. Prefer doi if present.
+      let url = s.url || '';
+      if (!url && s.doi) {
+        url = s.doi.startsWith('http') ? s.doi : `https://doi.org/${s.doi}`;
+      }
+      url = url || '#';
+      html = html.replace(re, `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" class="citation-link">[${n}]</a>`);
+    });
+    return html;
+  }
+
+  function openArtifactView(aid) {
+    const a = savedArtifacts[aid];
+    if (!a) return;
+    // Artifacts always open in Studio
+    if (appMode !== 'studio') switchAppMode('studio');
+    viewingArtifactId = aid;
+    if (activeSSE) { activeSSE.abort(); activeSSE = null; isLoading = false; updateSendBtn(); }
+    document.getElementById('chat-area').style.display = 'none';
+    document.getElementById('studio-workspace').classList.remove('active');
+    document.getElementById('input-area').style.display = 'none';
+
+    const view = document.getElementById('artifact-view');
+    const isCode = a.type === 'code';
+    const tagBadges = (a.tags || []).map(t => `<span class="artifact-tag">${escapeHtml(t)}</span>`).join('');
+    const dateStr = new Date(a.createdAt || Date.now()).toLocaleString();
+
+    // For code artifacts: strip the appended ## Sources section (not relevant inline)
+    // and render directly as markdown so processCodeBlocks can handle the code fences.
+    // For research: render with citation links wired to web sources.
+    let synthText = a.synthesis || '';
+    if (isCode) {
+      // Strip trailing sources block that the model sometimes appends
+      synthText = synthText.replace(/\n##\s+Sources[\s\S]*$/i, '').trim();
+    }
+    const bodyHtml = isCode
+      ? marked.parse(synthText)
+      : renderCitations(synthText, (a.papers && a.papers.length) ? a.papers : (a.webSources || []));
+
+    // Perspectives label differs by type
+    const perspLabel = isCode ? 'Creative directions' : 'Model perspectives';
+    const perspEntries = Object.entries(a.modelResponses || {});
+    let perspectivesHtml;
+    if (!perspEntries.length) {
+      perspectivesHtml = '<div style="color:#78787e;font-size:12.5px;padding:6px 4px">No saved responses.</div>';
+    } else {
+      const tabsHtml = perspEntries.map(([name], i) =>
+        `<button class="persp-tab${i === 0 ? ' active' : ''}" onclick="switchPerspTab(this)" data-pane="persp-${a.id}-${i}">${escapeHtml(name)}</button>`
+      ).join('');
+      const panesHtml = perspEntries.map(([_, text], i) =>
+        `<div class="persp-pane${i === 0 ? ' active' : ''}" id="persp-${a.id}-${i}">
+          <div class="model-perspective-text md-content">${marked.parse((text||'').slice(0, 4000))}</div>
+        </div>`
+      ).join('');
+      perspectivesHtml = `<div class="persp-tab-container"><div class="persp-tabs">${tabsHtml}</div>${panesHtml}</div>`;
+    }
+
+    // Build the sources panel — papers (peer-reviewed) take priority over web sources
+    const hasPapers = (a.papers || []).length > 0;
+    let sourcesHtml = '';
+    let sourcesLabel = 'Citation sources';
+    let sourcesCount = 0;
+    if (hasPapers) {
+      sourcesLabel = 'Research sources';
+      sourcesCount = a.papers.length;
+      sourcesHtml = a.papers.map((p, i) => {
+        const authors = escapeHtml(p.authors || 'Unknown');
+        const year = escapeHtml(String(p.year || 'n.d.'));
+        const title = escapeHtml(p.title || 'Untitled');
+        const journal = escapeHtml(p.journal || '');
+        const doi = (p.doi || '').trim();
+        const finding = escapeHtml(p.finding || '');
+        const doiUrl = doi ? (doi.startsWith('http') ? doi : `https://doi.org/${doi}`) : '';
+        const linkPart = doiUrl
+          ? ` <a href="${escapeHtml(doiUrl)}" target="_blank" rel="noopener noreferrer" class="citation-link">[link]</a>`
+          : '';
+        return `<div class="artifact-source-row" style="display:block;padding:9px 10px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <span class="artifact-source-num">[${i+1}]</span>
+            <div class="artifact-source-text">
+              <span class="artifact-source-title"><strong>${authors}</strong> (${year}). ${title}${journal ? `. <em>${journal}</em>` : ''}${linkPart}</span>
+              ${finding ? `<span class="artifact-source-domain" style="margin-top:4px;white-space:normal">${finding}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } else if ((a.webSources || []).length) {
+      sourcesCount = a.webSources.length;
+      sourcesHtml = a.webSources.map((s, i) => {
+        let domain = '';
+        try { domain = new URL(s.url).hostname.replace(/^www\./, ''); } catch(_) {}
+        return `<a class="artifact-source-row" href="${escapeHtml(s.url||'#')}" target="_blank" rel="noopener noreferrer">
+          <span class="artifact-source-num">[${i+1}]</span>
+          <span class="artifact-source-text">
+            <span class="artifact-source-title">${escapeHtml(s.title || domain || s.url)}</span>
+            <span class="artifact-source-domain">${escapeHtml(domain || s.url)}</span>
+          </span>
+        </a>`;
+      }).join('');
+    } else {
+      sourcesHtml = '<div style="color:#78787e;font-size:12.5px;padding:6px 4px">No sources captured.</div>';
+    }
+
+    // Citation verification badge
+    const citationBadge = (!isCode && a.citationValid === false && (a.citationErrors || []).length)
+      ? `<div style="margin:8px 0 12px;padding:8px 12px;border-radius:7px;border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.07);color:#d97706;font-size:12px">
+           <strong>Citation review:</strong> ${escapeHtml(a.citationErrors[0] || 'See review notes.')}${a.citationErrors.length > 1 ? ` (+${a.citationErrors.length - 1} more)` : ''}
+         </div>`
+      : (!isCode && a.citationValid === true && hasPapers
+        ? `<div style="margin:8px 0 12px;padding:6px 10px;border-radius:7px;border:1px solid rgba(74,122,63,0.35);background:rgba(74,122,63,0.07);color:#4A7A3F;font-size:11.5px;display:inline-block">
+             ✓ All citations verified against ${a.papers.length} peer-reviewed papers
+           </div>`
+        : '');
+
+
+    view.innerHTML = `<div class="artifact-view-inner">
+      <button class="artifact-back" onclick="closeArtifactView()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Studio
+      </button>
+      <div class="artifact-title">${escapeHtml(a.name || 'Untitled')}</div>
+      <div class="artifact-meta">
+        <span class="artifact-tag">${escapeHtml(a.type || 'research')}</span>
+        <span>${escapeHtml(dateStr)}</span>
+        ${tagBadges}
+      </div>
+      ${citationBadge}
+      <div class="artifact-body" id="av-body-${aid}">${bodyHtml}</div>
+      ${!isCode ? `
+      <div class="artifact-collapse open" onclick="toggleArtifactCollapse(this, event)">
+        <div class="artifact-collapse-header">
+          <span>${escapeHtml(sourcesLabel)} (${sourcesCount})</span>
+          <svg class="artifact-collapse-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="artifact-collapse-body">${sourcesHtml}</div>
+      </div>` : ''}
+      <div class="artifact-collapse" onclick="toggleArtifactCollapse(this, event)">
+        <div class="artifact-collapse-header">
+          <span>${escapeHtml(perspLabel)} (${Object.keys(a.modelResponses||{}).length})</span>
+          <svg class="artifact-collapse-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="artifact-collapse-body">${perspectivesHtml}</div>
+      </div>
+      <div class="artifact-export-row">
+        <button class="artifact-export-btn" onclick="startRenameArtifactInView('${a.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Rename
+        </button>
+        <button class="artifact-export-btn" onclick="exportArtifactMd('${a.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download .md
+        </button>
+        ${!isCode ? `<button class="artifact-export-btn" onclick="exportArtifactPdf('${a.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Download PDF
+        </button>` : ''}
+        <button class="artifact-export-btn" onclick="copyArtifact('${a.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <button class="artifact-export-btn" onclick="askFollowUpFromArtifact('${a.id}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Ask follow-up
+        </button>
+      </div>
+    </div>`;
+
+    view.style.display = 'block';
+    // Run processCodeBlocks on the rendered body for code artifacts
+    if (isCode) {
+      const body = document.getElementById(`av-body-${aid}`);
+      if (body) processCodeBlocks(body);
+    }
+    renderArtifactList();
+    view.scrollTop = 0;
+  }
+
+  function closeArtifactView() {
+    viewingArtifactId = null;
+    const view = document.getElementById('artifact-view');
+    view.style.display = 'none';
+    view.innerHTML = '';
+    document.getElementById('input-area').style.display = '';
+    // Return to Studio workspace
+    document.getElementById('studio-workspace').classList.add('active');
+    document.getElementById('chat-area').style.display = 'none';
+    renderArtifactList();
+  }
+
+  function toggleArtifactCollapse(el, e) {
+    if (e && e.target.closest('a, button')) return;
+    if (e && !e.target.closest('.artifact-collapse-header')) return;
+    el.classList.toggle('open');
+  }
+
+  function switchPerspTab(btn) {
+    const container = btn.closest('.persp-tab-container');
+    if (!container) return;
+    container.querySelectorAll('.persp-tab').forEach(t => t.classList.remove('active'));
+    container.querySelectorAll('.persp-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const pane = document.getElementById(btn.dataset.pane);
+    if (pane) pane.classList.add('active');
+  }
+
+  function buildArtifactMarkdown(a) {
+    const lines = [];
+    lines.push(`# ${a.name || 'Untitled'}`);
+    lines.push('');
+    lines.push(`*Type: ${a.type || 'research'}  ·  Created: ${new Date(a.createdAt).toLocaleString()}*`);
+    if (a.tags && a.tags.length) lines.push(`*Tags: ${a.tags.join(', ')}*`);
+    lines.push('');
+    lines.push(`> ${a.question || ''}`);
+    lines.push('');
+    lines.push(a.synthesis || '');
+    if (a.webSources && a.webSources.length) {
+      lines.push('');
+      lines.push('## Sources');
+      a.webSources.forEach((s, i) => {
+        lines.push(`${i+1}. [${s.title || s.url}](${s.url})`);
+      });
+    }
+    return lines.join('\n');
+  }
+
+  function exportArtifactMd(aid) {
+    const a = savedArtifacts[aid]; if (!a) return;
+    const md = buildArtifactMarkdown(a);
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = (a.name || 'artifact').replace(/[^\w-]+/g, '_') + '.md';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportArtifactPdf(aid) {
+    const a = savedArtifacts[aid]; if (!a) return;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(a.name||'Artifact')}</title>
+      <style>body{font-family:Georgia,serif;max-width:720px;margin:40px auto;padding:0 20px;color:#222;line-height:1.65}
+      h1,h2,h3{font-family:Georgia,serif;color:#111}
+      .meta{color:#666;font-size:12px;margin-bottom:18px}
+      a{color:#7a5a2c;text-decoration:none}a:hover{text-decoration:underline}
+      blockquote{border-left:3px solid #c9a77a;padding-left:12px;color:#555;margin:14px 0}
+      </style></head><body>
+      <h1>${escapeHtml(a.name||'Untitled')}</h1>
+      <div class="meta">${escapeHtml(a.type||'research')} · ${escapeHtml(new Date(a.createdAt).toLocaleString())}</div>
+      <blockquote>${escapeHtml(a.question||'')}</blockquote>
+      ${renderCitations(a.synthesis||'', a.webSources||[])}
+      ${(a.webSources&&a.webSources.length)?`<h2>Sources</h2><ol>${a.webSources.map(s=>`<li><a href="${escapeHtml(s.url)}" target="_blank">${escapeHtml(s.title||s.url)}</a></li>`).join('')}</ol>`:''}
+      <script>window.onload=()=>setTimeout(()=>window.print(),250);</` + `script>
+      </body></html>`;
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(html); w.document.close();
+  }
+
+  function copyArtifact(aid) {
+    const a = savedArtifacts[aid]; if (!a) return;
+    navigator.clipboard.writeText(buildArtifactMarkdown(a)).catch(() => {});
+  }
+
+  function renderFollowUpPill() {
+    const container = document.getElementById('followup-context-pill');
+    if (!followUpArtifactId || !savedArtifacts[followUpArtifactId]) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+      return;
+    }
+    const name = savedArtifacts[followUpArtifactId].name || 'Artifact';
+    container.style.display = 'flex';
+    container.innerHTML = `<span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#c9a77a;border:1px solid rgba(201,167,122,0.35);border-radius:5px;padding:2px 8px;display:inline-flex;align-items:center;gap:5px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${escapeHtml(name)}<button onclick="dismissFollowUpArtifact()" style="background:none;border:none;cursor:pointer;color:#78787e;font-size:13px;padding:0 0 0 3px;line-height:1;" title="Remove artifact context">×</button></span>`;
+    updateSendBtn();
+  }
+
+  function dismissFollowUpArtifact() {
+    followUpArtifactId = null;
+    renderFollowUpPill();
+    updateSendBtn();
+  }
+
+  function askFollowUpFromArtifact(aid) {
+    const a = savedArtifacts[aid]; if (!a) return;
+    closeArtifactView();
+    followUpArtifactId = aid;
+    renderFollowUpPill();
+    inputEl.value = '';
+    inputEl.dispatchEvent(new Event('input'));
+    inputEl.focus();
+    updateSendBtn();
   }
 
   function toggleSidebar() {
@@ -1819,6 +3639,15 @@
   syncPipelineUI();
   loadGlobalPromptCount();
   loadFromLocalStorage();
+  loadArtifactsFromStorage();
+
+  // Honor ?mode= from the landing page so CTA buttons land in the right mode
+  const _urlMode = new URLSearchParams(location.search).get('mode');
+  if (_urlMode === 'studio' && appMode !== 'studio') {
+    switchAppMode('studio');
+  } else if (_urlMode === 'chat' && appMode !== 'chat') {
+    switchAppMode('chat');
+  }
 
   inputEl.focus();
 
