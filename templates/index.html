@@ -3341,6 +3341,21 @@
     pendingArtifactSave = null;
   }
 
+  function buildPapersSourcesMarkdown(papers) {
+    const lines = ['## Sources', ''];
+    papers.forEach((p, i) => {
+      const authors = p.authors || 'Unknown';
+      const year = p.year || 'n.d.';
+      const title = p.title || 'Untitled';
+      const journal = p.journal ? `. ${p.journal}` : '';
+      const doi = (p.doi || '').trim();
+      const doiPart = doi ? `. DOI: ${doi}` : '';
+      lines.push(`[${i+1}] ${authors} (${year}). "${title}"${journal}${doiPart}`);
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
   function renderCitations(text, sources) {
     if (!text) return '';
     let html = marked.parse(text);
@@ -3382,6 +3397,11 @@
     if (isCode) {
       // Strip trailing sources block that the model sometimes appends
       synthText = synthText.replace(/\n##\s+Sources[\s\S]*$/i, '').trim();
+    } else if (a.papers && a.papers.length) {
+      // Replace model-generated Sources section (which may contain hallucinated DOIs)
+      // with one built from the verified papers list
+      synthText = synthText.replace(/\n##\s+Sources[\s\S]*$/i, '').trim();
+      synthText += '\n\n' + buildPapersSourcesMarkdown(a.papers);
     }
     const bodyHtml = isCode
       ? marked.parse(synthText)
@@ -3571,8 +3591,15 @@
     lines.push('');
     lines.push(`> ${a.question || ''}`);
     lines.push('');
-    lines.push(a.synthesis || '');
-    if (a.webSources && a.webSources.length) {
+    let synthesis = a.synthesis || '';
+    if (a.papers && a.papers.length) {
+      synthesis = synthesis.replace(/\n##\s+Sources[\s\S]*$/i, '').trim();
+    }
+    lines.push(synthesis);
+    if (a.papers && a.papers.length) {
+      lines.push('');
+      lines.push(buildPapersSourcesMarkdown(a.papers));
+    } else if (a.webSources && a.webSources.length) {
       lines.push('');
       lines.push('## Sources');
       a.webSources.forEach((s, i) => {
@@ -3595,6 +3622,13 @@
 
   function exportArtifactPdf(aid) {
     const a = savedArtifacts[aid]; if (!a) return;
+    const hasPapers = a.papers && a.papers.length;
+    const sources = hasPapers ? a.papers : (a.webSources || []);
+    let pdfSynth = a.synthesis || '';
+    if (hasPapers) {
+      pdfSynth = pdfSynth.replace(/\n##\s+Sources[\s\S]*$/i, '').trim();
+      pdfSynth += '\n\n' + buildPapersSourcesMarkdown(a.papers);
+    }
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(a.name||'Artifact')}</title>
       <style>body{font-family:Georgia,serif;max-width:720px;margin:40px auto;padding:0 20px;color:#222;line-height:1.65}
       h1,h2,h3{font-family:Georgia,serif;color:#111}
@@ -3608,8 +3642,8 @@
       <h1>${escapeHtml(a.name||'Untitled')}</h1>
       <div class="meta">${escapeHtml(a.type||'research')} · ${escapeHtml(new Date(a.createdAt).toLocaleString())}</div>
       <blockquote>${escapeHtml(a.question||'')}</blockquote>
-      ${renderCitations(a.synthesis||'', a.webSources||[])}
-      ${(a.webSources&&a.webSources.length)?`<h2>Sources</h2><ol>${a.webSources.map(s=>`<li><a href="${escapeHtml(s.url)}" target="_blank">${escapeHtml(s.title||s.url)}</a></li>`).join('')}</ol>`:''}
+      ${renderCitations(pdfSynth, sources)}
+      ${(!hasPapers && a.webSources&&a.webSources.length)?`<h2>Sources</h2><ol>${a.webSources.map(s=>`<li><a href="${escapeHtml(s.url)}" target="_blank">${escapeHtml(s.title||s.url)}</a></li>`).join('')}</ol>`:''}
       <div class="brand-bottom">This research artifact was generated using Opclave Studio —<br>multi-model synthesis across GPT, Claude, Gemini, and Grok.<br>Try it at opclave.com</div>
       <script>window.onload=()=>setTimeout(()=>window.print(),250);</` + `script>
       </body></html>`;
