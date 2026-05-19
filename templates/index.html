@@ -160,21 +160,78 @@
       color: #55555a; font-size: 13px; max-width: 340px; line-height: 1.6;
       margin-bottom: 22px;
     }
-    .studio-chips {
-      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-      max-width: 520px;
+    .studio-modes {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 560px;
     }
-    .studio-chip {
-      padding: 7px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);
-      background: none; color: #888; font-size: 12.5px; cursor: pointer;
-      font-family: 'Inter',sans-serif; transition: all .15s;
-      display: flex; align-items: center; gap: 6px;
+    .studio-mode-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+      padding: 18px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: none;
+      cursor: pointer;
+      text-align: left;
+      width: 168px;
+      transition: all 0.15s;
     }
-    .studio-chip:hover { border-color: rgba(201,167,122,0.4); color: #c9a77a; background: rgba(201,167,122,0.06); }
-    .studio-chip-cmd {
-      font-family: var(--mono,'JetBrains Mono',monospace); font-size: 10px;
-      color: #c9a77a; letter-spacing: 0.04em;
+    .studio-mode-card:hover {
+      border-color: rgba(201,167,122,0.35);
+      background: rgba(201,167,122,0.04);
     }
+    .smc-cmd {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 9px;
+      color: #c9a77a;
+      letter-spacing: 0.08em;
+    }
+    .smc-title {
+      font-family: 'Fraunces',serif;
+      font-size: 22px;
+      color: #ededed;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .smc-desc {
+      font-size: 11px;
+      color: #55555a;
+      line-height: 1.5;
+    }
+    /* Shared prompt textarea for code/research overlays */
+    .smode-textarea {
+      width: 100%;
+      min-height: 140px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e8e8ec;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      line-height: 1.65;
+      padding: 18px 18px 10px;
+      resize: none;
+      box-sizing: border-box;
+    }
+    .smode-textarea::placeholder { color: #55555a; }
+    .smode-submit-btn {
+      padding: 10px 28px;
+      border-radius: 999px;
+      border: 1px solid #c9a77a;
+      background: transparent;
+      color: #c9a77a;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .smode-submit-btn:hover { background: rgba(201,167,122,0.08); }
 
     /* Studio command mode buttons in composer */
     .studio-cmd-bar {
@@ -922,6 +979,16 @@
       overflow: hidden;
     }
     #review-fullpage.active { display: flex; }
+    #code-fullpage, #research-fullpage {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0c;
+      z-index: 500;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #code-fullpage.active, #research-fullpage.active { display: flex; }
     .rfp-topbar {
       display: flex;
       align-items: center;
@@ -1626,14 +1693,23 @@
   <div id="studio-workspace">
     <div id="studio-empty">
       <h2 class="studio-headline">Studio.</h2>
-      <p class="studio-sub">Give a build prompt, get a complete polished artifact — code, research, or both.</p>
-      <div class="studio-chips">
-        <button class="studio-chip" onclick="fillStudio('Build a landing page for ','code')"><span class="studio-chip-cmd">/code</span> Build a landing page</button>
-        <button class="studio-chip" onclick="fillStudio('Create a dashboard for ','code')"><span class="studio-chip-cmd">/code</span> Create a dashboard</button>
-        <button class="studio-chip" onclick="fillStudio('Research ','research')"><span class="studio-chip-cmd">/research</span> Research a topic</button>
-        <button class="studio-chip" onclick="fillStudio('Build a game where ','code')"><span class="studio-chip-cmd">/code</span> Build a game</button>
-        <button class="studio-chip" onclick="fillStudio('Compare ','research')"><span class="studio-chip-cmd">/research</span> Compare technologies</button>
-        <button class="studio-chip" onclick="enterReviewMode()"><span class="studio-chip-cmd">/review</span> Audit code</button>
+      <p class="studio-sub">Turn prompts into complete artifacts.</p>
+      <div class="studio-modes">
+        <button class="studio-mode-card" onclick="enterCodeMode()">
+          <span class="smc-cmd">/code</span>
+          <span class="smc-title">Build</span>
+          <span class="smc-desc">Applications, tools, and websites from a single prompt</span>
+        </button>
+        <button class="studio-mode-card" onclick="enterResearchMode()">
+          <span class="smc-cmd">/research</span>
+          <span class="smc-title">Research</span>
+          <span class="smc-desc">Structured documents synthesized from any question</span>
+        </button>
+        <button class="studio-mode-card" onclick="enterReviewMode()">
+          <span class="smc-cmd">/review</span>
+          <span class="smc-title">Review</span>
+          <span class="smc-desc">Multi-model audit for security, quality, and performance</span>
+        </button>
       </div>
     </div>
 
@@ -1792,6 +1868,86 @@
   </div>
 
 
+
+  <!-- ── Code full-page overlay ─────────────────────────────── -->
+  <div id="code-fullpage">
+    <div class="rfp-topbar">
+      <button class="rfp-back" onclick="exitCodeMode()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Studio
+      </button>
+      <span class="rfp-brand">Opclave</span>
+    </div>
+    <div class="rfp-scroll">
+      <div class="rfp-input-section">
+        <div class="rfp-hero">
+          <h1 class="rfp-title">Build.</h1>
+          <p class="rfp-subtitle">Describe what you want to build and get a complete, working artifact.</p>
+          <div class="rfp-agents">
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Apps</span>
+              <span class="rfp-agent-focus">Web applications, dashboards, and interfaces</span>
+            </div>
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Tools</span>
+              <span class="rfp-agent-focus">Scripts, utilities, and automation</span>
+            </div>
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Games</span>
+              <span class="rfp-agent-focus">Interactive demos, games, and prototypes</span>
+            </div>
+          </div>
+        </div>
+        <div class="rfp-card">
+          <textarea class="smode-textarea" id="code-prompt-input" placeholder="Describe what you want to build…" spellcheck="false" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))submitCodePrompt()"></textarea>
+          <div class="rfp-submit-row">
+            <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">Multi-model synthesis</span>
+            <button class="smode-submit-btn" onclick="submitCodePrompt()">Build it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /#code-fullpage -->
+
+  <!-- ── Research full-page overlay ─────────────────────────── -->
+  <div id="research-fullpage">
+    <div class="rfp-topbar">
+      <button class="rfp-back" onclick="exitResearchMode()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Studio
+      </button>
+      <span class="rfp-brand">Opclave</span>
+    </div>
+    <div class="rfp-scroll">
+      <div class="rfp-input-section">
+        <div class="rfp-hero">
+          <h1 class="rfp-title">Research.</h1>
+          <p class="rfp-subtitle">Ask any question and get a structured document synthesized from multiple perspectives.</p>
+          <div class="rfp-agents">
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Analysis</span>
+              <span class="rfp-agent-focus">Deep topic exploration and breakdown</span>
+            </div>
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Compare</span>
+              <span class="rfp-agent-focus">Technology, approach, and concept comparisons</span>
+            </div>
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Survey</span>
+              <span class="rfp-agent-focus">Landscape overviews and literature summaries</span>
+            </div>
+          </div>
+        </div>
+        <div class="rfp-card">
+          <textarea class="smode-textarea" id="research-prompt-input" placeholder="What do you want to research?" spellcheck="false" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))submitResearchPrompt()"></textarea>
+          <div class="rfp-submit-row">
+            <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">Multi-model synthesis</span>
+            <button class="smode-submit-btn" onclick="submitResearchPrompt()">Research it</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /#research-fullpage -->
 
   <!-- Fix prompt modal -->
   <div id="fix-prompt-overlay" onclick="closeFixPromptModal(event)">
@@ -2585,11 +2741,13 @@
       b.classList.toggle('active', b.dataset.cmd === cmd));
     if (cmd === 'review') {
       enterReviewMode();
+    } else if (cmd === 'code') {
+      enterCodeMode();
+    } else if (cmd === 'research') {
+      enterResearchMode();
     } else {
       hideReviewPanel();
-      inputEl.placeholder = cmd === 'code'
-        ? 'Describe what you want to build…'
-        : 'What do you want to research?';
+      inputEl.placeholder = 'What do you want to build or research?';
       inputEl.focus();
     }
   }
@@ -5026,6 +5184,56 @@
   }).catch(e => console.error('Auth init failed', e));
 
   // ── /review mode ──────────────────────────────────
+
+  function enterCodeMode(prefill) {
+    document.getElementById('code-fullpage').classList.add('active');
+    const ta = document.getElementById('code-prompt-input');
+    if (prefill) { ta.value = prefill; ta.setSelectionRange(ta.value.length, ta.value.length); }
+    setTimeout(() => ta.focus(), 50);
+  }
+
+  function exitCodeMode() {
+    document.getElementById('code-fullpage').classList.remove('active');
+  }
+
+  function submitCodePrompt() {
+    const text = document.getElementById('code-prompt-input').value.trim();
+    if (!text) return;
+    exitCodeMode();
+    if (window.appMode !== 'studio') switchAppMode('studio');
+    studioCmd = 'code';
+    document.querySelectorAll('.studio-cmd-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.cmd === 'code'));
+    inputEl.value = text;
+    inputEl.dispatchEvent(new Event('input'));
+    document.getElementById('code-prompt-input').value = '';
+    dispatchSubmit();
+  }
+
+  function enterResearchMode(prefill) {
+    document.getElementById('research-fullpage').classList.add('active');
+    const ta = document.getElementById('research-prompt-input');
+    if (prefill) { ta.value = prefill; ta.setSelectionRange(ta.value.length, ta.value.length); }
+    setTimeout(() => ta.focus(), 50);
+  }
+
+  function exitResearchMode() {
+    document.getElementById('research-fullpage').classList.remove('active');
+  }
+
+  function submitResearchPrompt() {
+    const text = document.getElementById('research-prompt-input').value.trim();
+    if (!text) return;
+    exitResearchMode();
+    if (window.appMode !== 'studio') switchAppMode('studio');
+    studioCmd = 'research';
+    document.querySelectorAll('.studio-cmd-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.cmd === 'research'));
+    inputEl.value = text;
+    inputEl.dispatchEvent(new Event('input'));
+    document.getElementById('research-prompt-input').value = '';
+    dispatchSubmit();
+  }
 
   function enterReviewMode() {
     document.getElementById('review-fullpage').classList.add('active');
