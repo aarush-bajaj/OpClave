@@ -1731,12 +1731,6 @@
       </div>
       <!-- Input box -->
       <div id="input-box">
-        <!-- Studio command mode selector (shown only in studio mode) -->
-        <div class="studio-cmd-bar" id="studio-cmd-bar">
-          <button class="studio-cmd-btn" id="cmd-btn-code" data-cmd="code" onclick="setStudioCmd('code')">/code — Build</button>
-          <button class="studio-cmd-btn" id="cmd-btn-research" data-cmd="research" onclick="setStudioCmd('research')">/research — Document</button>
-          <button class="studio-cmd-btn" id="cmd-btn-review" data-cmd="review" onclick="setStudioCmd('review')">/review — Audit</button>
-        </div>
         <!-- Textarea row -->
         <textarea id="input" rows="1" placeholder="Ask Voyance…"
           class="w-full bg-transparent border-0 outline-none dark:text-gray-100 text-gray-900 text-[15px] resize-none max-h-[200px] min-h-[28px] overflow-y-auto leading-relaxed dark:placeholder-gray-600 placeholder-gray-400"></textarea>
@@ -2652,8 +2646,7 @@
       studioWs.classList.add('active');
       newThreadBtnEl.style.display = 'none';
       if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'inline-flex';
-      cmdBar.classList.add('visible');
-      if (!studioCmd) setStudioCmd('code');
+      document.getElementById('input-area').style.display = 'none';
       inputEl.value = ''; inputEl.style.height = 'auto';
       compressedText = null; renderPills();
       inputEl.placeholder = 'Describe what you want to build…';
@@ -2686,7 +2679,7 @@
       newThreadBtnEl.style.display = '';
       if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'none';
       closeArtifactsModal();
-      cmdBar.classList.remove('visible');
+      document.getElementById('input-area').style.display = '';
       studioCmd = '';
       inputEl.value = ''; inputEl.style.height = 'auto';
       compressedText = null; renderPills();
@@ -3663,14 +3656,12 @@
       const intensiveNotice = document.getElementById('intensive-notice');
       const intensivePips   = document.getElementById('intensive-pips');
       if (threadMode === 'studio') {
-        if (cmdBar)        cmdBar.classList.add('visible');
         if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'inline-flex';
         if (webBtn)        webBtn.style.display = 'none';
         newThreadBtn.style.display = 'none';
         inputEl.placeholder = 'Describe what you want to build…';
         artifactModeEnabled = true;
         currentMode = 'intensive';
-        if (!studioCmd) setStudioCmd('code');
         if (grokModelRow)  grokModelRow.style.display = 'none';
         if (grokSynthRow)  grokSynthRow.style.display = 'none';
         if (intensiveNotice) intensiveNotice.style.display = 'none';
@@ -5202,8 +5193,7 @@
     exitCodeMode();
     if (window.appMode !== 'studio') switchAppMode('studio');
     studioCmd = 'code';
-    document.querySelectorAll('.studio-cmd-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.cmd === 'code'));
+    document.getElementById('input-area').style.display = '';
     inputEl.value = text;
     inputEl.dispatchEvent(new Event('input'));
     document.getElementById('code-prompt-input').value = '';
@@ -5227,8 +5217,7 @@
     exitResearchMode();
     if (window.appMode !== 'studio') switchAppMode('studio');
     studioCmd = 'research';
-    document.querySelectorAll('.studio-cmd-btn').forEach(b =>
-      b.classList.toggle('active', b.dataset.cmd === 'research'));
+    document.getElementById('input-area').style.display = '';
     inputEl.value = text;
     inputEl.dispatchEvent(new Event('input'));
     document.getElementById('research-prompt-input').value = '';
