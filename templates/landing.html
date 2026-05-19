@@ -3,6 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Forward Supabase OAuth callback tokens to /app if redirected here by mistake
+    (function() {
+      var h = window.location.hash, q = window.location.search;
+      if (h.includes('access_token') || h.includes('error=') || q.includes('code=') || q.includes('error=')) {
+        window.location.replace('/app' + q + h);
+      }
+    })();
+  </script>
   <title>OpClave: Voyance and Studio</title>
   <meta name="description" content="Ask once. Get independent answers from four AI models, synthesized into one. Or build complete applications and research documents with Studio.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
