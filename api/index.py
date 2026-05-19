@@ -34,6 +34,7 @@ INTENSIVE_LIMIT = 3       # per-IP daily query limit (intensive/coding mode)
 _UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL", "")
 _UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
 
+
 MODELS_GENERAL = {
     "gpt":    "gpt-5.4-mini-2026-03-17",
     "claude": "claude-sonnet-4-6",
@@ -101,17 +102,13 @@ def check_and_increment_intensive_limit(ip: str) -> tuple[bool, int]:
         return (True, 0)
 
 
-@app.get("/assets/logo.png")
-def serve_logo():
-    return FileResponse(os.path.join(_root, "templates", "assets", "logo.png"), media_type="image/png")
 
-@app.get("/assets/BrandLogo.png")
-def serve_brand_logo():
-    return FileResponse(os.path.join(_root, "templates", "assets", "BrandLogo.png"), media_type="image/png")
-
-@app.get("/assets/tailwind.css")
-def serve_tailwind():
-    return FileResponse(os.path.join(_root, "templates", "assets", "tailwind.css"), media_type="text/css")
+@app.get("/assets/{filename:path}")
+def serve_asset(filename: str):
+    path = os.path.join(_root, "templates", "assets", filename)
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return FileResponse(path)
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -277,7 +274,11 @@ def ask_gemini(question, max_tokens, history=None, model=None):
     for msg in (history or []):
         role = "model" if msg["role"] == "assistant" else "user"
         contents.append({"role": role, "parts": [{"text": msg["content"]}]})
-    contents.append({"role": "user", "parts": [{"text": question}]})
+    # question may be a string or a list of Gemini parts (for multimodal)
+    if isinstance(question, list):
+        contents.append({"role": "user", "parts": question})
+    else:
+        contents.append({"role": "user", "parts": [{"text": question}]})
     response = gemini_client.models.generate_content(
         model=model,
         config={"maxOutputTokens": max_tokens},
@@ -609,6 +610,38 @@ def search_web_for_artifact(question: str) -> list:
 
 
 _DEPTH_TARGETS = {"quick": 6, "standard": 10, "deep": 18}
+
+
+def _check_doi_valid(doi: str) -> bool:
+    """Returns True if the DOI resolves via CrossRef. On network errors, assumes valid."""
+    if not doi:
+        return True
+    plain = doi.replace('https://doi.org/', '').replace('http://doi.org/', '').strip()
+    if not plain or plain.startswith('http'):
+        return True  # plain URL, not a DOI — skip
+    url = f'https://api.crossref.org/works/{urllib.parse.quote(plain, safe="")}'
+    try:
+        req = urllib.request.Request(url)
+        req.add_header('User-Agent', 'Council/1.0 (mailto:support@opclave.com)')
+        with urllib.request.urlopen(req, timeout=4) as resp:
+            return resp.status == 200
+    except urllib.error.HTTPError as e:
+        return e.code not in (404, 410)
+    except Exception:
+        return True  # timeout or network error — don't penalise
+
+
+def _verify_paper_dois(papers: list) -> list:
+    """Verify all paper DOIs in parallel; clear any that CrossRef says don't exist."""
+    if not papers:
+        return papers
+    def _check(p):
+        doi = (p.get('doi') or '').strip()
+        if doi and not _check_doi_valid(doi):
+            return {**p, 'doi': ''}
+        return p
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(papers), 8)) as ex:
+        return list(ex.map(_check, papers))
 
 
 def search_for_research_papers(question: str, depth: str = "standard") -> list:
@@ -996,58 +1029,54 @@ def get_artifact_synthesis_prompt(question: str, model_responses: dict, web_sour
             "3. Where one analysis makes a claim no other analysis and no source supports: drop it\n"
             "4. If an analysis overstates a source's finding, defer to what the source actually says\n"
             "5. Extract quantitative figures from the inputs and anchor them to their sources\n\n"
-            "=== OUTPUT FORMAT ===\n\n"
-            "## Executive Summary\n"
+            "=== OUTPUT FORMAT — LaTeX ===\n\n"
+            "Output a complete LaTeX document. Start with \\documentclass{article} and "
+            "\\begin{document}. End with \\end{document}. Use \\section{} / \\section*{} "
+            "for headings, \\textbf{} for bold, \\textit{} for italics, "
+            "\\begin{itemize}/\\begin{enumerate} for lists. "
+            "Write inline citations as plain [N] text — do NOT use \\cite{}.\n\n"
+            "\\documentclass{article}\n"
+            "\\begin{document}\n\n"
+            "\\begin{abstract}\n"
             "120-160 words. Direct answer to the question. Must include at least two quantitative "
-            "anchors (specific figures with sources). No vague generalities.\n\n"
-            "## Methodology Note\n"
-            "80-120 words. Define the scope of this document: time horizon, geographic focus, "
-            "and type of evidence drawn from. Name the primary datasets, report series, or "
-            "authoritative sources that anchor this document's claims. State explicitly what falls "
-            "outside this document's scope. This prevents the paper from appearing as a collection "
-            "of cherry-picked anecdotes.\n\n"
-            "## [Section title — a specific dimension of the question]\n"
-            "Write 3-5 substantive sections organized by themes that emerge from the sources.\n"
+            "anchors (specific figures with sources). No vague generalities.\n"
+            "\\end{abstract}\n\n"
+            "\\section*{Methodology Note}\n"
+            "80-120 words. Define scope: time horizon, geographic focus, evidence types drawn from. "
+            "Name primary datasets or authoritative sources. State explicitly what falls outside scope.\n\n"
+            "\\section{[Section title -- a specific dimension of the question]}\n"
+            "Write 3--5 substantive sections organised by themes that emerge from the sources.\n"
             "Each section must:\n"
-            "- Open with a quantified empirical anchor: a specific figure, projection, or finding "
-            "with a citation. If no quantitative data exists for a sub-claim, say so explicitly.\n"
-            "- Explain underlying mechanisms clearly.\n"
-            "- Mark confidence with: 'Consensus across studies [1][2][3]', 'One study suggests [4]', "
-            "'Debated in the literature [5][6]', or 'The current evidence base does not support...'\n"
-            "- Where genuine debate exists IN THE FIELD, present it as 'researchers debate...' or "
-            "'some studies find... while others find...' — never as 'inputs disagree'.\n"
-            "- Close with a brief counter-evidence note: the strongest objection or limitation "
-            "specific to this section's claim (1-3 sentences). Label it **Counter-evidence:**\n"
-            "Each section: 300-500 words.\n\n"
-            "## High-Impact Risk Scenarios\n"
-            "150-250 words. Treat tail-risk events specific to this topic as primary analytical "
-            "variables, not peripheral open questions. Identify the scenarios most relevant to "
-            "this subject area. For each:\n"
-            "- Describe the plausible mechanism and trigger\n"
-            "- Assess the magnitude of impact if it materializes\n"
-            "- Explain why conventional analysis structurally underweights it\n"
-            "Cite sources where they exist; acknowledge explicitly where the evidence base is thin.\n\n"
-            "## Structural and Policy Dimensions\n"
-            "150-200 words. Address the structural, institutional, or policy forces shaping this "
-            "topic. Where relevant, name specific mechanisms and explain how they function in "
-            "practice, not just in theory. Provide at least one comparative example contrasting "
-            "two actors, institutions, or approaches with different methods or outcomes.\n\n"
-            "## Counter-Arguments and Limitations\n"
-            "200-300 words. Engage directly with the strongest objections to the paper's central "
-            "claims. Do not dismiss them — present them fairly and explain what evidence would "
-            "resolve them. Also address:\n"
-            "- What assumptions underlie the analysis presented here\n"
-            "- Where the evidence base is weakest or most contested\n"
-            "- What this paper does NOT claim (scope boundaries)\n\n"
-            "## Practical Implications\n"
-            "100-150 words. Concrete, actionable takeaways for policymakers, researchers, "
-            "or practitioners. Avoid generic recommendations.\n\n"
-            "## Open Questions\n"
-            "80-120 words. What remains genuinely unresolved in the field. Be intellectually "
-            "honest — distinguish 'not yet studied' from 'studied but inconclusive'.\n\n"
-            "## Sources\n"
+            "\\begin{itemize}\n"
+            "\\item Open with a quantified empirical anchor with a citation. "
+            "If no quantitative data exists, say so explicitly.\n"
+            "\\item Explain underlying mechanisms clearly.\n"
+            "\\item Mark confidence: ``Consensus across studies [1][2]'', ``One study suggests [4]'', "
+            "``Debated in the literature [5][6]'', or ``The current evidence base does not support...''\n"
+            "\\item Present genuine field debates as ``researchers debate...'' -- never ``inputs disagree''.\n"
+            "\\item Close with a \\textbf{Counter-evidence:} note (1--3 sentences, strongest objection).\n"
+            "\\end{itemize}\n"
+            "Each section: 300--500 words.\n\n"
+            "\\section*{High-Impact Risk Scenarios}\n"
+            "150--250 words. For each scenario: mechanism and trigger, magnitude of impact, "
+            "why conventional analysis structurally underweights it. "
+            "Cite sources where they exist; acknowledge where the evidence base is thin.\n\n"
+            "\\section*{Structural and Policy Dimensions}\n"
+            "150--200 words. Structural, institutional, or policy forces shaping the topic. "
+            "Name specific mechanisms. Provide at least one comparative example.\n\n"
+            "\\section*{Counter-Arguments and Limitations}\n"
+            "200--300 words. Engage directly with the strongest objections. Present them fairly. "
+            "Address: underlying assumptions, weakest evidence, scope boundaries.\n\n"
+            "\\section*{Practical Implications}\n"
+            "100--150 words. Concrete, actionable takeaways for policymakers, researchers, practitioners.\n\n"
+            "\\section*{Open Questions}\n"
+            "80--120 words. Genuinely unresolved issues. Distinguish ``not yet studied'' "
+            "from ``studied but inconclusive''.\n\n"
+            "\\section*{Sources}\n"
             "List ONLY the sources actually cited above, in the format already provided "
-            "(authors, year, title, journal/institution, DOI or URL). Renumber sequentially.\n\n"
+            "(authors, year, title, journal/institution, DOI or URL). "
+            "Use \\begin{enumerate}...\\item...\\end{enumerate}.\n\n"
+            "\\end{document}\n\n"
             "=== CITATION RULES (follow strictly) ===\n"
             "- Use [N] citations corresponding ONLY to the numbered source list above.\n"
             "- Every factual claim must trace to a specific source [N] OR be explicitly marked "
@@ -1089,42 +1118,37 @@ def get_artifact_synthesis_prompt(question: str, model_responses: dict, web_sour
         f"Research question: {question}\n\n"
         f"Expert research inputs (treat as raw material, not as positions to compare):\n\n{responses_block}\n\n"
         f"Live web sources:\n{sources_text}\n\n"
-        "=== OUTPUT FORMAT ===\n\n"
-        "## Executive Summary\n"
-        "120-160 words. Direct answer to the question. Include at least two quantitative anchors "
-        "(specific figures with sources). No vague generalities.\n\n"
-        "## Methodology Note\n"
-        "80-120 words. Define the scope of this document: time horizon, geographic focus, and "
-        "type of evidence used. Name the primary datasets, report series, or authoritative sources "
-        "that anchor this document's claims. State explicitly what falls outside scope.\n\n"
-        "## [Section title — a specific dimension of the question]\n"
-        "Write 3-5 substantive sections of 300-500 words each.\n"
-        "Each section must:\n"
-        "- Open with a quantified empirical anchor: a specific figure, projection, or finding "
-        "with a citation. Cite [N] where a web source supports the claim.\n"
-        "- Explain underlying mechanisms clearly.\n"
-        "- Present genuine field debates as 'researchers debate...' — never 'inputs disagree'.\n"
-        "- Close with a brief **Counter-evidence:** note (1-3 sentences) naming the strongest "
-        "objection or limitation for this section's central claim.\n\n"
-        "## High-Impact Risk Scenarios\n"
-        "150-250 words. Treat tail-risk events specific to this topic as primary analytical "
-        "variables, not peripheral footnotes. Identify the scenarios most relevant to this subject. "
-        "For each: describe the plausible mechanism, assess the magnitude of impact, and explain "
-        "why conventional analysis structurally underweights it.\n\n"
-        "## Structural and Policy Dimensions\n"
-        "150-200 words. Address the structural, institutional, or policy forces shaping this topic. "
-        "Name specific mechanisms and explain how they function in practice. Provide at least one "
-        "comparative example contrasting two actors, institutions, or approaches.\n\n"
-        "## Counter-Arguments and Limitations\n"
-        "200-300 words. Engage with the strongest objections to this document's central claims. "
-        "Address what assumptions underlie the analysis and where the evidence base is weakest.\n\n"
-        "## Practical Implications\n"
-        "100-150 words. Concrete, actionable takeaways. Avoid generic recommendations.\n\n"
-        "## Open Questions\n"
-        "80-120 words. What remains genuinely unresolved. Distinguish 'not yet studied' from "
-        "'studied but inconclusive'.\n\n"
-        "## Sources\n"
+        "=== OUTPUT FORMAT — LaTeX ===\n\n"
+        "Output a complete LaTeX document. Start with \\documentclass{article} and "
+        "\\begin{document}. End with \\end{document}. Use \\section{} / \\section*{} "
+        "for headings, \\textbf{} for bold, \\textit{} for italics, "
+        "\\begin{itemize}/\\begin{enumerate} for lists. "
+        "Write inline citations as plain [N] text -- do NOT use \\cite{}.\n\n"
+        "\\documentclass{article}\n"
+        "\\begin{document}\n\n"
+        "\\begin{abstract}\n"
+        "120-160 words. Direct answer to the question. Include at least two quantitative anchors. "
+        "No vague generalities.\n"
+        "\\end{abstract}\n\n"
+        "\\section*{Methodology Note}\n"
+        "80-120 words. Scope, time horizon, geographic focus, evidence types, what falls outside scope.\n\n"
+        "\\section{[Section title -- a specific dimension of the question]}\n"
+        "Write 3--5 sections of 300--500 words each.\n"
+        "Each must open with a quantified anchor, explain mechanisms, present field debates as "
+        "``researchers debate...'', and close with \\textbf{Counter-evidence:} (1--3 sentences).\n\n"
+        "\\section*{High-Impact Risk Scenarios}\n"
+        "150--250 words. Mechanism, magnitude, why underweighted by conventional analysis.\n\n"
+        "\\section*{Structural and Policy Dimensions}\n"
+        "150--200 words. Structural/institutional/policy forces. One comparative example.\n\n"
+        "\\section*{Counter-Arguments and Limitations}\n"
+        "200--300 words. Strongest objections, assumptions, weakest evidence, scope boundaries.\n\n"
+        "\\section*{Practical Implications}\n"
+        "100--150 words. Concrete takeaways. Avoid generic recommendations.\n\n"
+        "\\section*{Open Questions}\n"
+        "80--120 words. Unresolved issues. Distinguish ``not yet studied'' from ``inconclusive''.\n\n"
+        "\\section*{Sources}\n"
         "[1] Authors, Year. Title. Journal/Institution. URL\n\n"
+        "\\end{document}\n\n"
         "=== CITATION RULES (follow strictly) ===\n"
         "- Only cite [N] if you are confident about the specific content of that source.\n"
         "- Describe what a study actually found, not what you assume it found.\n"
@@ -1155,7 +1179,15 @@ def index():
 @app.get("/app")
 def app_route():
     with open(os.path.join(_root, "templates", "index.html"), encoding="utf-8") as f:
-        return HTMLResponse(f.read())
+        html_content = f.read()
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    supabase_anon_key = os.getenv("SUPABASE_ANON_KEY", "")
+    config_script = (
+        f'<script>window._SUPABASE_URL="{supabase_url}";'
+        f'window._SUPABASE_ANON_KEY="{supabase_anon_key}";</script>'
+    )
+    html_content = html_content.replace("<!-- __SUPABASE_CONFIG__ -->", config_script)
+    return HTMLResponse(html_content)
 
 
 @app.post("/extract-file")
@@ -1210,6 +1242,7 @@ async def extract_file(file: UploadFile = File(...)):
             return {"type": "text", "content": data.decode("utf-8", errors="replace")}
         except Exception as e:
             return {"error": f"Text extraction failed: {str(e)}"}
+
 
 
 @app.post("/verify-admin")
@@ -1312,6 +1345,7 @@ def clear_logs():
     return {"ok": True}
 
 
+
 @app.post("/stream")
 def stream(req: StreamRequest, request: Request):
     print(f"[STREAM] received — web_search={req.web_search} question={repr(req.question[:60])}", flush=True)
@@ -1393,7 +1427,7 @@ def stream(req: StreamRequest, request: Request):
             else:
                 # Research artifacts: hunt for real peer-reviewed papers
                 yield f"data: {json.dumps({'type': 'searching_research', 'depth': req.research_depth})}\n\n"
-                papers = search_for_research_papers(effective_question, req.research_depth)
+                papers = _verify_paper_dois(search_for_research_papers(effective_question, req.research_depth))
                 yield f"data: {json.dumps({'type': 'papers_found', 'count': len(papers), 'papers': papers})}\n\n"
                 if len(papers) < 5:
                     yield f"data: {json.dumps({'type': 'insufficient_research', 'count': len(papers), 'message': f'Only found {len(papers)} relevant papers — falling back to general web research.'})}\n\n"
@@ -1602,6 +1636,202 @@ def stream(req: StreamRequest, request: Request):
             "X-Accel-Buffering": "no",
             "Connection": "keep-alive",
         },
+    )
+
+
+class ReviewRequest(BaseModel):
+    code: str
+    language: str = "auto"
+    context: str = ""
+    filename: str = ""
+
+@app.post("/review")
+def code_review(req: ReviewRequest, request: Request):
+    code = req.code.strip()
+    if not code:
+        def err():
+            yield 'data: {"type":"error","message":"No code provided"}\n\n'
+        return StreamingResponse(err(), media_type="text/event-stream")
+
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    allowed, count = check_and_increment_ip_limit(ip)
+    if not allowed:
+        def rate_limited():
+            yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":DAILY_LIMIT})}\n\n'
+        return StreamingResponse(rate_limited(), media_type="text/event-stream")
+
+    language_hint = f"Language: {req.language}" if req.language != "auto" else ""
+    filename_hint = f"Filename: {req.filename}" if req.filename else ""
+    context_hint = f"Context: {req.context}" if req.context else ""
+    meta = "\n".join(filter(None, [language_hint, filename_hint, context_hint]))
+
+    security_prompt = f"""You are a senior security engineer conducting a security audit.
+
+{meta}
+
+Code to audit:
+{code}
+
+YOUR MANDATE: Find ONLY security issues. Do not comment on code quality or performance.
+
+Look specifically for:
+- Injection vulnerabilities (SQL, command, XSS, SSTI)
+- Authentication and authorization flaws
+- Hardcoded secrets, API keys, passwords, tokens
+- Insecure cryptography or hashing
+- Path traversal vulnerabilities
+- Insecure deserialization
+- Missing input validation or sanitization
+- Exposed sensitive data or PII
+- Insecure dependencies or imports
+- CORS misconfigurations
+- Race conditions with security implications
+
+Return ONLY a JSON array. No preamble, no markdown:
+[
+  {{
+    "severity": "critical|high|medium|low",
+    "title": "Short issue title",
+    "file": "filename if the code came from a named file, else omit",
+    "line": 47,
+    "description": "Clear explanation of the vulnerability",
+    "impact": "What an attacker could do with this",
+    "fix": "Specific code or approach to fix it"
+  }}
+]
+
+If no security issues found return an empty array: []"""
+
+    quality_prompt = f"""You are a senior software engineer conducting a code quality review.
+
+{meta}
+
+Code to review:
+{code}
+
+YOUR MANDATE: Find ONLY code quality issues. Do not comment on security or performance.
+
+Look specifically for:
+- Logic errors and bugs
+- Edge cases that are not handled
+- Null pointer or undefined access risks
+- Incorrect error handling or swallowed exceptions
+- Dead code or unreachable branches
+- Misleading variable or function names
+- Functions doing too many things
+- Missing or incorrect type handling
+- Off-by-one errors
+- Incorrect assumptions about data
+- Code that works but will break under certain inputs
+
+Return ONLY a JSON array. No preamble, no markdown:
+[
+  {{
+    "severity": "critical|high|medium|low",
+    "title": "Short issue title",
+    "file": "filename if the code came from a named file, else omit",
+    "line": 23,
+    "description": "Clear explanation of the issue",
+    "impact": "What goes wrong when this triggers",
+    "fix": "Specific code or approach to fix it"
+  }}
+]
+
+If no quality issues found return an empty array: []"""
+
+    performance_prompt = f"""You are a senior performance engineer conducting a performance audit.
+
+{meta}
+
+Code to audit:
+{code}
+
+YOUR MANDATE: Find ONLY performance issues. Do not comment on security or code quality.
+
+Look specifically for:
+- N+1 query problems
+- Missing database indexes or inefficient queries
+- Unnecessary loops or nested iterations
+- Memory leaks or excessive memory allocation
+- Blocking synchronous operations that should be async
+- Missing caching for expensive operations
+- Inefficient data structures for the use case
+- Repeated expensive computations that could be memoized
+- Large data loaded into memory when streaming would work
+- Unnecessary network calls or API requests in loops
+
+Return ONLY a JSON array. No preamble, no markdown:
+[
+  {{
+    "severity": "critical|high|medium|low",
+    "title": "Short issue title",
+    "file": "filename if the code came from a named file, else omit",
+    "line": 89,
+    "description": "Clear explanation of the performance issue",
+    "impact": "How this affects speed, memory, or cost at scale",
+    "fix": "Specific code or approach to fix it"
+  }}
+]
+
+If no performance issues found return an empty array: []"""
+
+    def generate():
+        results = {"security": [], "quality": [], "performance": []}
+        lock = threading.Lock()
+        event_queue = queue.Queue()
+
+        def run_agent(agent_name, model_func, prompt):
+            event_queue.put({'type': 'agent_start', 'agent': agent_name})
+            try:
+                import re as _re
+                response, usage = model_func(prompt, 2000)
+                clean = _re.sub(r'```(?:json)?|```', '', response).strip()
+                try:
+                    issues = json.loads(clean)
+                    if not isinstance(issues, list):
+                        issues = []
+                except (json.JSONDecodeError, ValueError):
+                    issues = []
+                with lock:
+                    results[agent_name] = issues
+                event_queue.put({'type': 'agent_done', 'agent': agent_name, 'issues': issues, 'count': len(issues)})
+            except Exception as e:
+                event_queue.put({'type': 'agent_error', 'agent': agent_name, 'error': str(e)})
+
+        agents = [
+            ('security',    ask_gpt,    security_prompt),
+            ('quality',     ask_claude, quality_prompt),
+            ('performance', ask_gemini, performance_prompt),
+        ]
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+        for name, func, prompt in agents:
+            executor.submit(run_agent, name, func, prompt)
+
+        completed = 0
+        while completed < 3:
+            try:
+                event = event_queue.get(timeout=120)
+                if event['type'] in ('agent_done', 'agent_error'):
+                    completed += 1
+                yield f"data: {json.dumps(event)}\n\n"
+            except queue.Empty:
+                break
+
+        executor.shutdown(wait=False)
+
+        severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3}
+        all_issues = []
+        for agent_name, issues in results.items():
+            for issue in issues:
+                all_issues.append({**issue, 'agent': agent_name})
+        all_issues.sort(key=lambda x: severity_order.get(x.get('severity', 'low'), 3))
+        yield f"data: {json.dumps({'type': 'review_complete', 'issues': all_issues, 'counts': {k: len(v) for k, v in results.items()}})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
     )
 
 
