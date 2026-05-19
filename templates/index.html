@@ -232,6 +232,46 @@
       transition: all 0.2s ease;
     }
     .smode-submit-btn:hover { background: rgba(201,167,122,0.08); }
+    .smode-examples {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 0 0 4px;
+    }
+    .smode-example-chip {
+      padding: 5px 12px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: none; color: #55555a; font-size: 11.5px;
+      cursor: pointer; font-family: 'Inter',sans-serif;
+      transition: all 0.15s; text-align: left;
+    }
+    .smode-example-chip:hover { border-color: rgba(201,167,122,0.35); color: #c9a77a; background: rgba(201,167,122,0.05); }
+    .smode-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 0; }
+    .smode-options-row {
+      display: flex; gap: 8px; padding: 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-wrap: wrap;
+    }
+    .smode-option-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+    .smode-option-label {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 9px; color: #55555a; letter-spacing: 0.12em;
+    }
+    .smode-select {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 6px; color: #b8b8c0; font-size: 12px;
+      padding: 5px 8px; font-family: 'Inter',sans-serif; outline: none;
+      cursor: pointer; transition: border-color 0.15s;
+    }
+    .smode-select:focus { border-color: rgba(201,167,122,0.4); }
+    .smode-context-row {
+      padding: 8px 16px 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .smode-context-input {
+      width: 100%; background: transparent; border: none; outline: none;
+      color: #b8b8c0; font-size: 13px; padding: 4px 0;
+      box-sizing: border-box; font-family: 'Inter',sans-serif; font-weight: 300;
+    }
+    .smode-context-input::placeholder { color: #55555a; }
 
     /* Studio command mode buttons in composer */
     .studio-cmd-bar {
@@ -1874,31 +1914,81 @@
     </div>
     <div class="rfp-scroll">
       <div class="rfp-input-section">
+
         <div class="rfp-hero">
           <h1 class="rfp-title">Build.</h1>
-          <p class="rfp-subtitle">Describe what you want to build and get a complete, working artifact.</p>
+          <p class="rfp-subtitle">Describe what you want — get a complete, working artifact.</p>
           <div class="rfp-agents">
             <div class="rfp-agent-row">
               <span class="rfp-agent-model">Apps</span>
-              <span class="rfp-agent-focus">Web applications, dashboards, and interfaces</span>
+              <span class="rfp-agent-focus">Web applications, dashboards &amp; interfaces</span>
             </div>
             <div class="rfp-agent-row">
               <span class="rfp-agent-model">Tools</span>
-              <span class="rfp-agent-focus">Scripts, utilities, and automation</span>
+              <span class="rfp-agent-focus">Scripts, utilities &amp; automation</span>
             </div>
             <div class="rfp-agent-row">
               <span class="rfp-agent-model">Games</span>
-              <span class="rfp-agent-focus">Interactive demos, games, and prototypes</span>
+              <span class="rfp-agent-focus">Interactive demos, games &amp; prototypes</span>
             </div>
           </div>
         </div>
+
         <div class="rfp-card">
+          <!-- Main prompt -->
           <textarea class="smode-textarea" id="code-prompt-input" placeholder="Describe what you want to build…" spellcheck="false" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))submitCodePrompt()"></textarea>
+
+          <!-- Example chips -->
+          <div style="padding: 0 16px 14px;">
+            <div class="smode-examples">
+              <button class="smode-example-chip" onclick="fillCodeExample(this)">A todo app with drag-and-drop sorting</button>
+              <button class="smode-example-chip" onclick="fillCodeExample(this)">A landing page for a SaaS product</button>
+              <button class="smode-example-chip" onclick="fillCodeExample(this)">A Python script to process CSV files</button>
+              <button class="smode-example-chip" onclick="fillCodeExample(this)">An interactive data dashboard</button>
+            </div>
+          </div>
+
+          <!-- Options row -->
+          <div class="smode-options-row">
+            <div class="smode-option-group">
+              <span class="smode-option-label">TYPE</span>
+              <select class="smode-select" id="code-type-select">
+                <option value="web app">Web app</option>
+                <option value="landing page">Landing page</option>
+                <option value="dashboard">Dashboard</option>
+                <option value="game">Game</option>
+                <option value="CLI tool">CLI tool</option>
+                <option value="API">API</option>
+                <option value="script">Script</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="smode-option-group">
+              <span class="smode-option-label">LANGUAGE / STACK</span>
+              <select class="smode-select" id="code-lang-select">
+                <option value="">Auto-detect</option>
+                <option value="HTML, CSS &amp; JavaScript">HTML + CSS + JS</option>
+                <option value="React">React</option>
+                <option value="Python">Python</option>
+                <option value="Node.js">Node.js</option>
+                <option value="Vue">Vue</option>
+                <option value="TypeScript">TypeScript</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Context -->
+          <div class="smode-context-row">
+            <input type="text" class="smode-context-input" id="code-context-input" placeholder="Any constraints, requirements, or existing stack to consider…"/>
+          </div>
+
+          <!-- Submit -->
           <div class="rfp-submit-row">
-            <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">Multi-model synthesis</span>
+            <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">GPT · Claude · Gemini</span>
             <button class="smode-submit-btn" onclick="submitCodePrompt()">Build it</button>
           </div>
         </div>
+
       </div>
     </div>
   </div><!-- /#code-fullpage -->
@@ -1914,31 +2004,76 @@
     </div>
     <div class="rfp-scroll">
       <div class="rfp-input-section">
+
         <div class="rfp-hero">
           <h1 class="rfp-title">Research.</h1>
-          <p class="rfp-subtitle">Ask any question and get a structured document synthesized from multiple perspectives.</p>
+          <p class="rfp-subtitle">Ask any question — get a structured document synthesized from multiple perspectives.</p>
           <div class="rfp-agents">
             <div class="rfp-agent-row">
-              <span class="rfp-agent-model">Analysis</span>
-              <span class="rfp-agent-focus">Deep topic exploration and breakdown</span>
+              <span class="rfp-agent-model">Analyse</span>
+              <span class="rfp-agent-focus">Deep topic exploration &amp; breakdown</span>
             </div>
             <div class="rfp-agent-row">
               <span class="rfp-agent-model">Compare</span>
-              <span class="rfp-agent-focus">Technology, approach, and concept comparisons</span>
+              <span class="rfp-agent-focus">Technologies, approaches &amp; concepts</span>
             </div>
             <div class="rfp-agent-row">
               <span class="rfp-agent-model">Survey</span>
-              <span class="rfp-agent-focus">Landscape overviews and literature summaries</span>
+              <span class="rfp-agent-focus">Landscape overviews &amp; literature summaries</span>
             </div>
           </div>
         </div>
+
         <div class="rfp-card">
+          <!-- Main prompt -->
           <textarea class="smode-textarea" id="research-prompt-input" placeholder="What do you want to research?" spellcheck="false" onkeydown="if(event.key==='Enter'&&(event.metaKey||event.ctrlKey))submitResearchPrompt()"></textarea>
+
+          <!-- Example chips -->
+          <div style="padding: 0 16px 14px;">
+            <div class="smode-examples">
+              <button class="smode-example-chip" onclick="fillResearchExample(this)">How does GPT-4 compare to Claude?</button>
+              <button class="smode-example-chip" onclick="fillResearchExample(this)">Best practices for microservices architecture</button>
+              <button class="smode-example-chip" onclick="fillResearchExample(this)">The state of quantum computing in 2025</button>
+              <button class="smode-example-chip" onclick="fillResearchExample(this)">How to implement RAG in a production app</button>
+            </div>
+          </div>
+
+          <!-- Options row -->
+          <div class="smode-options-row">
+            <div class="smode-option-group">
+              <span class="smode-option-label">FORMAT</span>
+              <select class="smode-select" id="research-format-select">
+                <option value="Overview">Overview</option>
+                <option value="Deep dive">Deep dive</option>
+                <option value="Comparison">Comparison</option>
+                <option value="Step-by-step guide">Step-by-step guide</option>
+                <option value="Literature review">Literature review</option>
+              </select>
+            </div>
+            <div class="smode-option-group">
+              <span class="smode-option-label">AUDIENCE</span>
+              <select class="smode-select" id="research-audience-select">
+                <option value="">General</option>
+                <option value="technical">Technical</option>
+                <option value="business">Business</option>
+                <option value="beginner">Beginner-friendly</option>
+                <option value="academic">Academic</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Context -->
+          <div class="smode-context-row">
+            <input type="text" class="smode-context-input" id="research-context-input" placeholder="Any specific angle, focus area, or prior knowledge to consider…"/>
+          </div>
+
+          <!-- Submit -->
           <div class="rfp-submit-row">
-            <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">Multi-model synthesis</span>
+            <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">GPT · Claude · Gemini</span>
             <button class="smode-submit-btn" onclick="submitResearchPrompt()">Research it</button>
           </div>
         </div>
+
       </div>
     </div>
   </div><!-- /#research-fullpage -->
@@ -5187,16 +5322,28 @@
     document.getElementById('code-fullpage').classList.remove('active');
   }
 
+  function fillCodeExample(btn) {
+    document.getElementById('code-prompt-input').value = btn.textContent.trim();
+    document.getElementById('code-prompt-input').focus();
+  }
+
   function submitCodePrompt() {
     const text = document.getElementById('code-prompt-input').value.trim();
     if (!text) return;
+    const type = document.getElementById('code-type-select').value;
+    const lang = document.getElementById('code-lang-select').value;
+    const context = document.getElementById('code-context-input').value.trim();
+    let prompt = type ? `Build a ${type}: ${text}` : text;
+    if (lang) prompt += `\n\nPreferred tech stack: ${lang}`;
+    if (context) prompt += `\n\nAdditional requirements: ${context}`;
     exitCodeMode();
     if (window.appMode !== 'studio') switchAppMode('studio');
     studioCmd = 'code';
     document.getElementById('input-area').style.display = '';
-    inputEl.value = text;
+    inputEl.value = prompt;
     inputEl.dispatchEvent(new Event('input'));
     document.getElementById('code-prompt-input').value = '';
+    document.getElementById('code-context-input').value = '';
     dispatchSubmit();
   }
 
@@ -5211,16 +5358,28 @@
     document.getElementById('research-fullpage').classList.remove('active');
   }
 
+  function fillResearchExample(btn) {
+    document.getElementById('research-prompt-input').value = btn.textContent.trim();
+    document.getElementById('research-prompt-input').focus();
+  }
+
   function submitResearchPrompt() {
     const text = document.getElementById('research-prompt-input').value.trim();
     if (!text) return;
+    const format = document.getElementById('research-format-select').value;
+    const audience = document.getElementById('research-audience-select').value;
+    const context = document.getElementById('research-context-input').value.trim();
+    let prompt = format ? `${format}: ${text}` : text;
+    if (audience) prompt += `\n\nAudience: ${audience}`;
+    if (context) prompt += `\n\nFocus on: ${context}`;
     exitResearchMode();
     if (window.appMode !== 'studio') switchAppMode('studio');
     studioCmd = 'research';
     document.getElementById('input-area').style.display = '';
-    inputEl.value = text;
+    inputEl.value = prompt;
     inputEl.dispatchEvent(new Event('input'));
     document.getElementById('research-prompt-input').value = '';
+    document.getElementById('research-context-input').value = '';
     dispatchSubmit();
   }
 
