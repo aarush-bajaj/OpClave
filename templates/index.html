@@ -780,7 +780,562 @@
       font-size: 9.5px; color: #7a6a58; flex-shrink: 0; white-space: nowrap;
     }
 
+
+    /* ── Auth components ──────────────────────────────── */
+    .auth-header-btn {
+      padding: 5px 13px;
+      border-radius: 999px;
+      border: 1px solid #c9a77a;
+      background: transparent;
+      color: #c9a77a;
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .auth-header-btn:hover { background: rgba(201,167,122,0.1); }
+
+    .user-avatar {
+      width: 27px; height: 27px;
+      border-radius: 50%;
+      border: 1px solid #c9a77a;
+      cursor: pointer;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    #user-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: #111115;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 8px;
+      min-width: 260px;
+      z-index: 300;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }
+    .user-dropdown-profile {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 6px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 6px;
+      min-width: 0;
+    }
+    .user-dropdown-profile img {
+      width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
+    }
+    .user-dropdown-info { min-width: 0; flex: 1; }
+    .user-dropdown-name { font-size: 13px; color: #ededed; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-dropdown-email { font-size: 11px; color: #78787e; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-dropdown-item {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 7px 8px;
+      border-radius: 6px; border: none;
+      background: transparent; color: #b8b8c0;
+      font-size: 12px; font-family: 'Inter', sans-serif;
+      cursor: pointer; text-align: left;
+      transition: background 0.12s, color 0.12s;
+    }
+    .user-dropdown-item:hover { background: rgba(255,255,255,0.05); color: #ededed; }
+    .user-dropdown-item.danger:hover { background: rgba(239,68,68,0.08); color: #f87171; }
+
+    .auth-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+    }
+    .auth-modal-card {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: #111115;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 32px;
+      width: 340px;
+      max-width: calc(100vw - 32px);
+      z-index: 1001;
+      text-align: center;
+      transition: all 0.25s ease;
+      opacity: 0;
+    }
+    #auth-modal.visible .auth-modal-card {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    .auth-modal-close {
+      position: absolute; top: 12px; right: 12px;
+      background: transparent; border: none;
+      color: #78787e; cursor: pointer; padding: 4px;
+      border-radius: 4px; display: flex; align-items: center;
+      transition: color 0.15s;
+    }
+    .auth-modal-close:hover { color: #ededed; }
+    .auth-modal-mark { margin: 0 auto 16px; color: #ededed; display: flex; justify-content: center; }
+    .auth-modal-title {
+      font-family: 'Fraunces', serif;
+      font-size: 21px; font-weight: 300;
+      color: #ededed; margin: 0 0 8px;
+      font-variation-settings: "opsz" 72;
+    }
+    .auth-modal-sub {
+      font-size: 13px; color: #b8b8c0;
+      line-height: 1.6; margin-bottom: 22px;
+      font-weight: 300;
+    }
+    .auth-btn-oauth {
+      width: 100%; padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent; color: #ededed;
+      font-size: 13px; font-family: 'Inter', sans-serif;
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      gap: 9px; margin-bottom: 9px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .auth-btn-oauth:hover {
+      border-color: #c9a77a;
+      background: rgba(201,167,122,0.08);
+    }
+    .auth-modal-skip {
+      font-size: 12px; color: #78787e;
+      cursor: pointer; margin-top: 6px;
+      transition: color 0.15s;
+    }
+    .auth-modal-skip:hover { color: #b8b8c0; }
+
+    /* ── Review full-page overlay ─── */
+    #review-fullpage {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0a0a0c;
+      z-index: 500;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #review-fullpage.active { display: flex; }
+    .rfp-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .rfp-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: #55555a;
+      font-size: 12px;
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      padding: 4px 0;
+      transition: color 0.15s;
+    }
+    .rfp-back:hover { color: #b8b8c0; }
+    .rfp-brand {
+      font-family: 'Fraunces',serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: #55555a;
+      letter-spacing: -0.01em;
+    }
+    .rfp-scroll {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* ─ Input state ─ */
+    .rfp-input-section {
+      width: 100%;
+      max-width: 680px;
+      padding: 52px 24px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    .rfp-input-section.hidden { display: none; }
+    .rfp-hero { display: flex; flex-direction: column; gap: 18px; }
+    .rfp-title {
+      font-family: 'Fraunces',serif;
+      font-size: clamp(40px,6vw,64px);
+      font-weight: 400;
+      color: #ededed;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin: 0;
+    }
+    .rfp-subtitle {
+      font-size: 14px;
+      color: #55555a;
+      line-height: 1.5;
+      margin: 0;
+      max-width: 320px;
+    }
+    .rfp-agents {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .rfp-agent-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .rfp-agent-model {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 10px;
+      color: #c9a77a;
+      letter-spacing: 0.08em;
+      min-width: 52px;
+    }
+    .rfp-agent-focus {
+      font-size: 12px;
+      color: #55555a;
+    }
+    /* ─ Input card ─ */
+    .rfp-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .rfp-context-row {
+      padding: 8px 16px 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .rfp-submit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .rfp-run-btn {
+      padding: 10px 28px;
+      border-radius: 999px;
+      border: 1px solid #c9a77a;
+      background: transparent;
+      color: #c9a77a;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .rfp-run-btn:hover { background: rgba(201,167,122,0.08); }
+    /* ─ Results state ─ */
+    .rfp-results-section {
+      width: 100%;
+      max-width: 680px;
+      padding: 40px 24px 48px;
+    }
+    .rfp-results-section.hidden { display: none; }
+    /* ── Review input card internals ─── */
+    .review-input-panel { /* kept for backward compat — no longer used */ display: none; }
+    .review-input-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 12px 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .review-input-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 10px 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .review-tab {
+      padding: 7px 14px;
+      font-size: 12px;
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      letter-spacing: 0.05em;
+      color: #78787e;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: -1px;
+    }
+    .review-tab.active { color: #c9a77a; border-bottom-color: #c9a77a; }
+    .review-pane { display: block; }
+    .review-pane.hidden { display: none; }
+    .code-input {
+      width: 100%;
+      min-height: 260px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e8e8ec;
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 12px;
+      line-height: 1.6;
+      padding: 16px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .code-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 16px 10px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .language-select {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: #78787e;
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 11px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+    .char-count { font-family: var(--mono,'JetBrains Mono',monospace); font-size: 11px; color: #78787e; }
+    .upload-dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+      border: 1px dashed rgba(255,255,255,0.15);
+      border-radius: 8px;
+      margin: 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: #78787e;
+      gap: 8px;
+    }
+    .upload-dropzone:hover { border-color: #c9a77a; color: #b8b8c0; }
+    .upload-hint { font-size: 11px; }
+    .review-context-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #b8b8c0;
+      font-size: 13px;
+      padding: 10px 0;
+      box-sizing: border-box;
+    }
+    .review-context-input::placeholder { color: #55555a; }
+    .issue-list { display: flex; flex-direction: column; gap: 10px; }
+    .issue-card {
+      border: 1px solid rgba(255,255,255,0.07);
+      border-left-width: 3px;
+      border-radius: 10px;
+      padding: 16px 18px;
+      transition: border-color 0.15s ease;
+    }
+    .issue-card.sev-critical { border-left-color: #f87171; }
+    .issue-card.sev-high     { border-left-color: #fb923c; }
+    .issue-card.sev-medium   { border-left-color: #fbbf24; }
+    .issue-card.sev-low      { border-left-color: #94a3b8; }
+    .issue-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .issue-top-left { display: flex; flex-direction: column; gap: 4px; }
+    .issue-top-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .severity-badge {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+    }
+    .sev-critical .severity-badge { color: #f87171; }
+    .sev-high .severity-badge     { color: #fb923c; }
+    .sev-medium .severity-badge   { color: #fbbf24; }
+    .sev-low .severity-badge      { color: #94a3b8; }
+    .issue-title { font-size: 14px; color: #e8e8ec; font-weight: 400; line-height: 1.4; }
+    .agent-badge {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .agent-security   { color: #f87171; background: rgba(248,113,113,0.1); }
+    .agent-quality    { color: #a78bfa; background: rgba(167,139,250,0.1); }
+    .agent-performance { color: #60a5fa; background: rgba(96,165,250,0.1); }
+    .file-line-badge {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 9px;
+      color: #55555a;
+    }
+    .issue-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 10px 0; }
+    .detail-section { margin-top: 8px; }
+    .detail-label {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 9px;
+      color: #55555a;
+      letter-spacing: 0.15em;
+      margin-bottom: 4px;
+    }
+    .detail-text { font-size: 13px; color: #a8a8b0; line-height: 1.65; font-weight: 300; }
+    .fix-text {
+      font-family: var(--mono,'JetBrains Mono',monospace);
+      font-size: 11px;
+      background: rgba(0,0,0,0.25);
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.06);
+      white-space: pre-wrap;
+      color: #c8c8d0;
+      line-height: 1.6;
+    }
+    .review-header { margin-bottom: 20px; }
+    .review-summary { display: flex; flex-direction: column; gap: 4px; }
+    .summary-count { font-size: 22px; color: #ededed; font-weight: 400; font-family: 'Fraunces',serif; letter-spacing: -0.02em; }
+    .agent-counts { font-family: var(--mono,'JetBrains Mono',monospace); font-size: 11px; color: #55555a; }
+    .review-actions { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+    .gen-prompt-btn {
+      padding: 8px 16px; border-radius: 8px; font-size: 12px; cursor: pointer;
+      transition: all 0.15s ease; border: 1px solid rgba(201,167,122,0.4);
+      background: rgba(201,167,122,0.06); color: #c9a77a;
+    }
+    .gen-prompt-btn:hover { background: rgba(201,167,122,0.12); border-color: #c9a77a; }
+    /* Fix prompt modal */
+    #fix-prompt-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 600;
+      align-items: center; justify-content: center; padding: 20px; display: none;
+    }
+    #fix-prompt-overlay.visible { display: flex; }
+    #fix-prompt-modal {
+      background: #0d0d0d; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+      padding: 22px; max-width: 640px; width: 100%; max-height: 80vh;
+      display: flex; flex-direction: column; gap: 14px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.5);
+    }
+    .fpm-header {
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .fpm-title {
+      font-size: 15px; font-weight: 500; color: #ededed; letter-spacing: -0.01em;
+    }
+    .fpm-subtitle {
+      font-size: 11px; color: #55555a; margin-top: 2px;
+      font-family: var(--mono,'JetBrains Mono',monospace); letter-spacing: 0.04em;
+    }
+    .fpm-close {
+      background: none; border: none; color: #55555a; font-size: 18px;
+      cursor: pointer; padding: 4px 6px; border-radius: 6px; line-height: 1;
+      transition: color 0.15s;
+    }
+    .fpm-close:hover { color: #b8b8c0; }
+    .fpm-body {
+      flex: 1; overflow-y: auto; background: #080808; border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px; padding: 16px;
+    }
+    .fpm-prompt {
+      font-family: var(--mono,'JetBrains Mono',monospace); font-size: 11.5px;
+      color: #c8c8d0; line-height: 1.7; white-space: pre-wrap; margin: 0;
+    }
+    .fpm-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .fpm-copy-btn {
+      flex: 1; padding: 10px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+      transition: all 0.15s; border: 1px solid #c9a77a; background: rgba(201,167,122,0.08);
+      color: #c9a77a;
+    }
+    .fpm-copy-btn:hover { background: rgba(201,167,122,0.16); }
+    .fpm-copy-btn.copied { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.08); }
+    .fpm-dismiss-btn {
+      padding: 10px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+      transition: all 0.15s; border: 1px solid rgba(255,255,255,0.1); background: none; color: #78787e;
+    }
+    .fpm-dismiss-btn:hover { border-color: rgba(255,255,255,0.2); color: #b8b8c0; }
+    .save-review-btn, .new-review-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .save-review-btn { border: 1px solid #c9a77a; background: transparent; color: #c9a77a; }
+    .save-review-btn:hover { background: rgba(201,167,122,0.07); }
+    .new-review-btn { border: 1px solid rgba(255,255,255,0.1); background: transparent; color: #78787e; }
+    .new-review-btn:hover { border-color: rgba(255,255,255,0.2); color: #b8b8c0; }
+    .review-clean { text-align: center; padding: 48px; color: #b8b8c0; }
+    .clean-icon { font-size: 28px; color: #4ade80; margin-bottom: 12px; }
+    .review-loading { padding: 8px 0; }
+    .agent-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .agent-status:last-child { border-bottom: none; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.running { background: #c9a77a; animation: pulse 1.2s ease infinite; }
+    .status-dot.done { background: #4ade80; }
+    .status-dot.error { background: #f87171; }
+    .agent-name { font-size: 13px; color: #e8e8ec; min-width: 140px; }
+    .agent-status-text { font-size: 12px; color: #78787e; font-family: var(--mono,'JetBrains Mono',monospace); }
+    .github-connect { display: flex; flex-direction: column; align-items: center; padding: 32px 24px; text-align: center; gap: 10px; color: #b8b8c0; }
+    .gh-url-row { display: flex; gap: 8px; padding: 14px 14px 8px; }
+    .gh-url-row .github-url-input { flex: 1; }
+    .gh-url-row .github-connect-btn { flex-shrink: 0; white-space: nowrap; }
+    .gh-repo-config .config-row { display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+    .gh-repo-config .config-row label { font-size: 12px; color: #78787e; min-width: 90px; }
+    .gh-repo-config .config-row select { background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e8e8ec; font-size: 12px; padding: 4px 8px; }
+    .github-connect-title { font-size: 14px; color: #e8e8ec; font-weight: 500; margin: 0; }
+    .github-connect-sub { font-size: 12px; color: #78787e; margin: 0; }
+    .github-connect-btn {
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: #e8e8ec;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .github-connect-btn:hover { border-color: #c9a77a; background: rgba(201,167,122,0.05); }
+    .github-divider { font-size: 11px; color: #78787e; }
+    .github-url-input {
+      width: 100%;
+      max-width: 340px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #e8e8ec;
+      font-size: 13px;
+      padding: 8px 12px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .repo-item { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); cursor: pointer; transition: background 0.1s ease; }
+    .repo-item:hover { background: rgba(255,255,255,0.04); }
+    .repo-name { font-size: 13px; color: #e8e8ec; font-weight: 500; }
+    .repo-meta { font-size: 11px; color: #78787e; margin-top: 2px; }
+    .repo-search { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .repo-search input { width: 100%; background: transparent; border: none; outline: none; color: #e8e8ec; font-size: 13px; }
+    .config-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .config-row label { font-size: 12px; color: #78787e; min-width: 100px; }
+    .config-row select { background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e8e8ec; font-size: 12px; padding: 4px 8px; }
+    .github-icon { color: #e8e8ec; }
+
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- __SUPABASE_CONFIG__ -->
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body class="h-full dark:bg-[#0a0a0c] bg-[#f8f8f4] dark:text-[#ededed] text-[#1c1b19] text-[14px] leading-relaxed font-light" style="font-family:'Inter',sans-serif;font-weight:300;letter-spacing:0.005em">
@@ -853,11 +1408,31 @@
       <span class="hidden sm:inline">Home</span>
     </a>
 
-    <!-- About button -->
-    <button onclick="document.getElementById('about-modal-overlay').classList.add('visible')" title="How it works"
-      class="p-1.5 rounded-lg dark:text-gray-400 text-gray-500 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 text-[13px] font-bold w-7 h-7 flex items-center justify-center border dark:border-[#1e1e1e] border-gray-200">?</button>
+    <!-- Auth: sign-in button or user avatar -->
+    <button id="auth-btn" class="auth-header-btn" onclick="AuthModal.show()" style="display:none">Sign in</button>
+    <div style="position:relative;display:inline-flex;align-items:center;flex-shrink:0">
+      <img id="user-avatar" class="user-avatar" style="display:none" onclick="showUserMenu()" alt="Profile"/>
+      <div id="user-dropdown" style="display:none">
+        <div class="user-dropdown-profile">
+          <img id="user-menu-avatar" src="" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0"/>
+          <div class="user-dropdown-info">
+            <div id="user-menu-name" class="user-dropdown-name"></div>
+            <div id="user-menu-email" class="user-dropdown-email"></div>
+          </div>
+        </div>
+        <button class="user-dropdown-item" onclick="switchAppMode('studio');toggleArtifactsPanel();hideUserMenu()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          My artifacts
+        </button>
+        <button class="user-dropdown-item danger" onclick="AuthManager.signOut()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
 
-    <!-- Sidebar toggle -->
+
+<!-- Sidebar toggle -->
     <button id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle threads"
       class="p-1.5 rounded-lg dark:text-gray-400 text-gray-500 dark:hover:bg-[#1a1a1a] hover:bg-gray-100 transition-colors shrink-0 mr-1">
       <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1058,8 +1633,11 @@
         <button class="studio-chip" onclick="fillStudio('Research ','research')"><span class="studio-chip-cmd">/research</span> Research a topic</button>
         <button class="studio-chip" onclick="fillStudio('Build a game where ','code')"><span class="studio-chip-cmd">/code</span> Build a game</button>
         <button class="studio-chip" onclick="fillStudio('Compare ','research')"><span class="studio-chip-cmd">/research</span> Compare technologies</button>
+        <button class="studio-chip" onclick="enterReviewMode()"><span class="studio-chip-cmd">/review</span> Audit code</button>
       </div>
     </div>
+
+    <!-- Review mode is now in #review-fullpage overlay -->
   </div>
 
   <!-- Artifact full view (Studio only) -->
@@ -1081,6 +1659,7 @@
         <div class="studio-cmd-bar" id="studio-cmd-bar">
           <button class="studio-cmd-btn" id="cmd-btn-code" data-cmd="code" onclick="setStudioCmd('code')">/code — Build</button>
           <button class="studio-cmd-btn" id="cmd-btn-research" data-cmd="research" onclick="setStudioCmd('research')">/research — Document</button>
+          <button class="studio-cmd-btn" id="cmd-btn-review" data-cmd="review" onclick="setStudioCmd('review')">/review — Audit</button>
         </div>
         <!-- Textarea row -->
         <textarea id="input" rows="1" placeholder="Ask Voyance…"
@@ -1214,7 +1793,146 @@
 
 
 
+  <!-- Fix prompt modal -->
+  <div id="fix-prompt-overlay" onclick="closeFixPromptModal(event)">
+    <div id="fix-prompt-modal" onclick="event.stopPropagation()">
+      <div class="fpm-header">
+        <div>
+          <div class="fpm-title">Fix prompt</div>
+          <div class="fpm-subtitle">Paste into Claude Code or any AI agent</div>
+        </div>
+        <button class="fpm-close" onclick="closeFixPromptModal()">&#215;</button>
+      </div>
+      <div class="fpm-body">
+        <pre class="fpm-prompt" id="fpm-prompt-text"></pre>
+      </div>
+      <div class="fpm-actions">
+        <button class="fpm-copy-btn" id="fpm-copy-btn" onclick="copyFixPrompt()">Copy prompt</button>
+        <button class="fpm-dismiss-btn" onclick="closeFixPromptModal()">Dismiss</button>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /#main -->
+
+  <!-- ── Review full-page overlay ─────────────────────────────── -->
+  <div id="review-fullpage">
+    <!-- Top bar -->
+    <div class="rfp-topbar">
+      <button class="rfp-back" onclick="exitReviewFullpage()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Studio
+      </button>
+      <span class="rfp-brand">Opclave</span>
+    </div>
+
+    <!-- Scrollable content -->
+    <div class="rfp-scroll">
+
+      <!-- Input section -->
+      <div class="rfp-input-section" id="rfp-input-section">
+        <!-- Hero -->
+        <div class="rfp-hero">
+          <h1 class="rfp-title">Review.</h1>
+          <p class="rfp-subtitle">Three models analyze your code simultaneously for security, quality, and performance.</p>
+          <div class="rfp-agents">
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">GPT</span>
+              <span class="rfp-agent-focus">Security vulnerabilities &amp; attack surface</span>
+            </div>
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Claude</span>
+              <span class="rfp-agent-focus">Code quality, correctness &amp; best practices</span>
+            </div>
+            <div class="rfp-agent-row">
+              <span class="rfp-agent-model">Gemini</span>
+              <span class="rfp-agent-focus">Performance, efficiency &amp; memory usage</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input card -->
+        <div class="rfp-card" id="review-panel">
+          <div class="review-input-tabs">
+            <button class="review-tab active" data-tab="paste" onclick="switchReviewTab('paste')">Paste code</button>
+            <button class="review-tab" data-tab="upload" onclick="switchReviewTab('upload')">Upload file</button>
+            <button class="review-tab" data-tab="github" onclick="switchReviewTab('github')">GitHub repo</button>
+          </div>
+
+          <!-- Paste pane -->
+          <div class="review-pane" id="review-paste">
+            <textarea class="code-input" id="review-code-input" placeholder="Paste your code here..." spellcheck="false"></textarea>
+            <div class="code-meta">
+              <select class="language-select" id="review-language-select">
+                <option value="auto">Auto-detect language</option>
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="typescript">TypeScript</option>
+                <option value="java">Java</option>
+                <option value="go">Go</option>
+                <option value="rust">Rust</option>
+                <option value="cpp">C++</option>
+                <option value="sql">SQL</option>
+              </select>
+              <span class="char-count" id="review-char-count">0 lines</span>
+            </div>
+          </div>
+
+          <!-- Upload pane -->
+          <div class="review-pane hidden" id="review-upload">
+            <div class="upload-dropzone" id="review-dropzone">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <p>Drop a file here or click to browse</p>
+              <span class="upload-hint">Supports .py .js .ts .java .go .rs .cpp .c .sql .html .css</span>
+            </div>
+            <input type="file" id="review-file-input" hidden accept=".py,.js,.ts,.java,.go,.rs,.cpp,.c,.sql,.html,.css,.txt"/>
+          </div>
+
+          <!-- GitHub pane -->
+          <div class="review-pane hidden" id="review-github">
+            <div class="gh-url-row">
+              <input type="text" id="gh-repo-url" class="github-url-input" placeholder="github.com/owner/repo or paste full URL" autocomplete="off" onkeydown="if(event.key==='Enter')loadGhRepo()"/>
+              <button class="github-connect-btn" onclick="loadGhRepo()" id="gh-load-btn">Load</button>
+            </div>
+            <p id="gh-url-error" style="font-size:12px;color:#ef4444;padding:0 14px 8px;display:none;"></p>
+            <div class="gh-repo-config hidden" id="gh-repo-config">
+              <div class="config-row">
+                <label>Branch</label>
+                <select id="branch-select"></select>
+              </div>
+              <div class="config-row">
+                <label>Review scope</label>
+                <select id="review-scope">
+                  <option value="recent">Files changed in last commit</option>
+                  <option value="full">Full repository scan (up to 5 files)</option>
+                </select>
+              </div>
+              <div class="config-row" id="gh-token-row" style="display:none;">
+                <label>Token</label>
+                <input type="password" id="gh-token-input" placeholder="ghp_… (required for private repos)" style="background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#e8e8ec;font-size:12px;padding:4px 8px;outline:none;flex:1;"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Context + submit -->
+          <div class="rfp-context-row">
+            <input type="text" class="review-context-input" id="review-context-input" placeholder="Optional: describe what this code does or what to focus on..."/>
+          </div>
+          <div class="rfp-submit-row">
+            <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">GPT · Claude · Gemini</span>
+            <button class="rfp-run-btn" id="rfp-run-btn-el" onclick="runCodeReview()">Run review</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results section (shown after run) -->
+      <div class="rfp-results-section hidden" id="review-results-panel">
+        <div id="review-results"></div>
+      </div>
+
+    </div><!-- /.rfp-scroll -->
+  </div><!-- /#review-fullpage -->
+
 </div>
 
 <script>
@@ -1378,9 +2096,9 @@
     if (ctxRingEl) ctxRingEl.style.display = currentMode === 'intensive' ? 'none' : '';
     if (pipsEl) pipsEl.style.display = currentMode === 'intensive' ? 'flex' : 'none';
     updateIntensivePips(intensiveCount);
-    // Web search button visibility
+    // Web search button visibility — hidden in studio mode
     const webBtn = document.getElementById('web-search-btn');
-    if (webBtn) webBtn.style.display = currentMode === 'intensive' ? 'none' : '';
+    if (webBtn) webBtn.style.display = (currentMode === 'intensive' || appMode === 'studio') ? 'none' : '';
   }
 
   function toggleCfgDropdown() {
@@ -1677,14 +2395,18 @@
   inputEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (!sendBtn.disabled) submitQuestion();
+      if (!sendBtn.disabled) dispatchSubmit();
     }
   });
 
   sendBtn.addEventListener('click', () => {
     if (isLoading) { stopGeneration(); return; }
-    if (!sendBtn.disabled) submitQuestion();
+    if (!sendBtn.disabled) dispatchSubmit();
   });
+
+  function dispatchSubmit() {
+    submitQuestion();
+  }
 
   function fillInput(el) {
     inputEl.value = el.textContent.trim();
@@ -1732,7 +2454,6 @@
         delete threads[currentThreadId];
       }
     }
-
     // Abort any in-flight request
     if (activeSSE) { activeSSE.abort(); activeSSE = null; isLoading = false; }
 
@@ -1767,6 +2488,7 @@
     const grokSynthRow   = document.querySelector('.cfg-synth-row[data-model="grok"]');
     const intensiveNotice = document.getElementById('intensive-notice');
     const intensivePips   = document.getElementById('intensive-pips');
+    const attachBtn      = document.getElementById('attach-btn');
 
     if (mode === 'studio') {
       // ── ENTER STUDIO ──
@@ -1781,6 +2503,7 @@
       inputEl.placeholder = 'Describe what you want to build…';
       artifactModeEnabled = true;
       if (webBtn) webBtn.style.display = 'none';
+      if (attachBtn) attachBtn.style.display = '';
       currentMode = 'intensive';
       if (_studioSnapshot) {
         enabledModels = new Set(_studioSnapshot.enabledModels);
@@ -1801,6 +2524,7 @@
 
     } else {
       // ── ENTER VOYANCE ──
+      hideReviewPanel();
       studioWs.classList.remove('active');
       chatArea.style.display = '';
       newThreadBtnEl.style.display = '';
@@ -1813,6 +2537,7 @@
       inputEl.placeholder = 'Ask Voyance…';
       artifactModeEnabled = false;
       if (webBtn) webBtn.style.display = '';
+      if (attachBtn) attachBtn.style.display = '';
       if (grokModelRow) grokModelRow.style.display = '';
       if (grokSynthRow) grokSynthRow.style.display = '';
 
@@ -1858,10 +2583,15 @@
     studioCmd = cmd;
     document.querySelectorAll('.studio-cmd-btn').forEach(b =>
       b.classList.toggle('active', b.dataset.cmd === cmd));
-    inputEl.placeholder = cmd === 'code'
-      ? 'Describe what you want to build…'
-      : 'What do you want to research?';
-    inputEl.focus();
+    if (cmd === 'review') {
+      enterReviewMode();
+    } else {
+      hideReviewPanel();
+      inputEl.placeholder = cmd === 'code'
+        ? 'Describe what you want to build…'
+        : 'What do you want to research?';
+      inputEl.focus();
+    }
   }
 
   function fillStudio(text, cmd) {
@@ -2381,6 +3111,11 @@
         break;
 
       case 'complete':
+        if (!AuthManager.isLoggedIn()) {
+          const qc = parseInt(localStorage.getItem('query_count') || '0') + 1;
+          localStorage.setItem('query_count', qc);
+          if (qc === 1) setTimeout(() => AuthModal.show('first_query'), 2000);
+        }
         break;
     }
 
@@ -3297,12 +4032,14 @@
   }
 
   function deleteArtifact(aid) {
+    const cloudId = savedArtifacts[aid]?.cloudId;
     delete savedArtifacts[aid];
     savedArtifactOrder = savedArtifactOrder.filter(x => x !== aid);
     try {
       localStorage.removeItem('opclave-artifact-' + aid);
       localStorage.setItem('opclave-artifact-order', JSON.stringify(savedArtifactOrder));
     } catch(_) {}
+    if (cloudId) ArtifactManager.deleteFromCloud(cloudId).catch(e => console.error('Cloud artifact delete failed', e));
     if (viewingArtifactId === aid) closeArtifactView();
     renderArtifactList();
   }
@@ -3357,6 +4094,14 @@
     savedArtifacts[art.id] = art;
     savedArtifactOrder.unshift(art.id);
     persistArtifact(art);
+    if (AuthManager.isLoggedIn()) {
+      ArtifactManager.saveToCloud(art).then(data => {
+        if (data && savedArtifacts[art.id]) {
+          savedArtifacts[art.id].cloudId = data.id;
+          persistArtifact(savedArtifacts[art.id]);
+        }
+      }).catch(e => console.error('Cloud artifact save failed', e));
+    }
     renderArtifactList();
     document.getElementById('artifact-save-overlay').classList.remove('visible');
     delete artifactBuffers[pendingArtifactSave.turnId];
@@ -3989,6 +4734,811 @@
         try { rec.start(); } catch(err) { console.warn('Recognition start failed:', err); }
       }
     };
+  })();
+
+  // ── Supabase client (lazy init) ──────────────────
+  let _supabase = null;
+  function getSupabase() {
+    if (!_supabase) {
+      if (!window.supabase)           { console.error('[Auth] Supabase CDN script not loaded'); return null; }
+      if (!window._SUPABASE_URL)      { console.error('[Auth] SUPABASE_URL not injected — restart server'); return null; }
+      if (!window._SUPABASE_ANON_KEY) { console.error('[Auth] SUPABASE_ANON_KEY not injected — restart server'); return null; }
+      try {
+        _supabase = window.supabase.createClient(window._SUPABASE_URL, window._SUPABASE_ANON_KEY);
+      } catch(e) {
+        console.error('[Auth] createClient failed:', e);
+        return null;
+      }
+    }
+    return _supabase;
+  }
+
+  // ── Auth Manager ─────────────────────────────────
+  const AuthManager = {
+    user: null,
+
+    async init() {
+      const sb = getSupabase();
+      if (!sb) { this.updateUI(); return; }
+      const { data: { session } } = await sb.auth.getSession();
+      this.user = session?.user ?? null;
+      this.updateUI();
+      sb.auth.onAuthStateChange((event, session) => {
+        this.user = session?.user ?? null;
+        this.updateUI();
+        if (event === 'SIGNED_IN') {
+          AuthModal.dismiss();
+          this.syncLocalDataToCloud().catch(e => console.error('Sync failed', e));
+          ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
+        }
+      });
+    },
+
+    async signInWithProvider(provider) {
+      const sb = getSupabase();
+      if (!sb) {
+        console.error('[Auth] Supabase client not initialized — check SUPABASE_URL and SUPABASE_ANON_KEY env vars');
+        this._showModalError('Auth not configured. Check server environment variables.');
+        return;
+      }
+      try {
+        const { error } = await sb.auth.signInWithOAuth({
+          provider,
+          options: { redirectTo: window.location.origin + '/app' }
+        });
+        if (error) {
+          console.error('[Auth] OAuth error:', error);
+          this._showModalError(error.message || 'Sign-in failed. Make sure this provider is enabled in Supabase.');
+        }
+      } catch(e) {
+        console.error('[Auth] signInWithOAuth threw:', e);
+        this._showModalError('Sign-in failed — see console for details.');
+      }
+    },
+
+    _showModalError(msg) {
+      const card = document.querySelector('.auth-modal-card');
+      if (!card) return;
+      let err = card.querySelector('.auth-modal-err');
+      if (!err) {
+        err = document.createElement('p');
+        err.className = 'auth-modal-err';
+        err.style.cssText = 'font-size:12px;color:#f87171;margin-top:10px;';
+        card.appendChild(err);
+      }
+      err.textContent = msg;
+    },
+
+    async signInWithGoogle() { return this.signInWithProvider('google'); },
+    async signInWithGitHub() { return this.signInWithProvider('github'); },
+
+    async signOut() {
+      const sb = getSupabase();
+      if (!sb) return;
+      await sb.auth.signOut();
+      this.user = null;
+      this.updateUI();
+    },
+
+    isLoggedIn() { return this.user !== null; },
+
+    updateUI() {
+      const authBtn = document.getElementById('auth-btn');
+      const userAvatar = document.getElementById('user-avatar');
+      const userMenuName = document.getElementById('user-menu-name');
+      const userMenuEmail = document.getElementById('user-menu-email');
+      const userMenuAvatar = document.getElementById('user-menu-avatar');
+      if (this.user) {
+        if (authBtn) authBtn.style.display = 'none';
+        if (userAvatar) {
+          userAvatar.style.display = 'block';
+          const av = this.user.user_metadata?.avatar_url || '';
+          userAvatar.src = av;
+          userAvatar.title = this.user.user_metadata?.full_name || this.user.email;
+          if (userMenuAvatar) userMenuAvatar.src = av;
+        }
+        if (userMenuName) userMenuName.textContent = this.user.user_metadata?.full_name || '';
+        if (userMenuEmail) userMenuEmail.textContent = this.user.email || '';
+      } else {
+        if (authBtn) authBtn.style.display = 'flex';
+        if (userAvatar) userAvatar.style.display = 'none';
+        hideUserMenu();
+      }
+    },
+
+    async syncLocalDataToCloud() {
+      if (!this.user) return;
+      const sb = getSupabase();
+      if (!sb) return;
+      for (const aid of [...savedArtifactOrder]) {
+        const art = savedArtifacts[aid];
+        if (!art || art.cloudId) continue;
+        try {
+          const data = await ArtifactManager.saveToCloud(art);
+          if (data && savedArtifacts[aid]) {
+            savedArtifacts[aid].cloudId = data.id;
+            persistArtifact(savedArtifacts[aid]);
+          }
+        } catch(e) { console.error('Sync failed for artifact', aid, e); }
+      }
+    }
+  };
+
+  // ── Auth Modal ───────────────────────────────────
+  const AuthModal = {
+    hasShown: false,
+
+    show(trigger) {
+      if (AuthManager.isLoggedIn()) return;
+      if (trigger === 'first_query' && this.hasShown) return;
+      if (trigger === 'first_query') this.hasShown = true;
+      const modal = document.createElement('div');
+      modal.id = 'auth-modal';
+      modal.innerHTML = `
+        <div class="auth-modal-backdrop" onclick="AuthModal.dismiss()"></div>
+        <div class="auth-modal-card">
+          <button class="auth-modal-close" onclick="AuthModal.dismiss()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div class="auth-modal-mark">
+            <img src="/assets/white_logo_transparent.png" alt="OpClave" style="width:40px;height:40px;object-fit:contain"/>
+          </div>
+          <h2 class="auth-modal-title">Save your work</h2>
+          <p class="auth-modal-sub">Create a free account to save artifacts, sync across devices, and keep your thread history.</p>
+          <button class="auth-btn-oauth" onclick="AuthManager.signInWithGoogle()">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+          <button class="auth-btn-oauth" onclick="AuthManager.signInWithGitHub()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            Continue with GitHub
+          </button>
+          <p class="auth-modal-skip" onclick="AuthModal.dismiss()">Continue without account</p>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      requestAnimationFrame(() => modal.classList.add('visible'));
+    },
+
+    dismiss() {
+      const modal = document.getElementById('auth-modal');
+      if (modal) {
+        modal.classList.remove('visible');
+        setTimeout(() => modal.remove(), 300);
+      }
+    }
+  };
+
+  // ── Artifact Manager (cloud-aware) ───────────────
+  const ArtifactManager = {
+    async saveToCloud(art) {
+      const sb = getSupabase();
+      if (!sb || !AuthManager.user) return null;
+      const { data, error } = await sb.from('artifacts').insert({
+        user_id: AuthManager.user.id,
+        name: art.name,
+        type: art.type || 'research',
+        question: art.question,
+        synthesis: art.synthesis,
+        model_responses: art.modelResponses || {},
+        web_sources: art.webSources || [],
+        papers: art.papers || [],
+        tags: art.tags || []
+      }).select().single();
+      if (error) { console.error('Cloud artifact save error', error); return null; }
+      return data;
+    },
+
+    async loadFromCloud() {
+      const sb = getSupabase();
+      if (!sb || !AuthManager.user) return;
+      const { data, error } = await sb.from('artifacts').select('*').order('created_at', { ascending: false });
+      if (error) { console.error('Cloud artifact load error', error); return; }
+      if (!data || !data.length) return;
+      const cloudIdSet = new Set(Object.values(savedArtifacts).map(a => a.cloudId).filter(Boolean));
+      let added = false;
+      data.forEach(row => {
+        if (cloudIdSet.has(row.id)) return;
+        const localId = 'cloud-' + row.id;
+        if (!savedArtifacts[localId]) {
+          savedArtifacts[localId] = {
+            id: localId, cloudId: row.id,
+            name: row.name, type: row.type,
+            question: row.question, synthesis: row.synthesis,
+            modelResponses: row.model_responses || {},
+            webSources: row.web_sources || [],
+            papers: row.papers || [],
+            tags: row.tags || [],
+            createdAt: row.created_at,
+          };
+          savedArtifactOrder.push(localId);
+          added = true;
+        }
+      });
+      if (added) renderArtifactList();
+    },
+
+    async deleteFromCloud(cloudId) {
+      const sb = getSupabase();
+      if (!sb || !AuthManager.user || !cloudId) return;
+      await sb.from('artifacts').delete().eq('id', cloudId).eq('user_id', AuthManager.user.id);
+    },
+
+    async renameInCloud(cloudId, newName) {
+      const sb = getSupabase();
+      if (!sb || !AuthManager.user || !cloudId) return;
+      await sb.from('artifacts').update({ name: newName, updated_at: new Date().toISOString() })
+        .eq('id', cloudId).eq('user_id', AuthManager.user.id);
+    }
+  };
+
+  // ── Thread Manager (cloud-aware) ─────────────────
+  const ThreadManager = {
+    async save(thread) {
+      const sb = getSupabase();
+      if (!sb || !AuthManager.user) return;
+      const { error } = await sb.from('threads').upsert({
+        ...(thread.cloudId ? { id: thread.cloudId } : {}),
+        user_id: AuthManager.user.id,
+        title: thread.title || (thread.messages?.[0]?.content?.slice(0, 50)) || 'New thread',
+        messages: thread.messages || [],
+        models_used: thread.modelsUsed || [],
+        updated_at: new Date().toISOString()
+      }).select().single();
+      if (error) console.error('Cloud thread save error', error);
+    }
+  };
+
+  // Expose to window so onclick= attributes in dynamic HTML can reach them
+  window.AuthManager = AuthManager;
+  window.AuthModal = AuthModal;
+  window.ArtifactManager = ArtifactManager;
+
+  // ── User dropdown helpers ─────────────────────────
+  function showUserMenu() {
+    const menu = document.getElementById('user-dropdown');
+    if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  }
+  function hideUserMenu() {
+    const menu = document.getElementById('user-dropdown');
+    if (menu) menu.style.display = 'none';
+  }
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('user-dropdown');
+    const avatar = document.getElementById('user-avatar');
+    if (menu && avatar && !menu.contains(e.target) && e.target !== avatar) {
+      menu.style.display = 'none';
+    }
+  });
+
+  // ── Initialize auth ───────────────────────────────
+  AuthManager.init().then(() => {
+    if (AuthManager.isLoggedIn()) {
+      ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
+    }
+  }).catch(e => console.error('Auth init failed', e));
+
+  // ── /review mode ──────────────────────────────────
+
+  function enterReviewMode() {
+    document.getElementById('review-fullpage').classList.add('active');
+    document.getElementById('rfp-input-section').classList.remove('hidden');
+    document.getElementById('review-results-panel').classList.add('hidden');
+    document.getElementById('review-results').innerHTML = '';
+  }
+
+  function exitReviewFullpage() {
+    document.getElementById('review-fullpage').classList.remove('active');
+  }
+
+  function switchReviewTab(tab) {
+    document.querySelectorAll('.review-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.review-pane').forEach(p => p.classList.add('hidden'));
+    const pane = document.getElementById('review-' + tab);
+    if (pane) pane.classList.remove('hidden');
+  }
+
+  function showReviewPanel() { /* no-op: review now lives in full-page overlay */ }
+  function hideReviewPanel() { /* no-op: review now lives in full-page overlay */ }
+
+  function showReviewLoading() {
+    document.getElementById('rfp-input-section').classList.add('hidden');
+    const panel = document.getElementById('review-results-panel');
+    panel.classList.remove('hidden');
+    const scroll = document.querySelector('.rfp-scroll');
+    if (scroll) scroll.scrollTop = 0;
+    const container = document.getElementById('review-results');
+    container.innerHTML = `
+      <div class="review-loading">
+        <div class="agent-status" id="status-security">
+          <div class="status-dot running"></div>
+          <span class="agent-name">Security agent</span>
+          <span class="agent-status-text">analyzing...</span>
+        </div>
+        <div class="agent-status" id="status-quality">
+          <div class="status-dot running"></div>
+          <span class="agent-name">Quality agent</span>
+          <span class="agent-status-text">analyzing...</span>
+        </div>
+        <div class="agent-status" id="status-performance">
+          <div class="status-dot running"></div>
+          <span class="agent-name">Performance agent</span>
+          <span class="agent-status-text">analyzing...</span>
+        </div>
+      </div>`;
+  }
+
+  function updateAgentStatus(agent, status, count) {
+    const el = document.getElementById('status-' + agent);
+    if (!el) return;
+    const dot = el.querySelector('.status-dot');
+    const text = el.querySelector('.agent-status-text');
+    dot.className = 'status-dot ' + status;
+    if (status === 'done') {
+      text.textContent = count === 0 ? 'No issues found' : count + ' issue' + (count !== 1 ? 's' : '') + ' found';
+    } else if (status === 'error') {
+      text.textContent = 'Failed';
+    }
+  }
+
+  function showReviewInputError(msg) {
+    let el = document.getElementById('rfp-input-error');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'rfp-input-error';
+      el.style.cssText = 'font-size:12px;color:#f87171;margin:0;padding:0 0 8px;font-family:var(--mono,"JetBrains Mono",monospace);';
+      const submitRow = document.querySelector('.rfp-submit-row');
+      if (submitRow) submitRow.before(el);
+    }
+    el.textContent = msg;
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 3500);
+  }
+
+  async function runCodeReview() {
+    const activeTab = document.querySelector('.review-tab.active')?.dataset.tab || 'paste';
+    let code = '', filename = '';
+    if (activeTab === 'paste') {
+      code = document.getElementById('review-code-input').value.trim();
+      if (!code) { showReviewInputError('Paste some code first.'); return; }
+    } else if (activeTab === 'upload') {
+      if (!window._reviewUploadedCode) { showReviewInputError('Upload a file first.'); return; }
+      code = window._reviewUploadedCode;
+      filename = window._reviewUploadedFilename || '';
+    } else if (activeTab === 'github') {
+      const btn = document.getElementById('rfp-run-btn-el');
+      if (btn) { btn.textContent = 'Fetching…'; btn.disabled = true; }
+      try {
+        code = await prepareGitHubReview();
+        if (!code) { showReviewInputError('No reviewable files found in this repo.'); if (btn) { btn.textContent = 'Run review'; btn.disabled = false; } return; }
+      } catch (e) {
+        showReviewInputError('Could not fetch from GitHub. Check the URL or try pasting.');
+        if (btn) { btn.textContent = 'Run review'; btn.disabled = false; }
+        return;
+      }
+      if (btn) { btn.textContent = 'Run review'; btn.disabled = false; }
+    }
+    const context = document.getElementById('review-context-input').value;
+    const language = document.getElementById('review-language-select')?.value || 'auto';
+    showReviewLoading();
+    try {
+      const response = await fetch('/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, language, context, filename })
+      });
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+        for (const line of lines) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            handleReviewEvent(data);
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      document.getElementById('review-results').innerHTML = `<p style="color:#f87171;padding:24px;font-size:13px;">Review failed: ${escHtml(e.message)}</p>`;
+    }
+  }
+
+  function handleReviewEvent(event) {
+    switch (event.type) {
+      case 'agent_start': updateAgentStatus(event.agent, 'running'); break;
+      case 'agent_done': updateAgentStatus(event.agent, 'done', event.count); break;
+      case 'agent_error': updateAgentStatus(event.agent, 'error'); break;
+      case 'review_complete': renderReviewResults(event.issues, event.counts); break;
+      case 'rate_limited':
+        document.getElementById('review-results').innerHTML = '<p style="color:#ef4444;padding:16px;">Daily query limit reached. Please try again tomorrow.</p>';
+        break;
+    }
+  }
+
+  function renderReviewResults(issues, counts) {
+    window._currentReviewIssues = issues;
+    const scroll = document.querySelector('.rfp-scroll');
+    if (scroll) scroll.scrollTop = 0;
+    const container = document.getElementById('review-results');
+    if (issues.length === 0) {
+      container.innerHTML = '<div class="review-clean"><div class="clean-icon">&#10003;</div><p>No issues found across all three agents.</p></div>';
+      return;
+    }
+    const sevClass = { critical: 'sev-critical', high: 'sev-high', medium: 'sev-medium', low: 'sev-low' };
+    const agentClass = { security: 'agent-security', quality: 'agent-quality', performance: 'agent-performance' };
+    container.innerHTML = `
+      <div class="review-header">
+        <div class="review-summary">
+          <span class="summary-count">${issues.length} issue${issues.length !== 1 ? 's' : ''} found</span>
+          <span class="agent-counts">${counts.security} security · ${counts.quality} quality · ${counts.performance} performance</span>
+        </div>
+      </div>
+      <div class="issue-list">
+        ${issues.map(issue => {
+          const sev = (issue.severity || 'low').toLowerCase();
+          const agent = issue.agent || '';
+          const fileLine = [issue.file, issue.line ? `line ${issue.line}` : ''].filter(Boolean).join(':');
+          return `
+          <div class="issue-card ${sevClass[sev] || 'sev-low'}">
+            <div class="issue-top">
+              <div class="issue-top-left">
+                <span class="severity-badge">${sev.toUpperCase()}</span>
+                <span class="issue-title">${escHtml(issue.title || '')}</span>
+              </div>
+              <div class="issue-top-right">
+                ${agent ? `<span class="agent-badge ${agentClass[agent] || ''}">${agent}</span>` : ''}
+                ${fileLine ? `<span class="file-line-badge">${escHtml(fileLine)}</span>` : ''}
+              </div>
+            </div>
+            <hr class="issue-divider"/>
+            <div class="detail-section"><div class="detail-label">DESCRIPTION</div><div class="detail-text">${escHtml(issue.description || '')}</div></div>
+            <div class="detail-section"><div class="detail-label">IMPACT</div><div class="detail-text">${escHtml(issue.impact || '')}</div></div>
+            <div class="detail-section"><div class="detail-label">FIX</div><div class="detail-text fix-text">${escHtml(issue.fix || '')}</div></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="review-actions">
+        <button class="gen-prompt-btn" onclick="showFixPromptModal()">Generate fix prompt</button>
+        <button class="save-review-btn" onclick="saveReviewAsArtifact()">Save as artifact</button>
+        <button class="new-review-btn" onclick="resetReview()">New review</button>
+      </div>`;
+  }
+
+  function buildFixPrompt(issues) {
+    if (!issues || issues.length === 0) return '';
+
+    // Group by file (or 'general' if no file)
+    const byFile = {};
+    issues.forEach(issue => {
+      const key = issue.file || '_';
+      if (!byFile[key]) byFile[key] = [];
+      byFile[key].push(issue);
+    });
+
+    const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    const lines = [];
+
+    lines.push('Fix the following issues identified by a multi-model code review (security, quality, and performance agents).');
+    lines.push('Address every issue listed. Maintain existing code structure, APIs, and tests where possible.');
+    lines.push('');
+    lines.push('─'.repeat(60));
+    lines.push('');
+
+    Object.entries(byFile).forEach(([file, fileIssues]) => {
+      if (file !== '_') {
+        lines.push(`FILE: ${file}`);
+        lines.push('');
+      }
+      // Sort within file by severity
+      fileIssues.sort((a, b) => sevOrder[a.severity] - sevOrder[b.severity]);
+      fileIssues.forEach((issue, i) => {
+        const loc = [issue.file && file === '_' ? `${issue.file}` : '', issue.line ? `line ${issue.line}` : ''].filter(Boolean).join(', ');
+        lines.push(`[${(issue.severity || 'low').toUpperCase()}] ${issue.title || 'Untitled issue'}${loc ? ` (${loc})` : ''}`);
+        lines.push(`Agent: ${issue.agent || 'unknown'}`);
+        if (issue.description) lines.push(`Problem: ${issue.description}`);
+        if (issue.impact)      lines.push(`Impact: ${issue.impact}`);
+        if (issue.fix)         lines.push(`Fix:\n${issue.fix}`);
+        lines.push('');
+      });
+    });
+
+    lines.push('─'.repeat(60));
+    lines.push('');
+    lines.push('When done, confirm each fix with a short comment in the code explaining what was changed and why.');
+
+    return lines.join('\n');
+  }
+
+  function showFixPromptModal() {
+    const issues = window._currentReviewIssues;
+    if (!issues || issues.length === 0) return;
+    const prompt = buildFixPrompt(issues);
+    document.getElementById('fpm-prompt-text').textContent = prompt;
+    const btn = document.getElementById('fpm-copy-btn');
+    if (btn) { btn.textContent = 'Copy prompt'; btn.classList.remove('copied'); }
+    document.getElementById('fix-prompt-overlay').classList.add('visible');
+  }
+
+  function closeFixPromptModal(e) {
+    if (e && e.target !== document.getElementById('fix-prompt-overlay')) return;
+    document.getElementById('fix-prompt-overlay').classList.remove('visible');
+  }
+
+  function copyFixPrompt() {
+    const text = document.getElementById('fpm-prompt-text').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('fpm-copy-btn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy prompt'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function resetReview() {
+    document.getElementById('rfp-input-section').classList.remove('hidden');
+    document.getElementById('review-results-panel').classList.add('hidden');
+    document.getElementById('review-code-input').value = '';
+    document.getElementById('review-char-count').textContent = '0 lines';
+    document.getElementById('review-results').innerHTML = '';
+  }
+
+  async function saveReviewAsArtifact() {
+    const issues = window._currentReviewIssues;
+    if (!issues) return;
+    const name = prompt('Name this review artifact:');
+    if (!name) return;
+    const art = {
+      name,
+      type: 'review',
+      question: 'Code review',
+      synthesis: JSON.stringify(issues),
+      modelResponses: { GPT: 'Security agent', Claude: 'Quality agent', Gemini: 'Performance agent' },
+      tags: ['code-review']
+    };
+    if (window.ArtifactManager && window.ArtifactManager.saveToCloud) {
+      const data = await ArtifactManager.saveToCloud(art);
+      if (data) { alert('Review saved to artifacts.'); return; }
+    }
+    // Local fallback
+    const id = 'review-' + Date.now();
+    if (typeof savedArtifacts !== 'undefined') {
+      savedArtifacts[id] = { id, ...art, createdAt: new Date().toISOString() };
+      if (typeof savedArtifactOrder !== 'undefined') savedArtifactOrder.unshift(id);
+      if (typeof renderArtifactList === 'function') renderArtifactList();
+    }
+    alert('Review saved to artifacts.');
+  }
+
+  // GitHub integration — URL-based, no OAuth required
+  function _ghToken() { return (document.getElementById('gh-token-input')?.value || '').trim(); }
+
+  function _ghHeaders() {
+    const h = { 'Accept': 'application/vnd.github.v3+json' };
+    const t = _ghToken();
+    if (t) h['Authorization'] = `Bearer ${t}`;
+    return h;
+  }
+
+  function _parseGhUrl(raw) {
+    const s = raw.trim().replace(/\/$/, '');
+    const stripGit = r => r.replace(/\.git$/, '');
+    const urlMatch = s.match(/github\.com\/([^/?#]+)\/([^/?#.]+(?:\.git)?)/);
+    if (urlMatch) return { owner: urlMatch[1], repo: stripGit(urlMatch[2]) };
+    const slashMatch = s.match(/^([^/\s]+)\/([^/\s]+)$/);
+    if (slashMatch) return { owner: slashMatch[1], repo: stripGit(slashMatch[2]) };
+    return null;
+  }
+
+  async function loadGhRepo() {
+    const urlVal = document.getElementById('gh-repo-url').value;
+    const errEl = document.getElementById('gh-url-error');
+    const btn = document.getElementById('gh-load-btn');
+    errEl.style.display = 'none';
+
+    const parsed = _parseGhUrl(urlVal);
+    if (!parsed) {
+      errEl.textContent = 'Enter a repo as owner/repo or paste a GitHub URL.';
+      errEl.style.display = '';
+      return;
+    }
+
+    btn.textContent = 'Loading…';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, { headers: _ghHeaders() });
+
+      if (res.status === 401 || res.status === 404) {
+        // Show token field and let user retry
+        document.getElementById('gh-token-row').style.display = 'flex';
+        document.getElementById('gh-repo-config').classList.remove('hidden');
+        errEl.textContent = res.status === 401
+          ? 'Authentication required — enter a token with repo scope below.'
+          : 'Repo not found. If it\'s private, enter a token below.';
+        errEl.style.display = '';
+        btn.textContent = 'Load';
+        btn.disabled = false;
+        return;
+      }
+
+      if (!res.ok) {
+        errEl.textContent = `GitHub returned ${res.status}.`;
+        errEl.style.display = '';
+        btn.textContent = 'Load';
+        btn.disabled = false;
+        return;
+      }
+
+      const repoData = await res.json();
+      window._ghRepo = { owner: parsed.owner, repo: parsed.repo };
+
+      // Load branches
+      const branchRes = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/branches`, { headers: _ghHeaders() });
+      const branches = await branchRes.json();
+      const branchSelect = document.getElementById('branch-select');
+      const defaultBranch = repoData.default_branch || 'main';
+      branchSelect.innerHTML = (Array.isArray(branches) ? branches : []).map(b =>
+        `<option value="${b.name}" ${b.name === defaultBranch ? 'selected' : ''}>${b.name}</option>`
+      ).join('');
+
+      document.getElementById('gh-repo-config').classList.remove('hidden');
+      document.getElementById('gh-token-row').style.display = 'none';
+    } catch (e) {
+      errEl.textContent = 'Network error — could not reach GitHub.';
+      errEl.style.display = '';
+    }
+
+    btn.textContent = 'Load';
+    btn.disabled = false;
+  }
+
+  async function prepareGitHubReview() {
+    if (!window._ghRepo) return '';
+    const { owner, repo } = window._ghRepo;
+    const branch = document.getElementById('branch-select').value;
+    const scope = document.getElementById('review-scope').value;
+    const reviewable = [
+      '.py','.js','.ts','.jsx','.tsx','.java','.go','.rs','.cpp','.c','.h',
+      '.cs','.swift','.kt','.rb','.php','.sql','.sh','.bash','.ps1','.psm1',
+      '.json','.yaml','.yml','.toml','.xml','.html','.css','.scss','.vue',
+      '.dart','.ex','.exs','.clj','.hs','.lua','.r','.m','.scala'
+    ];
+
+    const isReviewable = name => reviewable.some(ext => name.toLowerCase().endsWith(ext));
+
+    let filePaths = [];
+
+    if (scope === 'recent') {
+      const commitRes = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/commits/${branch}`,
+        { headers: _ghHeaders() }
+      );
+      const commit = await commitRes.json();
+      filePaths = (commit.files || [])
+        .filter(f => isReviewable(f.filename))
+        .slice(0, 5)
+        .map(f => f.filename);
+
+      // Fall back to full scan if last commit touched no reviewable files
+      if (filePaths.length === 0) {
+        const treeRes = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+          { headers: _ghHeaders() }
+        );
+        const tree = await treeRes.json();
+        filePaths = (tree.tree || [])
+          .filter(f => f.type === 'blob' && isReviewable(f.path))
+          .slice(0, 5)
+          .map(f => f.path);
+      }
+    } else {
+      const treeRes = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`,
+        { headers: _ghHeaders() }
+      );
+      const tree = await treeRes.json();
+      filePaths = (tree.tree || [])
+        .filter(f => f.type === 'blob' && isReviewable(f.path))
+        .slice(0, 5)
+        .map(f => f.path);
+    }
+
+    if (filePaths.length === 0) return '';
+
+    const chunks = [];
+    for (const path of filePaths) {
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
+          { headers: _ghHeaders() }
+        );
+        const data = await res.json();
+        if (data.content) chunks.push(`// File: ${path}\n${atob(data.content.replace(/\n/g, ''))}`);
+      } catch (e) { console.error('Failed to fetch', path, e); }
+    }
+    return chunks.join('\n\n// ---\n\n');
+  }
+
+  // File upload handlers for review
+  (function() {
+    function initReviewUpload() {
+      const dropzone = document.getElementById('review-dropzone');
+      const fileInput = document.getElementById('review-file-input');
+      if (!dropzone || !fileInput) return;
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          window._reviewUploadedCode = ev.target.result;
+          window._reviewUploadedFilename = file.name;
+          dropzone.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <p style="color:#e8e8ec">${file.name}</p>
+            <span style="color:#78787e">${(file.size/1024).toFixed(1)} KB</span>`;
+        };
+        reader.readAsText(file);
+      });
+      dropzone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropzone.style.borderColor = '#c9a77a';
+      });
+      dropzone.addEventListener('dragleave', function() {
+        dropzone.style.borderColor = 'rgba(255,255,255,0.15)';
+      });
+      dropzone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropzone.style.borderColor = 'rgba(255,255,255,0.15)';
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change'));
+      });
+    }
+    // Init after DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initReviewUpload);
+    } else {
+      initReviewUpload();
+    }
+  })();
+
+  // Line count for code textarea
+  (function() {
+    function initLineCount() {
+      const textarea = document.getElementById('review-code-input');
+      const counter = document.getElementById('review-char-count');
+      if (!textarea || !counter) return;
+      textarea.addEventListener('input', function() {
+        const lines = this.value ? this.value.split('\n').length : 0;
+        counter.textContent = lines + ' line' + (lines !== 1 ? 's' : '');
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLineCount);
+    } else {
+      initLineCount();
+    }
   })();
 </script>
 </body>
