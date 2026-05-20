@@ -5711,13 +5711,14 @@
     try {
       const res = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, { headers: _ghHeaders() });
 
-      if (res.status === 401 || res.status === 404) {
-        // Show token field and let user retry
+      if (res.status === 401 || res.status === 403 || res.status === 404) {
         document.getElementById('gh-token-row').style.display = 'flex';
         document.getElementById('gh-repo-config').classList.remove('hidden');
-        errEl.textContent = res.status === 401
-          ? 'Authentication required — enter a token with repo scope below.'
-          : 'Repo not found. If it\'s private, enter a token below.';
+        errEl.textContent = res.status === 404
+          ? 'Repo not found. If it\'s private, enter a token below.'
+          : res.status === 403
+          ? 'GitHub rate limit reached or access denied — add a personal access token below to continue.'
+          : 'Authentication required — enter a token with repo scope below.';
         errEl.style.display = '';
         btn.textContent = 'Load';
         btn.disabled = false;
@@ -5725,7 +5726,7 @@
       }
 
       if (!res.ok) {
-        errEl.textContent = `GitHub returned ${res.status}.`;
+        errEl.textContent = `GitHub returned ${res.status}. Try adding a personal access token.`;
         errEl.style.display = '';
         btn.textContent = 'Load';
         btn.disabled = false;
