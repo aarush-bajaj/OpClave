@@ -5399,7 +5399,7 @@
     document.getElementById('rfp-input-section').classList.add('hidden');
     const panel = document.getElementById('review-results-panel');
     panel.classList.remove('hidden');
-    const scroll = document.querySelector('.rfp-scroll');
+    const scroll = document.querySelector('#review-fullpage .rfp-scroll');
     if (scroll) scroll.scrollTop = 0;
     const container = document.getElementById('review-results');
     container.innerHTML = `
@@ -5516,7 +5516,7 @@
 
   function renderReviewResults(issues, counts) {
     window._currentReviewIssues = issues;
-    const scroll = document.querySelector('.rfp-scroll');
+    const scroll = document.querySelector('#review-fullpage .rfp-scroll');
     if (scroll) scroll.scrollTop = 0;
     const container = document.getElementById('review-results');
     if (issues.length === 0) {
@@ -5657,6 +5657,10 @@
     document.getElementById('review-code-input').value = '';
     document.getElementById('review-char-count').textContent = '0 lines';
     document.getElementById('review-results').innerHTML = '';
+    window._currentReviewIssues = null;
+    const scroll = document.querySelector('#review-fullpage .rfp-scroll');
+    if (scroll) scroll.scrollTop = 0;
+    switchReviewTab('paste');
   }
 
   async function saveReviewAsArtifact() {
