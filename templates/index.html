@@ -1903,24 +1903,6 @@
 
 
   <!-- Fix prompt modal -->
-  <div id="fix-prompt-overlay" onclick="closeFixPromptModal(event)">
-    <div id="fix-prompt-modal" onclick="event.stopPropagation()">
-      <div class="fpm-header">
-        <div>
-          <div class="fpm-title">Fix prompt</div>
-          <div class="fpm-subtitle">Paste into Claude Code or any AI agent</div>
-        </div>
-        <button class="fpm-close" onclick="closeFixPromptModal()">&#215;</button>
-      </div>
-      <div class="fpm-body">
-        <pre class="fpm-prompt" id="fpm-prompt-text"></pre>
-      </div>
-      <div class="fpm-actions">
-        <button class="fpm-copy-btn" id="fpm-copy-btn" onclick="copyFixPrompt()">Copy prompt</button>
-        <button class="fpm-dismiss-btn" onclick="closeFixPromptModal()">Dismiss</button>
-      </div>
-    </div>
-  </div>
 
   </div><!-- /#main -->
 
@@ -2206,6 +2188,26 @@
       </div>
     </div>
   </div><!-- /#research-fullpage -->
+
+  <!-- ── Fix prompt modal ──────────────────────────────────────── -->
+  <div id="fix-prompt-overlay" onclick="closeFixPromptModal(event)">
+    <div id="fix-prompt-modal" onclick="event.stopPropagation()">
+      <div class="fpm-header">
+        <div>
+          <div class="fpm-title">Fix prompt</div>
+          <div class="fpm-subtitle">Paste into Claude Code or any AI agent</div>
+        </div>
+        <button class="fpm-close" onclick="closeFixPromptModal()">&#215;</button>
+      </div>
+      <div class="fpm-body">
+        <pre class="fpm-prompt" id="fpm-prompt-text"></pre>
+      </div>
+      <div class="fpm-actions">
+        <button class="fpm-copy-btn" id="fpm-copy-btn" onclick="copyFixPrompt()">Copy prompt</button>
+        <button class="fpm-dismiss-btn" onclick="closeFixPromptModal()">Dismiss</button>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -5555,8 +5557,7 @@
         }).join('')}
       </div>
       <div class="review-actions">
-        <button class="gen-prompt-btn" onclick="showFixPromptModal()">Generate fix prompt</button>
-        <button class="save-review-btn" onclick="saveReviewAsArtifact()">Save as artifact</button>
+        <button class="gen-prompt-btn" id="gen-prompt-btn" onclick="showFixPromptModal()">Generate fix prompt</button>
         <button class="new-review-btn" onclick="resetReview()">New review</button>
       </div>`;
   }
@@ -5609,14 +5610,29 @@
   function showFixPromptModal() {
     const issues = window._currentReviewIssues;
     if (!issues || issues.length === 0) return;
-    const prompt = buildFixPrompt(issues);
-    document.getElementById('fpm-prompt-text').textContent = prompt;
-    const btn = document.getElementById('fpm-copy-btn');
-    if (btn) { btn.textContent = 'Copy prompt'; btn.classList.remove('copied'); }
-    document.getElementById('fix-prompt-overlay').classList.add('visible');
+
+    const triggerBtn = document.getElementById('gen-prompt-btn');
+    if (triggerBtn) {
+      triggerBtn.textContent = 'Generating…';
+      triggerBtn.disabled = true;
+    }
+
+    // Yield to browser to paint the loading state, then build and show
+    setTimeout(() => {
+      const prompt = buildFixPrompt(issues);
+      document.getElementById('fpm-prompt-text').textContent = prompt;
+      const copyBtn = document.getElementById('fpm-copy-btn');
+      if (copyBtn) { copyBtn.textContent = 'Copy prompt'; copyBtn.classList.remove('copied'); }
+      document.getElementById('fix-prompt-overlay').classList.add('visible');
+      if (triggerBtn) {
+        triggerBtn.textContent = 'Generate fix prompt';
+        triggerBtn.disabled = false;
+      }
+    }, 80);
   }
 
   function closeFixPromptModal(e) {
+    // Allow: no event (close button), or clicking the backdrop directly
     if (e && e.target !== document.getElementById('fix-prompt-overlay')) return;
     document.getElementById('fix-prompt-overlay').classList.remove('visible');
   }
