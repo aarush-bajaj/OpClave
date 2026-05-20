@@ -1176,6 +1176,12 @@ def index():
         return HTMLResponse(f.read())
 
 
+@app.get("/studio")
+def studio_route():
+    with open(os.path.join(_root, "templates", "studio.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
 @app.get("/app")
 def app_route():
     with open(os.path.join(_root, "templates", "index.html"), encoding="utf-8") as f:

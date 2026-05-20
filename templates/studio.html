@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpClave Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0c;
+      color: #e8e8ec;
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Top bar ─────────────────────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-family: 'Fraunces', serif;
+      font-size: 17px;
+      font-weight: 400;
+      color: #e8e8ec;
+      letter-spacing: -0.015em;
+    }
+    .logo-accent { color: #c9a77a; }
+
+    .model-pill-list {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      letter-spacing: 0.07em;
+      font-weight: 500;
+    }
+
+    /* ── Main ────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 52px 24px 64px;
+      gap: 20px;
+    }
+
+    /* ── Nav cards ───────────────────────────────────── */
+    .nav-cards {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .nav-card {
+      flex: 1;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 18px 20px 20px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.14s, background 0.14s;
+      outline: none;
+      appearance: none;
+    }
+
+    .nav-card:hover:not(.active) {
+      border-color: rgba(255,255,255,0.13);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .nav-card.active {
+      border-color: rgba(201,167,122,0.35);
+      background: rgba(201,167,122,0.08);
+    }
+
+    .nc-cmd {
+      font-size: 10px;
+      color: rgba(255,255,255,0.28);
+      letter-spacing: 0.1em;
+      font-weight: 500;
+      font-family: 'Inter', monospace;
+      margin-bottom: 10px;
+    }
+    .nav-card.active .nc-cmd { color: rgba(201,167,122,0.55); }
+
+    .nc-title {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: #c8c8d0;
+      letter-spacing: -0.02em;
+      margin-bottom: 7px;
+      line-height: 1;
+    }
+    .nav-card.active .nc-title { color: #c9a77a; }
+
+    .nc-desc {
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+      line-height: 1.55;
+    }
+
+    /* ── Input block ─────────────────────────────────── */
+    .input-block {
+      width: 100%;
+      max-width: 700px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      background: #0d0d10;
+      overflow: hidden;
+    }
+
+    /* Sub-mode pills */
+    .pill-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 13px 16px 11px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .pill {
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: transparent;
+      color: rgba(255,255,255,0.38);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s, color 0.12s;
+      outline: none;
+      appearance: none;
+    }
+
+    .pill:hover:not(.active) {
+      border-color: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6);
+    }
+
+    .pill.active {
+      border-color: rgba(201,167,122,0.35);
+      background: rgba(201,167,122,0.08);
+      color: #c9a77a;
+    }
+
+    /* Textarea */
+    .query-textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e8e8ec;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.65;
+      padding: 20px 20px 14px;
+      resize: none;
+      min-height: 110px;
+      display: block;
+    }
+
+    .query-textarea::placeholder { color: rgba(255,255,255,0.18); }
+
+    /* Bottom bar */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 16px 13px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .input-hint {
+      font-size: 10.5px;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 0.06em;
+      font-weight: 500;
+    }
+
+    .submit-btn {
+      padding: 9px 22px;
+      border-radius: 8px;
+      border: 1px solid rgba(201,167,122,0.28);
+      background: rgba(201,167,122,0.09);
+      color: #c9a77a;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.14s, border-color 0.14s, opacity 0.14s;
+      outline: none;
+      appearance: none;
+      white-space: nowrap;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background: rgba(201,167,122,0.16);
+      border-color: rgba(201,167,122,0.5);
+    }
+
+    .submit-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .submit-btn.is-loading {
+      animation: btnpulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes btnpulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+
+    /* ── Progress bar ────────────────────────────────── */
+    .progress-wrap {
+      width: 100%;
+      max-width: 700px;
+      min-height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: rgba(201,167,122,0.55);
+      letter-spacing: 0.04em;
+      animation: fadein 0.25s ease;
+    }
+
+    @keyframes fadein {
+      from { opacity: 0; transform: translateY(3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .progress-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%,  20% { content: ''; }
+      40%       { content: '.'; }
+      60%       { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 560px) {
+      .topbar { padding: 16px 20px; }
+      .main { padding: 32px 16px 48px; }
+      .nav-cards { flex-direction: column; gap: 8px; }
+      .nc-title { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="logo">OpClave <span class="logo-accent">Studio</span></div>
+    <div class="model-pill-list">GPT · Claude · Gemini · Grok</div>
+  </header>
+
+  <main class="main">
+
+    <!-- Nav cards -->
+    <div class="nav-cards" id="nav-cards">
+      <button class="nav-card" data-card="Build" onclick="activateCard('Build')">
+        <div class="nc-cmd">/code</div>
+        <div class="nc-title">Build</div>
+        <div class="nc-desc">Applications, tools, and websites from a single prompt</div>
+      </button>
+      <button class="nav-card active" data-card="Research" onclick="activateCard('Research')">
+        <div class="nc-cmd">/research</div>
+        <div class="nc-title">Research</div>
+        <div class="nc-desc">Structured documents synthesized from any question</div>
+      </button>
+      <button class="nav-card" data-card="Review" onclick="activateCard('Review')">
+        <div class="nc-cmd">/review</div>
+        <div class="nc-title">Review</div>
+        <div class="nc-desc">Multi-model audit for security, quality, and performance</div>
+      </button>
+    </div>
+
+    <!-- Input block -->
+    <div class="input-block">
+      <div class="pill-bar" id="pill-bar"></div>
+      <textarea class="query-textarea" id="query-input" spellcheck="false"></textarea>
+      <div class="bottom-bar">
+        <span class="input-hint">GPT · Claude · Gemini · Grok</span>
+        <button class="submit-btn" id="submit-btn" onclick="handleSubmit()"></button>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progress-wrap"></div>
+
+  </main>
+
+  <script>
+    const SUB_MODES = {
+      Build:    ['App', 'Website', 'Script'],
+      Research: ['Analyse', 'Compare', 'Survey'],
+      Review:   ['Security', 'Quality', 'Performance'],
+    };
+
+    const PLACEHOLDERS = {
+      Build:    'What do you want to build?',
+      Research: 'What do you want to research?',
+      Review:   'What do you want to review?',
+    };
+
+    const BUTTON_LABELS = {
+      Build:    'Build it',
+      Research: 'Research it',
+      Review:   'Review it',
+    };
+
+    const SYSTEM_PROMPTS = {
+      App:         "You are an expert software architect and full-stack developer. The user wants to build an application. Provide complete, production-ready code with clear structure, error handling, and comments. Include setup instructions.",
+      Website:     "You are an expert frontend developer and UI designer. The user wants to build a website. Provide complete HTML/CSS/JS with responsive design, semantic markup, and modern aesthetics.",
+      Script:      "You are an expert programmer and automation engineer. The user wants a script or automation tool. Provide clean, well-commented code with usage examples and edge case handling.",
+      Analyse:     "You are a rigorous analytical researcher. Break the topic into its core components, mechanisms, and implications. Structure your response with clear sections: Overview, Key Factors, Deep Analysis, Implications. Be thorough and precise.",
+      Compare:     "You are an expert at comparative analysis. The user wants to compare concepts, technologies, or approaches. Structure your response as: Overview, Key Differences, Strengths & Weaknesses of each, and a clear Recommendation.",
+      Survey:      "You are an expert at landscape mapping and literature synthesis. Provide a comprehensive survey of the field: current state, major players/approaches, recent developments, open problems, and where things are heading.",
+      Security:    "You are a senior security engineer and penetration tester. Review the provided code, system, or architecture for security vulnerabilities. Structure as: Critical Issues, High/Medium/Low severity findings, and specific remediation steps for each.",
+      Quality:     "You are a senior software engineer focused on code quality. Review for: code clarity and maintainability, design patterns, test coverage gaps, documentation, and technical debt. Provide specific, actionable improvements.",
+      Performance: "You are a performance engineering expert. Review for: bottlenecks, inefficient algorithms or queries, memory usage, caching opportunities, and scalability concerns. Provide benchmarks or estimates where relevant.",
+    };
+
+    const VOYANCE_SYNTHESIS_PROMPTS = {
+      Build:    `You are Voyance, Opclave's synthesis engine. You have received responses from GPT, Claude, Gemini, and Grok to a build request. Synthesize the best approach: take the strongest architectural decisions, the cleanest code patterns, and the most complete implementation from across all four. Where they differ, choose the best. Output a single cohesive, production-ready result. Do not mention the individual models.`,
+      Research: `You are Voyance, Opclave's synthesis engine. You have received research responses from GPT, Claude, Gemini, and Grok. Synthesize them into one authoritative, well-structured document. Combine unique insights from each, resolve contradictions by noting where perspectives differ, and produce a response that is more complete than any single model could provide. Do not mention the individual models.`,
+      Review:   `You are Voyance, Opclave's synthesis engine. You have received review responses from GPT, Claude, Gemini, and Grok. Synthesize into a single comprehensive review: consolidate findings, elevate issues that multiple models flagged, and produce a unified set of prioritized recommendations. Do not mention the individual models.`,
+    };
+
+    // ── State ────────────────────────────────────────────────────
+    let activeCard    = 'Research';
+    let activeSubMode = 'Analyse';
+    let isLoading     = false;
+
+    // ── Card activation ──────────────────────────────────────────
+    function activateCard(card) {
+      activeCard    = card;
+      activeSubMode = SUB_MODES[card][0];
+
+      document.querySelectorAll('.nav-card').forEach(c =>
+        c.classList.toggle('active', c.dataset.card === card));
+
+      renderPills();
+      document.getElementById('query-input').placeholder = PLACEHOLDERS[card];
+      if (!isLoading) document.getElementById('submit-btn').textContent = BUTTON_LABELS[card];
+    }
+
+    // ── Sub-mode activation ──────────────────────────────────────
+    function activateSubMode(subMode) {
+      activeSubMode = subMode;
+      document.querySelectorAll('.pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.submode === subMode));
+    }
+
+    // ── Render pills ─────────────────────────────────────────────
+    function renderPills() {
+      const bar = document.getElementById('pill-bar');
+      bar.innerHTML = '';
+      SUB_MODES[activeCard].forEach((sm, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'pill' + (i === 0 ? ' active' : '');
+        btn.dataset.submode = sm;
+        btn.textContent = sm;
+        btn.onclick = () => activateSubMode(sm);
+        bar.appendChild(btn);
+      });
+    }
+
+    // ── Progress text ────────────────────────────────────────────
+    function setProgress(text) {
+      const wrap = document.getElementById('progress-wrap');
+      if (!text) { wrap.innerHTML = ''; return; }
+      wrap.innerHTML = `<span class="progress-text">${text}<span class="progress-dots"></span></span>`;
+    }
+
+    // ── Model query ──────────────────────────────────────────────
+    async function queryModel(modelId, systemPrompt, userQuery) {
+      const res = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: modelId, system: systemPrompt, query: userQuery }),
+      });
+      return res.json();
+    }
+
+    // ── Submit ───────────────────────────────────────────────────
+    async function handleSubmit() {
+      const userQuery = document.getElementById('query-input').value.trim();
+      if (!userQuery || isLoading) return;
+
+      isLoading = true;
+      const btn = document.getElementById('submit-btn');
+      btn.textContent = 'Synthesizing…';
+      btn.classList.add('is-loading');
+      btn.disabled = true;
+
+      const systemPrompt = SYSTEM_PROMPTS[activeSubMode];
+      const mode    = activeCard;
+      const subMode = activeSubMode;
+
+      try {
+        setProgress('Querying GPT, Claude, Gemini, Grok');
+
+        const [gptRes, claudeRes, geminiRes, grokRes] = await Promise.all([
+          queryModel('gpt-4o',                    systemPrompt, userQuery),
+          queryModel('claude-sonnet-4-20250514',  systemPrompt, userQuery),
+          queryModel('gemini-2.0-flash',          systemPrompt, userQuery),
+          queryModel('grok-3',                    systemPrompt, userQuery),
+        ]);
+
+        setProgress('Synthesizing with Voyance');
+
+        const synthesisPrompt = VOYANCE_SYNTHESIS_PROMPTS[mode];
+        const synthesisInput  = [
+          `GPT: ${gptRes.text}`,
+          `Claude: ${claudeRes.text}`,
+          `Gemini: ${geminiRes.text}`,
+          `Grok: ${grokRes.text}`,
+          `Original query: ${userQuery}`,
+        ].join('\n\n');
+
+        const synthesisRes = await queryModel('claude-sonnet-4-20250514', synthesisPrompt, synthesisInput);
+
+        setProgress('');
+
+        document.dispatchEvent(new CustomEvent('opclave:result', {
+          detail: {
+            mode,
+            subMode,
+            query: userQuery,
+            modelResponses: { gpt: gptRes, claude: claudeRes, gemini: geminiRes, grok: grokRes },
+            synthesis: synthesisRes,
+          },
+        }));
+
+      } catch (err) {
+        setProgress('');
+        console.error('[Opclave] query failed:', err);
+      } finally {
+        isLoading = false;
+        btn.textContent = BUTTON_LABELS[activeCard];
+        btn.classList.remove('is-loading');
+        btn.disabled = false;
+      }
+    }
+
+    // ── Keyboard shortcut ────────────────────────────────────────
+    document.getElementById('query-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit();
+    });
+
+    // ── Init ─────────────────────────────────────────────────────
+    renderPills();
+    document.getElementById('query-input').placeholder = PLACEHOLDERS[activeCard];
+    document.getElementById('submit-btn').textContent  = BUTTON_LABELS[activeCard];
+  </script>
+
+</body>
+</html>
