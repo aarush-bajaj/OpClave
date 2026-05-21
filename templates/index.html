@@ -3071,6 +3071,7 @@
             isLoading = false;
             updateSendBtn();
             newThreadBtn.disabled = false;
+            saveCurrentThread();
             const hitGeneralLimit = currentMode !== 'intensive' && promptCount >= MAX_PROMPTS;
             const hitIntensiveLimit = currentMode === 'intensive' && intensiveCount >= MAX_INTENSIVE;
             if (!isAdminMode && (hitGeneralLimit || hitIntensiveLimit)) {
@@ -3732,7 +3733,7 @@
     threads[currentThreadId].messagesHTML = messagesEl.innerHTML;
     saveToLocalStorage();
     if (AuthManager.isLoggedIn()) {
-      ThreadManager.save(threads[currentThreadId]).catch(() => {});
+      ThreadManager.save(threads[currentThreadId]).catch(e => console.error('Thread save failed:', e));
     }
   }
 
