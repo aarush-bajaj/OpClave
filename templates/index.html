@@ -3730,6 +3730,9 @@
     threads[currentThreadId].history = [...conversationHistory];
     threads[currentThreadId].messagesHTML = messagesEl.innerHTML;
     saveToLocalStorage();
+    if (AuthManager.isLoggedIn()) {
+      ThreadManager.save(threads[currentThreadId]).catch(() => {});
+    }
   }
 
   function switchThread(id) {
@@ -3829,6 +3832,9 @@
     threadOrder = threadOrder.filter(tid => tid !== id);
     delete threads[id];
     localStorage.removeItem('opclave-html-' + id);
+    if (AuthManager.isLoggedIn()) {
+      ThreadManager.deleteFromCloud(id).catch(() => {});
+    }
     if (currentThreadId === id) {
       currentThreadId = null;
       // Find the next thread in the same mode so we stay in context
@@ -3911,21 +3917,29 @@
     });
   }
 
-  function saveToLocalStorage() {
+  function clearThreadsFromLocalStorage() {
     try {
-      // Save each thread's rendered HTML in its own key to avoid one large blob
+      const keys = Object.keys(localStorage).filter(k =>
+        k.startsWith('opclave-html-') ||
+        k === 'opclave-threads' || k === 'opclave-thread-order' || k === 'opclave-current-thread'
+      );
+      keys.forEach(k => localStorage.removeItem(k));
+    } catch(_) {}
+  }
+
+  function saveToLocalStorage() {
+    // Threads are only persisted for signed-in users (stored in Supabase as source of truth)
+    if (!AuthManager.isLoggedIn()) return;
+    try {
       threadOrder.forEach(id => {
         try {
           localStorage.setItem('opclave-html-' + id, threads[id].messagesHTML || '');
         } catch(e) {
-          // Quota exceeded for this thread's HTML — skip it silently
           localStorage.removeItem('opclave-html-' + id);
         }
       });
       const slim = {};
-      threadOrder.forEach(id => {
-        slim[id] = { ...threads[id], messagesHTML: '' };
-      });
+      threadOrder.forEach(id => { slim[id] = { ...threads[id], messagesHTML: '' }; });
       localStorage.setItem('opclave-threads', JSON.stringify(slim));
       localStorage.setItem('opclave-thread-order', JSON.stringify(threadOrder));
       localStorage.setItem('opclave-current-thread', currentThreadId || '');
@@ -5020,13 +5034,42 @@
       const { data: { session } } = await sb.auth.getSession();
       this.user = session?.user ?? null;
       this.updateUI();
+
+      if (this.user) {
+        // Signed in: load authoritative data from Supabase
+        ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
+        ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
+      } else {
+        // Not signed in: wipe any stale local thread data so it doesn't persist after sign-out
+        clearThreadsFromLocalStorage();
+        threads = {};
+        threadOrder = [];
+        currentThreadId = null;
+        conversationHistory = [];
+        messagesEl.innerHTML = '';
+        emptyState.style.display = '';
+        renderThreadList();
+        updateSendBtn();
+      }
+
       sb.auth.onAuthStateChange((event, session) => {
         this.user = session?.user ?? null;
         this.updateUI();
         if (event === 'SIGNED_IN') {
           AuthModal.dismiss();
           this.syncLocalDataToCloud().catch(e => console.error('Sync failed', e));
+          ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
           ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
+        } else if (event === 'SIGNED_OUT') {
+          clearThreadsFromLocalStorage();
+          threads = {};
+          threadOrder = [];
+          currentThreadId = null;
+          conversationHistory = [];
+          messagesEl.innerHTML = '';
+          emptyState.style.display = '';
+          renderThreadList();
+          updateSendBtn();
         }
       });
     },
@@ -5073,8 +5116,7 @@
       const sb = getSupabase();
       if (!sb) return;
       await sb.auth.signOut();
-      this.user = null;
-      this.updateUI();
+      // onAuthStateChange SIGNED_OUT handler clears all state
     },
 
     isLoggedIn() { return this.user !== null; },
@@ -5242,14 +5284,73 @@
       const sb = getSupabase();
       if (!sb || !AuthManager.user) return;
       const { error } = await sb.from('threads').upsert({
-        ...(thread.cloudId ? { id: thread.cloudId } : {}),
+        id: thread.id,
         user_id: AuthManager.user.id,
-        title: thread.title || (thread.messages?.[0]?.content?.slice(0, 50)) || 'New thread',
-        messages: thread.messages || [],
-        models_used: thread.modelsUsed || [],
+        name: thread.name || 'New Thread',
+        history: thread.history || [],
+        messages_html: thread.messagesHTML || '',
+        mode: thread.mode || 'chat',
         updated_at: new Date().toISOString()
-      }).select().single();
+      }, { onConflict: 'id' });
       if (error) console.error('Cloud thread save error', error);
+    },
+
+    async deleteFromCloud(threadId) {
+      const sb = getSupabase();
+      if (!sb || !AuthManager.user) return;
+      await sb.from('threads').delete()
+        .eq('id', threadId)
+        .eq('user_id', AuthManager.user.id);
+    },
+
+    async loadFromCloud() {
+      const sb = getSupabase();
+      if (!sb || !AuthManager.user) return;
+      const { data, error } = await sb
+        .from('threads')
+        .select('id, name, history, messages_html, mode, updated_at')
+        .eq('user_id', AuthManager.user.id)
+        .neq('mode', 'studio')
+        .order('updated_at', { ascending: false })
+        .limit(50);
+      if (error) { console.error('Thread cloud load error', error); return; }
+      if (!data || data.length === 0) return;
+
+      threads = {};
+      threadOrder = [];
+      data.forEach(t => {
+        threads[t.id] = {
+          id: t.id,
+          name: t.name || 'New Thread',
+          history: t.history || [],
+          messagesHTML: t.messages_html || '',
+          mode: t.mode || 'chat',
+        };
+        threadOrder.push(t.id);
+      });
+
+      // Refresh localStorage cache
+      clearThreadsFromLocalStorage();
+      threadOrder.forEach(id => {
+        try { localStorage.setItem('opclave-html-' + id, threads[id].messagesHTML || ''); } catch(_) {}
+      });
+      const slim = {};
+      threadOrder.forEach(id => { slim[id] = { ...threads[id], messagesHTML: '' }; });
+      try {
+        localStorage.setItem('opclave-threads', JSON.stringify(slim));
+        localStorage.setItem('opclave-thread-order', JSON.stringify(threadOrder));
+      } catch(_) {}
+
+      currentThreadId = null;
+      conversationHistory = [];
+      messagesEl.innerHTML = '';
+      renderThreadList();
+      if (threadOrder.length > 0) {
+        switchThread(threadOrder[0]);
+      } else {
+        emptyState.style.display = '';
+        updateSendBtn();
+      }
     }
   };
 
@@ -5276,11 +5377,7 @@
   });
 
   // ── Initialize auth ───────────────────────────────
-  AuthManager.init().then(() => {
-    if (AuthManager.isLoggedIn()) {
-      ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
-    }
-  }).catch(e => console.error('Auth init failed', e));
+  AuthManager.init().catch(e => console.error('Auth init failed', e));
 
   // ── /review mode ──────────────────────────────────
 
