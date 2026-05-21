@@ -2270,6 +2270,7 @@
   let msgCounter = 0;
   let activeSSE = null;
   let isLoading = false;
+  let _sessionToken = null; // Supabase access token, kept fresh by onAuthStateChange
   let activeStreams = {};
   let _genId = 0;
   let _autoScrollActive = false; // true while current stream should auto-scroll
@@ -3026,7 +3027,7 @@
 
     fetch('/stream', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(_sessionToken ? { 'Authorization': `Bearer ${_sessionToken}` } : {}) },
       body: JSON.stringify({
         question,
         synthesizer: selectedSynthesizer,
@@ -5033,6 +5034,7 @@
       if (!sb) { this.updateUI(); return; }
       const { data: { session } } = await sb.auth.getSession();
       this.user = session?.user ?? null;
+      _sessionToken = session?.access_token ?? null;
       this.updateUI();
 
       if (this.user) {
@@ -5054,6 +5056,7 @@
 
       sb.auth.onAuthStateChange((event, session) => {
         this.user = session?.user ?? null;
+        _sessionToken = session?.access_token ?? null;
         this.updateUI();
         if (event === 'SIGNED_IN') {
           AuthModal.dismiss();
@@ -5061,6 +5064,7 @@
           ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
           ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
         } else if (event === 'SIGNED_OUT') {
+          _sessionToken = null;
           clearThreadsFromLocalStorage();
           threads = {};
           threadOrder = [];
@@ -5556,7 +5560,7 @@
     try {
       const response = await fetch('/review', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(_sessionToken ? { 'Authorization': `Bearer ${_sessionToken}` } : {}) },
         body: JSON.stringify({ code, language, context, filename })
       });
       if (!response.ok) {

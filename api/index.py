@@ -78,10 +78,39 @@ def check_feedback_rate_limit(ip: str) -> bool:
         return True  # fail open — an Upstash outage shouldn't block feedback
 
 
-def check_and_increment_ip_limit(ip: str) -> tuple[bool, int]:
-    """Returns (allowed, current_count) for the given IP. Resets every 24h."""
+def _extract_user_id(request: "Request") -> str | None:
+    """Decode the Supabase JWT from the Authorization header and return the user sub.
+    No signature verification — used only as a stable rate-limit key."""
+    import base64 as _b64
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth[7:]
+    parts = token.split(".")
+    if len(parts) != 3:
+        return None
     try:
-        key = f"council:prompts:{ip}:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        padded = parts[1] + "=" * (-len(parts[1]) % 4)
+        payload = json.loads(_b64.urlsafe_b64decode(padded))
+        return payload.get("sub") or None
+    except Exception:
+        return None
+
+
+def _client_id(request: "Request") -> str:
+    """Return user:<uuid> for authenticated requests, ip:<addr> otherwise."""
+    uid = _extract_user_id(request)
+    if uid:
+        return f"user:{uid}"
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    return f"ip:{ip}"
+
+
+def check_and_increment_ip_limit(request: "Request") -> tuple[bool, int]:
+    """Returns (allowed, current_count) keyed by user ID (if authed) or IP. Resets every 24h."""
+    try:
+        key = f"council:prompts:{_client_id(request)}:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
         count = _redis(["INCR", key])
         if count == 1:
             _redis(["EXPIRE", key, 86400])
@@ -90,10 +119,10 @@ def check_and_increment_ip_limit(ip: str) -> tuple[bool, int]:
         return (True, 0)  # fail open so an Upstash outage doesn't break the site
 
 
-def check_and_increment_intensive_limit(ip: str) -> tuple[bool, int]:
+def check_and_increment_intensive_limit(request: "Request") -> tuple[bool, int]:
     """Returns (allowed, current_count) for intensive queries. Separate 3/day bucket."""
     try:
-        key = f"council:intensive:{ip}:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
+        key = f"council:intensive:{_client_id(request)}:{datetime.now(timezone.utc).strftime('%Y-%m-%d')}"
         count = _redis(["INCR", key])
         if count == 1:
             _redis(["EXPIRE", key, 86400])
@@ -1374,14 +1403,11 @@ def stream(req: StreamRequest, request: Request):
             yield 'data: {"type":"error","message":"No question provided"}\n\n'
         return StreamingResponse(err(), media_type="text/event-stream")
 
-    forwarded = request.headers.get("x-forwarded-for")
-    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
-
     if is_intensive:
-        allowed, count = check_and_increment_intensive_limit(ip)
+        allowed, count = check_and_increment_intensive_limit(request)
         active_limit = INTENSIVE_LIMIT
     else:
-        allowed, count = check_and_increment_ip_limit(ip)
+        allowed, count = check_and_increment_ip_limit(request)
         active_limit = DAILY_LIMIT
 
     if not allowed:
@@ -1659,9 +1685,7 @@ def code_review(req: ReviewRequest, request: Request):
             yield 'data: {"type":"error","message":"No code provided"}\n\n'
         return StreamingResponse(err(), media_type="text/event-stream")
 
-    forwarded = request.headers.get("x-forwarded-for")
-    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
-    allowed, count = check_and_increment_ip_limit(ip)
+    allowed, count = check_and_increment_ip_limit(request)
     if not allowed:
         def rate_limited():
             yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":DAILY_LIMIT})}\n\n'
