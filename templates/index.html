@@ -3928,6 +3928,31 @@
     } catch(_) {}
   }
 
+  function clearArtifactsFromLocalStorage() {
+    try {
+      const keys = Object.keys(localStorage).filter(k =>
+        k.startsWith('opclave-artifact-')
+      );
+      keys.forEach(k => localStorage.removeItem(k));
+    } catch(_) {}
+  }
+
+  function clearAllUserData() {
+    clearThreadsFromLocalStorage();
+    clearArtifactsFromLocalStorage();
+    threads = {};
+    threadOrder = [];
+    currentThreadId = null;
+    conversationHistory = [];
+    messagesEl.innerHTML = '';
+    emptyState.style.display = '';
+    savedArtifacts = {};
+    savedArtifactOrder = [];
+    renderThreadList();
+    renderArtifactList();
+    updateSendBtn();
+  }
+
   function saveToLocalStorage() {
     // Threads are only persisted for signed-in users (stored in Supabase as source of truth)
     if (!AuthManager.isLoggedIn()) return;
@@ -5042,16 +5067,8 @@
         ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
         ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
       } else {
-        // Not signed in: wipe any stale local thread data so it doesn't persist after sign-out
-        clearThreadsFromLocalStorage();
-        threads = {};
-        threadOrder = [];
-        currentThreadId = null;
-        conversationHistory = [];
-        messagesEl.innerHTML = '';
-        emptyState.style.display = '';
-        renderThreadList();
-        updateSendBtn();
+        // Not signed in: wipe all stale user data so nothing persists after sign-out
+        clearAllUserData();
       }
 
       sb.auth.onAuthStateChange((event, session) => {
@@ -5065,15 +5082,7 @@
           ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
         } else if (event === 'SIGNED_OUT') {
           _sessionToken = null;
-          clearThreadsFromLocalStorage();
-          threads = {};
-          threadOrder = [];
-          currentThreadId = null;
-          conversationHistory = [];
-          messagesEl.innerHTML = '';
-          emptyState.style.display = '';
-          renderThreadList();
-          updateSendBtn();
+          clearAllUserData();
         }
       });
     },
