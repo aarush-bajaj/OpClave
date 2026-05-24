@@ -516,6 +516,14 @@ class StreamRequest(BaseModel):
     artifact_mode: bool = False
     forced_artifact_type: str = ""  # "code" | "research" | "" (auto-detect)
     research_depth: str = "standard"  # "quick" | "standard" | "deep"
+    prior_code: str = ""          # current build's code, sent on Studio Build follow-ups
+    studio_followup: bool = False # True when iterating on an existing build artifact
+
+class ResearchRequest(BaseModel):
+    topic: str = ""
+    context: str = ""
+    follow_up_of: str = ""        # previous topic, when this is a follow-up exploration
+    history: List[dict] = []
 
 class FeedbackRequest(BaseModel):
     message: str = ""
@@ -609,6 +617,60 @@ def suggest_artifact_name(question: str, artifact_type: str) -> str:
     key_words = [w.strip(".,!?;:'\"") for w in words if len(w) > 4][:3]
     suggestion = " ".join(key_words).title()
     return suggestion if suggestion else f"Untitled {artifact_type}"
+
+
+# ── Build follow-up intent (question vs edit) ─────────────────────────────────
+# Hybrid: a fast keyword heuristic decides clear cases; an LLM resolves ambiguous ones.
+
+_EDIT_SIGNALS = (
+    'add ', 'change', 'make it', 'make the', 'make them', 'remove', 'delete', 'replace',
+    'instead', 'refactor', 'fix ', 'update', 'modify', 'turn it into', 'turn into',
+    'support ', 'enable', 'include', 'give it', 'set the', 'set it', 'increase', 'decrease',
+    'rename', 'resize', 'recolor', 're-color', 'restyle', 'implement', 'integrate', 'connect',
+    'animate', 'center', 'align', 'bigger', 'smaller', 'darker', 'lighter', 'faster', 'slower',
+    'also add', 'can you add', 'could you add', 'please add', 'put a', 'put an', 'let the user',
+    'allow the user', 'should be able', 'make sure', 'get rid of', 'swap', 'convert it',
+)
+_QUESTION_STARTS = (
+    'what', 'why', 'how', 'when', 'where', 'which', 'who', 'is ', 'are ', 'does ', 'do ',
+    'can you explain', 'could you explain', 'explain', 'tell me', 'is there', 'are there',
+    'should i', "what's", 'whats', 'do i', 'will it', 'would it',
+)
+
+
+def _heuristic_intent(message: str):
+    """Return 'edit', 'question', or None when the phrasing is ambiguous."""
+    m = (message or "").strip().lower()
+    if not m:
+        return 'question'
+    has_edit = any(s in m for s in _EDIT_SIGNALS)
+    has_question = m.endswith('?') or any(m.startswith(s) for s in _QUESTION_STARTS)
+    if has_edit and not has_question:
+        return 'edit'
+    if has_question and not has_edit:
+        return 'question'
+    return None
+
+
+def _classify_intent_with_model(message: str) -> str:
+    try:
+        prompt = (
+            "A user is iterating on a code project. Classify their follow-up message as exactly one word:\n"
+            "EDIT = they want the code changed, extended, added to, fixed, or restyled.\n"
+            "QUESTION = they are only asking or inquiring and do NOT want the code changed.\n\n"
+            f"Follow-up: \"{message}\"\n\n"
+            "Answer with one word only: EDIT or QUESTION."
+        )
+        out, _ = ask_gpt(prompt, 4, model=MODELS_GENERAL.get('gpt'))
+        return 'edit' if 'edit' in (out or '').lower() else 'question'
+    except Exception:
+        # If unsure, prefer answering over silently rebuilding the user's app.
+        return 'question'
+
+
+def classify_followup_intent(message: str) -> str:
+    h = _heuristic_intent(message)
+    return h if h is not None else _classify_intent_with_model(message)
 
 
 def search_web_for_artifact(question: str) -> list:
@@ -972,9 +1034,20 @@ _ARTIFACT_ROLES_CODE = {
 
 
 def build_artifact_model_prompt(model_name: str, question: str, web_context: str,
-                                 artifact_type: str = "", papers: list = None) -> str:
+                                 artifact_type: str = "", papers: list = None,
+                                 prior_code: str = "") -> str:
     if artifact_type == "code":
         role = _ARTIFACT_ROLES_CODE.get(model_name, "Provide creative direction for this build request. Do NOT write code.")
+        if prior_code:
+            return (
+                f"{role}\n\n"
+                "IMPORTANT: This is an iteration on an EXISTING, working app — not a new build. "
+                "The user wants a focused change. Preserve everything else.\n\n"
+                f"Current code:\n```\n{truncate(prior_code, 6000)}\n```\n\n"
+                f"Requested change: {question}\n\n"
+                "Give concise, specific direction for implementing ONLY this change while keeping all "
+                "existing functionality, structure, and styling intact. Do NOT write the full code."
+            )
         parts = [role, "", f"Build request: {question}"]
         return "\n".join(parts)
 
@@ -1013,12 +1086,26 @@ def build_artifact_model_prompt(model_name: str, question: str, web_context: str
 
 
 def get_artifact_synthesis_prompt(question: str, model_responses: dict, web_sources: list,
-                                   artifact_type: str = "", papers: list = None) -> str:
+                                   artifact_type: str = "", papers: list = None,
+                                   prior_code: str = "") -> str:
     if artifact_type == "code":
         directions_block = "\n\n---\n\n".join(
             f"### {name}:\n{truncate(r, 3500)}"
             for name, r in model_responses.items() if r
         )
+        if prior_code:
+            return (
+                "You are an expert engineer modifying an EXISTING, working single-file app. "
+                "Apply the requested change and preserve everything else exactly as it is.\n"
+                "Rules: output the COMPLETE updated self-contained HTML file with all CSS and JS inline. "
+                "Keep all existing features, structure, IDs, and styling intact except where the change "
+                "strictly requires otherwise. Do NOT rebuild from scratch or drop unrelated features. "
+                "No placeholders, no TODOs, no prose — start with ```html and end with ```.\n\n"
+                f"Current code (modify this):\n```html\n{prior_code}\n```\n\n"
+                f"Requested change: {question}\n\n"
+                f"Direction from the council on how to apply it:\n\n{directions_block}\n\n"
+                "Output the full updated file now, with the change applied and everything else preserved."
+            )
         return (
             "You are an expert engineer. You have received creative and architectural direction from "
             "multiple specialists. Your ONLY job is to write the complete, working code.\n"
@@ -1392,6 +1479,15 @@ def stream(req: StreamRequest, request: Request):
     attachments = req.attachments
     is_intensive = req.mode.lower() == "intensive"
 
+    # Studio Build follow-up routing: a lightweight question is answered directly (no council),
+    # an edit goes through the build pipeline with the current code injected as the base.
+    prior_code = (req.prior_code or "").strip()
+    is_studio_followup = bool(req.studio_followup) and bool(prior_code)
+    followup_intent = classify_followup_intent(question) if is_studio_followup else ""
+    if followup_intent == "question":
+        # A quick inquiry shouldn't burn a premium credit — bill it as a general query.
+        is_intensive = False
+
     # Enforce intensive-mode restrictions before anything else
     if is_intensive:
         requested_models -= {"grok"}
@@ -1421,9 +1517,42 @@ def stream(req: StreamRequest, request: Request):
     artifact_mode = bool(req.artifact_mode) and not image_mode
     do_perplexity = req.web_search and not image_mode and not is_intensive and not artifact_mode
 
+    # ── Build follow-up QUESTION: answer with a single model, no council/synthesis/artifact ──
+    if followup_intent == "question":
+        q_model_map = MODELS_INTENSIVE if is_intensive else MODELS_GENERAL
+        q_synth_map = {
+            'claude': synthesize_with_claude, 'gpt': synthesize_with_gpt,
+            'gemini': synthesize_with_gemini, 'grok': synthesize_with_grok,
+        }
+        q_fn = q_synth_map.get(synthesizer, synthesize_with_claude)
+        q_model = q_model_map.get(synthesizer) or MODELS_GENERAL.get(synthesizer, MODELS_GENERAL["claude"])
+        q_system = (
+            "You are a senior software engineer pair-programming with the user on a single-file web app. "
+            "Answer their question about the current code clearly and concisely — explain behavior, point to "
+            "the relevant parts, and offer options when useful. Do NOT output a full rewrite of the app; "
+            "short illustrative snippets are fine only when they genuinely help. Be direct and practical."
+        )
+        q_prompt = f"Here is the current code:\n\n```html\n{prior_code}\n```\n\n{effective_question}"
+
+        def answer_generate():
+            yield f"data: {json.dumps({'type': 'followup_intent', 'intent': 'question'})}\n\n"
+            council_text = ""
+            try:
+                for chunk in q_fn(q_prompt, 4000, history, system=q_system, model=q_model):
+                    council_text += chunk
+                    yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': chunk})}\n\n"
+                yield f"data: {json.dumps({'type': 'council_done'})}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'type': 'council_error', 'error': str(e)})}\n\n"
+            yield f"data: {json.dumps({'type': 'complete'})}\n\n"
+
+        return StreamingResponse(answer_generate(), media_type="text/event-stream")
+
     def generate():
         nonlocal augmented_question
         artifact_type = ""
+        if is_studio_followup:
+            yield f"data: {json.dumps({'type': 'followup_intent', 'intent': 'edit'})}\n\n"
         model_tokens = estimate_max_tokens(effective_question)
         if artifact_mode:
             model_tokens = max(model_tokens, 4000)
@@ -1452,10 +1581,12 @@ def stream(req: StreamRequest, request: Request):
             yield f"data: {json.dumps({'type': 'artifact_mode', 'enabled': True, 'artifact_type': artifact_type, 'suggested_name': artifact_name})}\n\n"
 
             if artifact_type == "code":
-                # Code artifacts: keep regular web search for context (frameworks, libs, etc.)
-                yield f"data: {json.dumps({'type': 'searching_web'})}\n\n"
-                web_sources = search_web_for_artifact(effective_question)
-                yield f"data: {json.dumps({'type': 'web_search_complete', 'sources': web_sources})}\n\n"
+                if not is_studio_followup:
+                    # New build: gather web context (frameworks, libs, etc.)
+                    yield f"data: {json.dumps({'type': 'searching_web'})}\n\n"
+                    web_sources = search_web_for_artifact(effective_question)
+                    yield f"data: {json.dumps({'type': 'web_search_complete', 'sources': web_sources})}\n\n"
+                # else: iterating on an existing build — skip the web search, we already have the app
             else:
                 # Research artifacts: hunt for real peer-reviewed papers
                 yield f"data: {json.dumps({'type': 'searching_research', 'depth': req.research_depth})}\n\n"
@@ -1484,7 +1615,8 @@ def stream(req: StreamRequest, request: Request):
             event_queue.put({'type': 'progress', 'model': name, 'status': 'running'})
             try:
                 if artifact_mode:
-                    q = build_artifact_model_prompt(name, augmented_question, web_ctx, artifact_type, papers)
+                    q = build_artifact_model_prompt(name, augmented_question, web_ctx, artifact_type, papers,
+                                                    prior_code if is_studio_followup else "")
                 else:
                     q = model_question
                 result, usage = func(q, model_tokens, history)
@@ -1553,6 +1685,7 @@ def stream(req: StreamRequest, request: Request):
                 web_sources,
                 artifact_type,
                 papers,
+                prior_code if is_studio_followup else "",
             )
         else:
             synthesis_system = SYNTHESIS_SYSTEM_TEXT
@@ -1595,7 +1728,7 @@ def stream(req: StreamRequest, request: Request):
                 }
                 synth_fn = synth_map.get(actual_synth, synthesize_with_claude)
                 synth_model_str = model_map.get(actual_synth) or MODELS_GENERAL.get(actual_synth, MODELS_GENERAL["claude"])
-                synth_history = [] if artifact_mode else history
+                synth_history = history if (is_studio_followup and prior_code) else ([] if artifact_mode else history)
                 for text_chunk in synth_fn(synthesis_prompt, synthesis_tokens, synth_history, system=synthesis_system, model=synth_model_str):
                     council_text += text_chunk
                     yield f"data: {json.dumps({'type': 'council_chunk', 'chunk': text_chunk})}\n\n"
@@ -1857,6 +1990,236 @@ If no performance issues found return an empty array: []"""
                 all_issues.append({**issue, 'agent': agent_name})
         all_issues.sort(key=lambda x: severity_order.get(x.get('severity', 'low'), 3))
         yield f"data: {json.dumps({'type': 'review_complete', 'issues': all_issues, 'counts': {k: len(v) for k, v in results.items()}})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+    )
+
+
+# ── Research Explorer ─────────────────────────────────────────────────────────
+# Three models each take a distinct research angle (historical, conceptual,
+# applied), a fourth call drafts a Mermaid diagram, a fifth proposes follow-up
+# questions, and Claude synthesizes the three perspectives into one exploration.
+@app.post("/research")
+def research(req: ResearchRequest, request: Request):
+    topic = req.topic.strip()
+    if not topic:
+        def err():
+            yield 'data: {"type":"error","message":"No topic provided"}\n\n'
+        return StreamingResponse(err(), media_type="text/event-stream")
+
+    # Research is a heavy multi-model studio operation — bill it against the
+    # existing intensive bucket (same limit Studio Build/Research used before).
+    allowed, count = check_and_increment_intensive_limit(request)
+    if not allowed:
+        def rate_limited():
+            yield f'data: {json.dumps({"type":"rate_limited","used":count,"limit":INTENSIVE_LIMIT,"mode":"intensive"})}\n\n'
+        return StreamingResponse(rate_limited(), media_type="text/event-stream")
+
+    follow_up_context = (
+        f"\nThis is a follow-up exploration branching from the topic: {req.follow_up_of}"
+        if req.follow_up_of else ""
+    )
+    extra_context = f"\n\nAdditional context to consider: {req.context}" if req.context.strip() else ""
+
+    gpt_prompt = f"""You are a research analyst specializing in historical context and factual grounding.
+
+Topic: {topic}{follow_up_context}{extra_context}
+
+YOUR MANDATE: Research this topic from a historical and factual angle. Cover:
+- How this topic developed over time
+- Key events, milestones, or turning points
+- Established facts and data points
+- Real world examples and case studies
+- What the evidence actually shows
+
+Be specific. Cite real examples. Avoid vague generalities.
+Write 3-4 substantive paragraphs. Do not use bullet points."""
+
+    claude_prompt = f"""You are a conceptual analyst specializing in deep theoretical understanding.
+
+Topic: {topic}{follow_up_context}{extra_context}
+
+YOUR MANDATE: Research this topic from a conceptual and theoretical angle. Cover:
+- The underlying principles and frameworks
+- Why things work the way they do at a fundamental level
+- Competing theories or schools of thought
+- What experts debate and why
+- The most important ideas someone needs to understand this topic deeply
+
+Be intellectually rigorous. Surface non-obvious insights.
+Write 3-4 substantive paragraphs. Do not use bullet points."""
+
+    gemini_prompt = f"""You are an applied research specialist focusing on practical implications and future directions.
+
+Topic: {topic}{follow_up_context}{extra_context}
+
+YOUR MANDATE: Research this topic from a practical and forward-looking angle. Cover:
+- How this topic applies in the real world today
+- Current challenges and open problems
+- Emerging trends and future directions
+- Who is working on this and what they are building
+- What someone could actually do with this knowledge
+
+Be concrete and actionable. Focus on what is happening now and next.
+Write 3-4 substantive paragraphs. Do not use bullet points."""
+
+    diagram_prompt = f"""You are a knowledge visualization expert.
+
+Topic: {topic}
+
+Analyze this topic and decide which diagram type best represents it:
+- "flowchart" — if the topic involves a process, system, or causal chain
+- "mindmap" — if the topic has many interconnected concepts branching from a center
+- "timeline" — if the topic has important historical progression or stages
+- "quadrantChart" — if the topic involves comparing things across two dimensions
+- "graph" — if the topic involves a network of relationships
+
+Then generate valid Mermaid.js diagram syntax for that diagram type.
+
+Rules:
+- Return ONLY a JSON object, no markdown, no backticks
+- The diagram must be valid Mermaid syntax that renders without errors
+- For flowchart use "flowchart TD" and arrows like A[Label] --> B[Label]
+- For graph use "graph TD" with the same arrow syntax
+- Keep it focused — 6 to 12 nodes maximum
+- Use clear, short labels on each node
+- Do not use parentheses, quotes, or special characters inside node labels
+
+Format:
+{{
+  "diagram_type": "mindmap",
+  "title": "Short descriptive title for the diagram",
+  "mermaid": "mindmap\\n  root((Urban Development))\\n    Housing\\n      Affordable\\n      Zoning\\n    Transport\\n      Transit\\n      Roads\\n    Economy\\n      Jobs\\n      Investment"
+}}"""
+
+    questions_prompt = f"""You are an intellectual guide helping someone explore a topic deeply.
+
+Topic: {topic}
+
+Generate exactly 5 follow-up questions that would genuinely deepen someone's understanding of this topic.
+
+Rules:
+- Questions should be intellectually interesting, not obvious
+- Each question should open a genuinely different angle of exploration
+- Questions should be specific enough to be researchable
+- Avoid yes/no questions — each should invite deep exploration
+- Think about what a curious expert would want to explore next
+
+Return ONLY a JSON array of 5 strings. No preamble, no markdown:
+["Question one?", "Question two?", "Question three?", "Question four?", "Question five?"]"""
+
+    def generate():
+        import re as _re
+        results = {}
+        lock = threading.Lock()
+        event_queue = queue.Queue()
+
+        def run_model(name, func, prompt, max_tokens=2000):
+            event_queue.put({'type': 'model_start', 'model': name})
+            try:
+                response, _usage = func(prompt, max_tokens)
+                with lock:
+                    results[name] = response or ""
+                event_queue.put({'type': 'model_done', 'model': name, 'response': response or ""})
+            except Exception as e:
+                with lock:
+                    results[name] = ""
+                event_queue.put({'type': 'model_error', 'model': name, 'error': str(e)})
+
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        for name, func, prompt in [
+            ('GPT',    ask_gpt,    gpt_prompt),
+            ('Claude', ask_claude, claude_prompt),
+            ('Gemini', ask_gemini, gemini_prompt),
+        ]:
+            executor.submit(run_model, name, func, prompt)
+        executor.submit(run_model, 'diagram',   ask_claude, diagram_prompt, 1200)
+        executor.submit(run_model, 'questions', ask_gpt,    questions_prompt, 800)
+
+        completed = 0
+        while completed < 5:
+            try:
+                event = event_queue.get(timeout=120)
+            except queue.Empty:
+                break
+
+            etype = event['type']
+            model = event.get('model')
+
+            if etype == 'model_start':
+                # Surface loading state only for the three visible research models
+                if model in ('GPT', 'Claude', 'Gemini'):
+                    yield f"data: {json.dumps(event)}\n\n"
+                continue
+
+            # model_done or model_error — both count toward completion
+            completed += 1
+
+            if etype == 'model_error':
+                if model in ('GPT', 'Claude', 'Gemini'):
+                    yield f"data: {json.dumps(event)}\n\n"
+                elif model == 'diagram':
+                    yield f"data: {json.dumps({'type': 'diagram_error', 'error': event.get('error', '')})}\n\n"
+                elif model == 'questions':
+                    yield f"data: {json.dumps({'type': 'questions_error', 'error': event.get('error', '')})}\n\n"
+                continue
+
+            # model_done
+            if model in ('GPT', 'Claude', 'Gemini'):
+                yield f"data: {json.dumps(event)}\n\n"
+            elif model == 'diagram':
+                try:
+                    clean = _re.sub(r'```(?:json)?|```', '', event['response']).strip()
+                    diagram_data = json.loads(clean)
+                    yield f"data: {json.dumps({'type': 'diagram_ready', 'diagram': diagram_data})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'type': 'diagram_error', 'error': str(e)})}\n\n"
+            elif model == 'questions':
+                try:
+                    clean = _re.sub(r'```(?:json)?|```', '', event['response']).strip()
+                    questions = json.loads(clean)
+                    if not isinstance(questions, list):
+                        questions = []
+                    yield f"data: {json.dumps({'type': 'questions_ready', 'questions': questions})}\n\n"
+                except Exception as e:
+                    yield f"data: {json.dumps({'type': 'questions_error', 'error': str(e)})}\n\n"
+
+        executor.shutdown(wait=False)
+
+        synthesis_prompt = f"""You are synthesizing three research perspectives on: {topic}
+
+Historical/Factual perspective:
+{results.get('GPT', 'Not available')}
+
+Conceptual/Theoretical perspective:
+{results.get('Claude', 'Not available')}
+
+Practical/Applied perspective:
+{results.get('Gemini', 'Not available')}
+
+Synthesize these three perspectives into one cohesive, well-structured exploration.
+
+Rules:
+- Do NOT mention which model said what
+- Weave all three perspectives together naturally
+- Use clear section headers (## Header) to organize the content
+- Start with the most important insight, not background
+- Be intellectually honest about what is debated vs settled
+- Total length: 600 to 900 words
+- Write for a curious, intelligent reader who wants real depth"""
+
+        yield f"data: {json.dumps({'type': 'synthesis_start'})}\n\n"
+        try:
+            for chunk in synthesize_with_claude(synthesis_prompt, 3000):
+                yield f"data: {json.dumps({'type': 'synthesis_chunk', 'chunk': chunk})}\n\n"
+            yield f"data: {json.dumps({'type': 'synthesis_done'})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'synthesis_error', 'error': str(e)})}\n\n"
+
+        yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
     return StreamingResponse(
         generate(),

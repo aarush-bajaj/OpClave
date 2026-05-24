@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,27 +12,35 @@
       }
     })();
   </script>
-  <title>OpClave: Voyance and Studio</title>
-  <meta name="description" content="Ask once. Get independent answers from four AI models, synthesized into one. Or build complete applications and research documents with Studio.">
+  <title>OpClave: Four minds. One answer.</title>
+  <meta name="description" content="Ask once. Get independent answers from four AI models, synthesized into one. Or open Studio to build applications, write research, and review code.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300;1,9..144,400&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0c;
-      --bg-raised: #111114;
-      --line: rgba(255, 255, 255, 0.06);
-      --line-hover: rgba(255, 255, 255, 0.12);
-      --text: #ffffff;
-      --text-dim: #b8b8c0;
-      --text-faint: #78787e;
-      --accent: #c9a77a;
-      --accent-soft: rgba(201, 167, 122, 0.12);
-      --serif: 'Fraunces', serif;
+      --bg: #07080b;
+      --bg-raised: #0e1016;
+      --bg-glass: rgba(11,13,18,0.64);
+      --bg-glass-2: rgba(9,11,15,0.80);
+      --line: rgba(255,255,255,0.06);
+      --line-hover: rgba(255,255,255,0.12);
+      --text: #e4e7ed;
+      --text-dim: #8e96a4;
+      --text-faint: #545b69;
+      --accent: #c9a77a;        /* gold */
+      --accent-bright: #e7c79c;
+      --accent-soft: rgba(201,167,122,0.12);
+      --cyan: #46e0d4;          /* teal */
+      --cyan-bright: #7af0e7;
+      --cyan-soft: rgba(70,224,212,0.12);
+      --violet: #8b7cf6;        /* review */
+      --violet-bright: #b3a8ff;
+      --serif: 'Bricolage Grotesque', sans-serif;
+      --sans: 'Hanken Grotesk', sans-serif;
       --mono: 'JetBrains Mono', monospace;
-      --sans: 'Inter', sans-serif;
     }
 
     html { scroll-behavior: smooth; }
@@ -42,861 +50,522 @@
       color: var(--text);
       font-family: var(--sans);
       font-weight: 300;
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.7;
       letter-spacing: 0.005em;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      position: relative;
     }
 
     a { color: inherit; text-decoration: none; }
 
-    /* Fade-in */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(6px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+    /* ── Aurora mesh (cyan, violet, gold drift), matches app ── */
+    #aurora { position: fixed; inset: -15% -8%; z-index: 0; pointer-events: none; overflow: hidden; }
+    #aurora::before, #aurora::after, #aurora > i {
+      content: ""; position: absolute; border-radius: 50%; display: block;
+      filter: blur(105px); opacity: 0.28; mix-blend-mode: screen; will-change: transform;
     }
-    .fade-in.visible {
-      opacity: 1;
-      transform: translateY(0);
+    #aurora::before {
+      width: 44vw; height: 44vw; left: -14vw; top: -22vh;
+      background: radial-gradient(circle, rgba(34,150,148,0.52), transparent 64%);
+      animation: auroraA 26s ease-in-out infinite alternate;
+    }
+    #aurora::after {
+      width: 46vw; height: 46vw; right: -18vw; top: -8vh;
+      background: radial-gradient(circle, rgba(78,66,158,0.48), transparent 64%);
+      animation: auroraB 31s ease-in-out infinite alternate;
+    }
+    #aurora > i {
+      width: 50vw; height: 50vw; left: 36%; top: 72%;
+      background: radial-gradient(circle, rgba(150,118,78,0.42), transparent 62%);
+      animation: auroraC 35s ease-in-out infinite alternate;
+    }
+    @keyframes auroraA { to { transform: translate(9vw,11vh) scale(1.18); } }
+    @keyframes auroraB { to { transform: translate(-8vw,9vh) scale(1.14); } }
+    @keyframes auroraC { to { transform: translate(-7vw,-10vh) scale(1.22); } }
+
+    /* ── Film grain overlay ── */
+    #grain {
+      position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0.035;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
-    /* Nav */
+    /* All page content sits above the canvas */
+    nav, main, footer { position: relative; z-index: 2; }
+
+    /* ── Gradient text utility ── */
+    .grad {
+      background: linear-gradient(102deg, var(--accent-bright) 6%, var(--cyan-bright));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+    .grad-word {
+      background: linear-gradient(96deg, #ffffff 8%, var(--accent-bright) 64%, var(--cyan-bright));
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+
+    /* ── Reveal animations ── */
+    .reveal { opacity: 0; transform: translateY(18px); filter: blur(6px);
+      transition: opacity 0.7s cubic-bezier(.2,.7,.2,1), transform 0.7s cubic-bezier(.2,.7,.2,1), filter 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: none; filter: blur(0); }
+    @keyframes luxIn { from { opacity: 0; transform: translateY(16px); filter: blur(7px); } to { opacity: 1; transform: none; filter: blur(0); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      #aurora::before, #aurora::after, #aurora > i { animation: none !important; }
+      .reveal { transition: none; }
+      .lux > * { animation: none !important; }
+      [data-float] { animation: none !important; }
+    }
+
+    /* ── Nav ── */
     nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(10, 10, 12, 0.85);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--line);
-      padding: 0 32px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
+      position: sticky; top: 0; z-index: 100;
+      background: linear-gradient(180deg, rgba(8,9,13,0.82), rgba(8,9,13,0.30));
+      -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding: 0 36px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
     }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      flex-shrink: 0;
-    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .nav-wordmark {
-      font-family: var(--serif);
-      font-weight: 400;
-      font-size: 16px;
-      letter-spacing: -0.01em;
-      color: var(--text);
-      line-height: 1;
-      margin-top: 1px;
+      font-family: var(--serif); font-weight: 600; font-size: 18px;
+      letter-spacing: -0.02em; line-height: 1;
     }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      list-style: none;
-    }
+    .nav-links { display: flex; align-items: center; gap: 34px; list-style: none; }
     .nav-links a {
-      font-family: var(--sans);
-      font-weight: 400;
-      font-size: 13px;
-      color: var(--text-dim);
-      transition: color 0.2s;
+      font-family: var(--mono); font-weight: 400; font-size: 12px;
+      letter-spacing: 0.02em; color: var(--text-dim); transition: color 0.2s;
     }
     .nav-links a:hover { color: var(--text); }
-
     .nav-cta {
-      font-family: var(--sans);
-      font-weight: 400;
-      font-size: 13px;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      background: transparent;
-      padding: 6px 16px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: background 0.2s;
-      flex-shrink: 0;
+      font-family: var(--sans); font-weight: 500; font-size: 13px; color: #07080b;
+      border: none; background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+      padding: 8px 20px; border-radius: 999px; cursor: pointer; flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 0 16px 1px rgba(201,167,122,0.30), 0 0 30px 6px rgba(70,224,212,0.12);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .nav-cta:hover { background: var(--accent-soft); }
-
-    /* Hero */
-    .splash {
-      position: relative;
-      min-height: calc(100vh - 56px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 100px 24px 88px;
-      text-align: center;
-      overflow: hidden;
-    }
-    .splash::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
-      width: 700px; height: 500px;
-      background: radial-gradient(ellipse at 50% 30%, rgba(201, 167, 122, 0.04) 0%, transparent 65%);
-      pointer-events: none;
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.26), 0 0 22px 4px rgba(201,167,122,0.46), 0 0 40px 10px rgba(70,224,212,0.22);
     }
 
-    .splash-inner {
-      max-width: 580px;
-      margin: 0 auto;
-      position: relative;
+    /* ── Hero ── */
+    .hero {
+      position: relative; min-height: calc(100vh - 60px);
+      display: grid; grid-template-columns: 1.05fr 0.95fr; align-items: center; gap: 56px;
+      max-width: 1180px; margin: 0 auto; padding: 60px 36px 80px;
+    }
+    .hero-aura {
+      position: absolute; right: 8%; top: 42%; transform: translateY(-50%);
+      width: min(640px, 52vw); height: min(640px, 52vw); z-index: -1; pointer-events: none;
+      background: radial-gradient(circle, rgba(70,224,212,0.07), rgba(201,167,122,0.045) 44%, transparent 70%);
+      animation: heroPulse 8s ease-in-out infinite alternate;
+    }
+    @keyframes heroPulse { from { opacity: 0.4; transform: translateY(-50%) scale(0.95); } to { opacity: 0.7; transform: translateY(-50%) scale(1.06); } }
+
+    .hero-copy { max-width: 540px; }
+    .hero-copy > * { animation: luxIn 0.8s cubic-bezier(.2,.7,.2,1) backwards; }
+    .hero-eyebrow { animation-delay: 0.02s; }
+    .hero-title { animation-delay: 0.10s; }
+    .hero-tagline { animation-delay: 0.22s; }
+    .hero-ctas { animation-delay: 0.34s; }
+    .hero-trust { animation-delay: 0.46s; }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 9px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 26px;
+      padding: 6px 14px; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.02);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    }
+    .hero-eyebrow .pip {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan); box-shadow: 0 0 10px 1px var(--cyan);
+      animation: pipPulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pipPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+    .hero-title {
+      font-family: var(--serif); font-weight: 600;
+      font-size: clamp(46px, 6.4vw, 82px); line-height: 0.98;
+      letter-spacing: -0.04em; font-variation-settings: "opsz" 96;
+      margin-bottom: 24px;
+    }
+    .hero-title em { font-style: normal; font-weight: 700; }
+
+    .hero-tagline {
+      font-size: 16px; font-weight: 300; color: var(--text-dim);
+      line-height: 1.7; max-width: 460px; margin-bottom: 36px;
     }
 
-    .splash-wordmark {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 52px;
-      line-height: 1.1;
-      letter-spacing: -0.025em;
-      font-variation-settings: "opsz" 144;
-      color: var(--text);
-      margin-bottom: 20px;
+    .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--sans); font-weight: 500; font-size: 14px;
+      padding: 13px 26px; border-radius: 999px; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
     }
-    .splash-wordmark em {
-      font-style: italic;
-      color: var(--accent);
+    .btn .arr { transition: transform 0.3s cubic-bezier(.34,1.4,.64,1); }
+    .btn:hover .arr { transform: translateX(4px); }
+    .btn-primary {
+      color: #07080b; border: none;
+      background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 0 18px 2px rgba(201,167,122,0.40), 0 0 38px 8px rgba(70,224,212,0.16);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.26), 0 0 26px 5px rgba(201,167,122,0.55), 0 0 50px 12px rgba(70,224,212,0.26);
+    }
+    .btn-ghost {
+      color: var(--text); border: 1px solid var(--line-hover); background: rgba(255,255,255,0.02);
+      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    }
+    .btn-ghost:hover { border-color: rgba(70,224,212,0.45); background: rgba(70,224,212,0.05); transform: translateY(-2px); }
+
+    .hero-trust {
+      display: flex; align-items: center; gap: 16px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--text-faint);
+    }
+    .hero-trust .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-faint); }
+
+    /* ── Hero merge visual: four sources → one synthesis ── */
+    .hero-viz {
+      position: relative; width: 100%; max-width: 460px; margin: 0 auto;
+      animation: luxIn 1s cubic-bezier(.2,.7,.2,1) 0.4s backwards;
+    }
+    .vm { display: flex; flex-direction: column; }
+    .vm-caption {
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 14px; padding: 0 2px;
+    }
+    .vm-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .vm-chip {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+      padding: 16px 14px; border-radius: 13px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.022);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      transition: border-color 0.3s, background 0.3s, transform 0.3s;
+    }
+    .hero-viz:hover .vm-chip { border-color: var(--line-hover); }
+    .vm-chip-idx { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text-faint); }
+    .vm-chip-name { font-family: var(--sans); font-weight: 500; font-size: 14px; color: var(--text-dim); letter-spacing: -0.01em; }
+
+    .vm-connect { width: 100%; height: 60px; display: block; }
+    .vm-line { stroke: rgba(255,255,255,0.13); stroke-width: 1; fill: none; }
+    .vm-line-draw {
+      stroke-dasharray: 120; stroke-dashoffset: 120;
+      animation: vmDraw 1.1s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    .vm-line-draw.l1 { animation-delay: 0.55s; }
+    .vm-line-draw.l2 { animation-delay: 0.68s; }
+    .vm-line-draw.l3 { animation-delay: 0.81s; }
+    .vm-line-draw.l4 { animation-delay: 0.94s; }
+    @keyframes vmDraw { to { stroke-dashoffset: 0; } }
+    .vm-merge-ring { stroke: rgba(201,167,122,0.5); stroke-width: 1; fill: none; }
+    .vm-merge-dot  { fill: var(--accent-bright); }
+
+    .vm-synth {
+      position: relative; overflow: hidden;
+      border: 1px solid var(--line); border-radius: 16px;
+      padding: 22px 24px 24px; background: var(--bg-glass-2);
+      -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .vm-synth::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 1.5px;
+      background: linear-gradient(90deg, transparent 8%, var(--accent) 38%, var(--cyan) 62%, transparent 92%);
+      opacity: 0.7;
+    }
+    .vm-synth-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .vm-diamond {
+      width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1px;
+      background: linear-gradient(135deg, var(--accent-bright), var(--cyan));
+    }
+    .vm-synth-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-bright); }
+    .vm-synth-text {
+      font-family: var(--serif); font-weight: 500; font-size: 21px; line-height: 1.28;
+      letter-spacing: -0.015em; color: var(--text); margin-bottom: 12px;
+    }
+    .vm-synth-sub { font-size: 13px; font-weight: 300; color: var(--text-dim); line-height: 1.6; margin-bottom: 18px; }
+    .vm-synth-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .vm-tag {
+      font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--text-dim);
+      border: 1px solid var(--line-hover); border-radius: 5px; padding: 3px 9px;
     }
 
-    .splash-tagline {
-      font-family: var(--sans);
-      font-weight: 300;
-      font-size: 14px;
-      color: var(--text-dim);
-      max-width: 420px;
-      margin: 0 auto 28px;
-      line-height: 1.65;
-    }
-
-    .splash-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
-      width: 100%;
-      max-width: 360px;
-      margin: 0 auto;
-    }
-
-    .splash-card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 18px 24px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: transparent;
-      cursor: pointer;
-      text-align: left;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-    }
-
-    .splash-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-
-    .splash-card--primary {
-      border-color: rgba(201, 167, 122, 0.3);
-      background: rgba(201, 167, 122, 0.04);
-    }
-    .splash-card--primary::before {
-      background: radial-gradient(ellipse at 20% 50%, rgba(201, 167, 122, 0.12) 0%, transparent 60%);
-    }
-    .splash-card--primary:hover {
-      border-color: rgba(201, 167, 122, 0.65);
-      background: rgba(201, 167, 122, 0.07);
-      box-shadow: 0 0 32px rgba(201, 167, 122, 0.14), inset 0 0 24px rgba(201, 167, 122, 0.04);
-    }
-    .splash-card--primary:hover::before { opacity: 1; }
-
-    .splash-card--secondary::before {
-      background: radial-gradient(ellipse at 20% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
-    }
-    .splash-card--secondary:hover {
-      border-color: rgba(255, 255, 255, 0.14);
-      background: rgba(255, 255, 255, 0.025);
-      box-shadow: 0 0 24px rgba(255, 255, 255, 0.04);
-    }
-    .splash-card--secondary:hover::before { opacity: 1; }
-
-    .card-text { display: flex; flex-direction: column; gap: 3px; }
-
-    .card-label {
-      font-family: var(--sans);
-      font-weight: 400;
-      font-size: 14px;
-      color: var(--text-dim);
-      transition: color 0.25s ease;
-    }
-    .splash-card--primary .card-label { color: var(--accent); }
-    .splash-card--primary:hover .card-label { color: var(--accent); }
-    .splash-card--secondary:hover .card-label { color: var(--text); }
-
-    .card-sub {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      transition: color 0.25s ease;
-    }
-    .splash-card--primary .card-sub { color: rgba(201, 167, 122, 0.5); }
-
-    .card-arrow {
-      font-size: 16px;
-      color: var(--text-faint);
-      line-height: 1;
-      flex-shrink: 0;
-      transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), color 0.25s ease, opacity 0.25s ease;
-      opacity: 0.5;
-    }
-    .splash-card--primary .card-arrow { color: var(--accent); opacity: 0.7; }
-    .splash-card:hover .card-arrow { opacity: 1; }
-    .splash-card--primary:hover .card-arrow { transform: translateX(5px); }
-    .splash-card--secondary:hover .card-arrow { transform: translateX(5px); }
-
-    /* About section */
-    #about {
-      border-top: 1px solid var(--line);
-    }
-
-    /* Hero-like about intro */
-    .about-intro {
-      padding: 80px 24px 64px;
-      text-align: center;
-    }
-    .about-intro-inner {
-      max-width: 560px;
-      margin: 0 auto;
-    }
-    .about-intro h2 {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 42px;
-      line-height: 1.1;
-      letter-spacing: -0.025em;
-      font-variation-settings: "opsz" 144;
-      color: var(--text);
-      margin-bottom: 18px;
-    }
-    .about-intro h2 em {
-      font-style: italic;
-      color: var(--accent);
-    }
-    .about-intro p {
-      font-family: var(--sans);
-      font-weight: 300;
-      font-size: 14px;
-      color: var(--text-dim);
-      line-height: 1.65;
-      margin-bottom: 28px;
-    }
-
-    .model-flow {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 36px;
-    }
-    .model-flow-models {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-    }
-    .model-flow-arrow {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-faint);
-      opacity: 0.5;
-    }
-    .model-flow-synthesis {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent);
-      border: 1px solid rgba(201, 167, 122, 0.5);
-      padding: 3px 10px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-    }
-
-    /* Section wrapper */
-    .section {
-      padding: 96px 24px;
-    }
-    .section-inner {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
+    /* ── Section scaffolding ── */
+    main { display: block; }
+    .section { padding: 110px 36px; max-width: 1080px; margin: 0 auto; }
+    .section-tight { max-width: 920px; }
     .eyebrow {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      margin-bottom: 14px;
+      display: inline-block; font-family: var(--mono); font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); margin-bottom: 18px;
     }
-
     .section-title {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 38px;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-      font-variation-settings: "opsz" 144;
-      color: var(--text);
-      margin-bottom: 48px;
+      font-family: var(--serif); font-weight: 600;
+      font-size: clamp(30px, 4vw, 46px); line-height: 1.08;
+      letter-spacing: -0.03em; font-variation-settings: "opsz" 72;
+      margin-bottom: 22px;
     }
-    .section-title em {
-      font-style: italic;
-      color: var(--accent);
+    .section-title em { font-style: normal; }
+    .section-lede {
+      font-size: 16px; font-weight: 300; color: var(--text-dim); line-height: 1.7;
+      max-width: 560px; margin-bottom: 52px;
     }
 
-    /* App preview */
-    .preview-section {
-      padding: 96px 24px 96px;
-    }
-    .preview-inner {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .preview-header {
-      margin-bottom: 36px;
-    }
-
-    .browser-chrome {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      overflow: hidden;
-      background: var(--bg-raised);
+    /* ── Voyance preview (glass browser) ── */
+    .browser {
+      border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+      background: var(--bg-glass-2);
+      -webkit-backdrop-filter: blur(26px) saturate(1.2); backdrop-filter: blur(26px) saturate(1.2);
+      box-shadow: 0 40px 100px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .browser-top {
-      background: rgba(255, 255, 255, 0.025);
-      border-bottom: 1px solid var(--line);
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--line);
+      padding: 12px 16px; display: flex; align-items: center; gap: 12px;
     }
-    .browser-dots {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-    .browser-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-    .dot-red    { background: #ff5f57; }
-    .dot-yellow { background: #febc2e; }
-    .dot-green  { background: #28c840; }
+    .browser-dots { display: flex; gap: 7px; flex-shrink: 0; }
+    .browser-dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-red { background: #ff5f57; } .dot-yellow { background: #febc2e; } .dot-green { background: #28c840; }
     .browser-url {
-      flex: 1;
-      max-width: 280px;
-      margin: 0 auto;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 4px 12px;
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-faint);
-      text-align: center;
-      white-space: nowrap;
-      overflow: hidden;
+      flex: 1; max-width: 300px; margin: 0 auto;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 7px;
+      padding: 5px 14px; font-family: var(--mono); font-size: 11px; color: var(--text-faint);
+      text-align: center; white-space: nowrap; overflow: hidden;
     }
-
-    .browser-tabs {
-      border-bottom: 1px solid var(--line);
-      padding: 0 16px;
-      display: flex;
-      overflow-x: auto;
-    }
+    .browser-tabs { border-bottom: 1px solid var(--line); padding: 0 16px; display: flex; overflow-x: auto; }
     .browser-tabs::-webkit-scrollbar { display: none; }
     .browser-tab {
-      font-family: var(--sans);
-      font-size: 12px;
-      font-weight: 400;
-      padding: 10px 16px;
-      color: var(--text-faint);
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: color 0.15s;
-      user-select: none;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
+      padding: 12px 16px; color: var(--text-faint); border-bottom: 2px solid transparent;
+      white-space: nowrap; cursor: pointer; flex-shrink: 0; transition: color 0.15s; user-select: none;
     }
     .browser-tab:hover:not(.active) { color: var(--text-dim); }
-    .browser-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    .browser-body {
-      padding: 28px 28px 32px;
-      transition: opacity 0.15s ease;
-    }
+    .browser-tab.active { color: var(--accent-bright); border-bottom-color: var(--accent); }
+    .browser-body { padding: 30px 30px 34px; transition: opacity 0.15s ease; }
     .browser-body.fading { opacity: 0; }
-
     .browser-q-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      margin-bottom: 8px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-faint); margin-bottom: 9px;
     }
     .browser-q-text {
-      font-family: var(--sans);
-      font-size: 15px;
-      font-weight: 400;
-      color: var(--text);
-      margin-bottom: 24px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--line);
+      font-family: var(--serif); font-weight: 500; font-size: 18px; letter-spacing: -0.01em;
+      color: var(--text); margin-bottom: 26px; padding-bottom: 26px; border-bottom: 1px solid var(--line);
     }
-    .synthesis-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 14px;
-    }
+    .synthesis-badge { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; }
     .synthesis-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      flex-shrink: 0;
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+      box-shadow: 0 0 10px 1px var(--accent); flex-shrink: 0;
     }
-    .synthesis-tag {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent);
+    .synthesis-tag, .model-tag {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
     }
-    .model-tag {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      margin-bottom: 14px;
-    }
-    .synthesis-body {
-      font-family: var(--sans);
-      font-size: 13px;
-      font-weight: 300;
-      color: var(--text-dim);
-      line-height: 1.8;
-    }
-    .synthesis-body strong {
-      color: var(--text);
-      font-weight: 400;
-    }
+    .synthesis-tag { color: var(--accent-bright); }
+    .model-tag { color: var(--text-faint); margin-bottom: 16px; }
+    .synthesis-body { font-size: 14px; font-weight: 300; color: var(--text-dim); line-height: 1.85; }
+    .synthesis-body strong { color: var(--text); font-weight: 500; }
+    .synthesis-body em { font-style: italic; color: var(--accent-bright); }
 
-    /* Mode split (Voyance vs Studio) */
+    /* ── Mode split (Voyance vs Studio) ── */
     .mode-split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      overflow: hidden;
-      background: var(--line);
-      margin-bottom: 0;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+      border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--line);
     }
     .mode-panel {
-      background: var(--bg);
-      padding: 40px 36px;
+      background: rgba(10,12,17,0.6);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      padding: 44px 38px; position: relative; overflow: hidden;
     }
+    .mode-panel::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--m, var(--cyan)), transparent);
+      opacity: 0.5;
+    }
+    .mode-panel.voyance { --m: var(--cyan); }
+    .mode-panel.studio  { --m: var(--accent); }
     .mode-badge {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent);
-      border: 1px solid rgba(201, 167, 122, 0.35);
-      border-radius: 999px;
-      padding: 3px 12px;
-      display: inline-block;
-      margin-bottom: 20px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--m); border: 1px solid color-mix(in srgb, var(--m) 35%, transparent);
+      background: color-mix(in srgb, var(--m) 10%, transparent);
+      border-radius: 999px; padding: 4px 13px; display: inline-block; margin-bottom: 22px;
     }
     .mode-title {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 26px;
-      line-height: 1.2;
-      letter-spacing: -0.015em;
-      font-variation-settings: "opsz" 72;
-      color: var(--text);
-      margin-bottom: 12px;
+      font-family: var(--serif); font-weight: 600; font-size: 28px; line-height: 1.15;
+      letter-spacing: -0.02em; color: var(--text); margin-bottom: 14px;
     }
-    .mode-title em { font-style: italic; color: var(--accent); }
-    .mode-desc {
-      font-size: 13px;
-      color: var(--text-dim);
-      line-height: 1.7;
-      margin-bottom: 20px;
-      font-weight: 300;
-    }
-    .mode-tags {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
+    .mode-title em { font-style: normal; }
+    .mode-desc { font-size: 14px; color: var(--text-dim); line-height: 1.75; margin-bottom: 24px; font-weight: 300; }
+    .mode-tags { display: flex; gap: 7px; flex-wrap: wrap; }
     .mode-tag-item {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-faint);
-      border: 1px solid var(--line-hover);
-      border-radius: 4px;
-      padding: 2px 8px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-dim);
+      border: 1px solid var(--line-hover); border-radius: 6px; padding: 3px 10px;
     }
 
-    /* Studio code mockup */
-    .studio-mock {
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 48px;
-      background: var(--bg-raised);
+    /* ── Studio three modes ── */
+    .studio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .smode {
+      position: relative; overflow: hidden; border-radius: 20px;
+      padding: 28px 26px 26px; border: 1px solid var(--line);
+      background: rgba(255,255,255,0.018);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      display: flex; flex-direction: column;
+      transition: transform 0.28s cubic-bezier(.2,.7,.2,1), border-color 0.28s, box-shadow 0.28s, background 0.28s;
     }
-    .studio-mock-header {
-      background: rgba(255,255,255,0.02);
-      border-bottom: 1px solid var(--line);
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .smode::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--m), transparent);
+      opacity: 0.5; transition: opacity 0.28s;
     }
-    .studio-cmd-chip {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      color: var(--accent);
-      background: var(--accent-soft);
-      border: 1px solid rgba(201, 167, 122, 0.3);
-      border-radius: 4px;
-      padding: 2px 8px;
+    .smode[data-mode="build"]    { --m: #46e0d4; }
+    .smode[data-mode="research"] { --m: #e7c79c; }
+    .smode[data-mode="review"]   { --m: #8b7cf6; }
+    .smode:hover {
+      transform: translateY(-5px);
+      border-color: color-mix(in srgb, var(--m) 45%, transparent);
+      background: rgba(255,255,255,0.03);
+      box-shadow: 0 20px 54px rgba(0,0,0,0.5), 0 0 38px -8px var(--m);
     }
-    .studio-mock-prompt {
-      font-family: var(--sans);
-      font-size: 12px;
-      color: var(--text-dim);
-      font-weight: 300;
+    .smode:hover::before { opacity: 1; }
+    .smode-head { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; }
+    .smode-icon {
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; color: var(--m);
+      background: color-mix(in srgb, var(--m) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--m) 30%, transparent);
+      box-shadow: 0 0 22px -7px var(--m);
     }
-    .studio-mock-body {
-      padding: 24px 28px 28px;
+    .smode-cmd {
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--m);
+      padding: 4px 9px; border-radius: 7px;
+      background: color-mix(in srgb, var(--m) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--m) 22%, transparent);
     }
-    .studio-artifact-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .smode-title {
+      font-family: var(--serif); font-size: 27px; font-weight: 600; color: var(--text);
+      letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 9px;
     }
-    .studio-artifact-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      flex-shrink: 0;
+    .smode-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 20px; min-height: 62px; }
+    .smode-list { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 22px; }
+    .smode-list li {
+      display: flex; align-items: flex-start; gap: 9px;
+      font-size: 12.5px; color: var(--text-dim); line-height: 1.4;
     }
-    .studio-code-block {
-      background: #0d0d0f;
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 8px;
-      padding: 18px 20px;
-      font-family: var(--mono);
-      font-size: 11.5px;
-      line-height: 1.65;
-      overflow: hidden;
+    .smode-list li svg { flex-shrink: 0; margin-top: 3px; color: var(--m); }
+    .smode-go {
+      margin-top: auto; display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
+      color: var(--m); opacity: 0.82; transition: gap 0.2s, opacity 0.2s;
     }
-    .ck { color: #c792ea; }
-    .ct { color: #89ddff; }
-    .cs { color: #c3e88d; }
-    .cm { color: #546e7a; }
-    .cp { color: #ffcb6b; }
-    .cn { color: var(--text-dim); }
+    .smode:hover .smode-go { opacity: 1; gap: 10px; }
 
-    /* Features grid: 2x3 */
+    /* ── Features grid ── */
     .features-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      overflow: hidden;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+      background: rgba(10,12,17,0.4);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
     }
     .feature-cell {
-      padding: 40px 36px;
-      border-right: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
+      padding: 38px 32px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+      transition: background 0.25s;
     }
-    .feature-cell:nth-child(2n)   { border-right: none; }
-    .feature-cell:nth-child(5),
-    .feature-cell:nth-child(6)    { border-bottom: none; }
-
+    .feature-cell:hover { background: rgba(255,255,255,0.018); }
+    .feature-cell:nth-child(3n) { border-right: none; }
+    .feature-cell:nth-child(n+4) { border-bottom: none; }
     .feature-num {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      color: var(--text-faint);
-      margin-bottom: 18px;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--cyan); margin-bottom: 18px;
     }
     .feature-title {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 22px;
-      line-height: 1.25;
-      letter-spacing: -0.01em;
-      font-variation-settings: "opsz" 72;
-      color: var(--text);
-      margin-bottom: 12px;
+      font-family: var(--serif); font-weight: 600; font-size: 20px; line-height: 1.25;
+      letter-spacing: -0.01em; color: var(--text); margin-bottom: 11px;
     }
-    .feature-title em {
-      font-style: italic;
-      color: var(--accent);
-    }
-    .feature-desc {
-      font-family: var(--sans);
-      font-weight: 300;
-      font-size: 13px;
-      color: var(--text-dim);
-      line-height: 1.7;
-    }
+    .feature-title em { font-style: normal; }
+    .feature-desc { font-family: var(--sans); font-weight: 300; font-size: 13px; color: var(--text-dim); line-height: 1.7; }
 
-    /* How it works */
-    .steps { border-top: 1px solid var(--line); }
+    /* ── How it works ── */
+    .track-header { display: flex; align-items: center; gap: 14px; margin: 12px 0 8px; }
+    .track-label {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--m, var(--cyan));
+    }
+    .track-line { flex: 1; height: 1px; background: color-mix(in srgb, var(--m, var(--cyan)) 22%, transparent); }
+    .steps { display: block; }
     .step {
-      display: grid;
-      grid-template-columns: 52px 1fr;
-      gap: 20px;
-      padding: 36px 0;
-      border-bottom: 1px solid var(--line);
-      align-items: start;
+      display: grid; grid-template-columns: 56px 1fr; gap: 22px; padding: 34px 0;
+      border-bottom: 1px solid var(--line); align-items: start;
     }
     .step:last-child { border-bottom: none; }
     .step-num {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      color: var(--text-faint);
-      padding-top: 5px;
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--m, var(--cyan)); padding-top: 6px;
     }
     .step-title {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 24px;
-      line-height: 1.2;
-      letter-spacing: -0.01em;
-      font-variation-settings: "opsz" 72;
-      color: var(--text);
-      margin-bottom: 10px;
+      font-family: var(--serif); font-weight: 600; font-size: 23px; line-height: 1.2;
+      letter-spacing: -0.01em; color: var(--text); margin-bottom: 9px;
     }
-    .step-title em {
-      font-style: italic;
-      color: var(--accent);
-    }
-    .step-desc {
-      font-family: var(--sans);
-      font-weight: 300;
-      font-size: 13px;
-      color: var(--text-dim);
-      line-height: 1.7;
-      max-width: 500px;
-    }
+    .step-title em { font-style: normal; }
+    .step-desc { font-family: var(--sans); font-weight: 300; font-size: 14px; color: var(--text-dim); line-height: 1.7; max-width: 560px; }
+    .track-voyance { --m: var(--cyan); }
+    .track-studio  { --m: var(--accent); }
 
-    /* Studio how-it-works sub-section */
-    .studio-steps-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 48px 0 0;
-      margin-bottom: 0;
-    }
-    .studio-steps-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-    .studio-steps-line {
-      flex: 1;
-      height: 1px;
-      background: rgba(201, 167, 122, 0.18);
-    }
-
-    /* CTA */
-    .cta-section {
-      padding: 96px 24px;
-      text-align: center;
+    /* ── CTA ── */
+    .cta {
+      position: relative; padding: 120px 36px; text-align: center; overflow: hidden;
       border-top: 1px solid var(--line);
+    }
+    .cta::before {
+      content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      width: min(720px, 90vw); height: min(720px, 90vw); pointer-events: none; z-index: -1;
+      background: radial-gradient(circle, rgba(70,224,212,0.06), rgba(201,167,122,0.04) 45%, transparent 70%);
+      animation: heroPulse 9s ease-in-out infinite alternate;
     }
     .cta-logo { margin: 0 auto 28px; display: block; }
     .cta-title {
-      font-family: var(--serif);
-      font-weight: 300;
-      font-size: 44px;
-      line-height: 1.15;
-      letter-spacing: -0.025em;
-      font-variation-settings: "opsz" 144;
-      color: var(--text);
-      margin-bottom: 16px;
+      font-family: var(--serif); font-weight: 600; font-size: clamp(34px, 5vw, 56px);
+      line-height: 1.08; letter-spacing: -0.035em; font-variation-settings: "opsz" 96; margin-bottom: 18px;
     }
-    .cta-title em {
-      font-style: italic;
-      color: var(--accent);
-    }
-    .cta-sub {
-      font-family: var(--sans);
-      font-weight: 300;
-      font-size: 13px;
-      color: var(--text-faint);
-      margin-bottom: 36px;
-    }
-    .cta-btns {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .cta-btn {
-      display: inline-block;
-      font-family: var(--sans);
-      font-weight: 400;
-      font-size: 14px;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      background: transparent;
-      padding: 10px 28px;
-      border-radius: 999px;
-      transition: background 0.2s;
-    }
-    .cta-btn:hover { background: var(--accent-soft); }
-    .cta-btn--ghost {
-      color: var(--text-dim);
-      border-color: var(--line-hover);
-    }
-    .cta-btn--ghost:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+    .cta-title em { font-style: normal; }
+    .cta-sub { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--text-faint); margin-bottom: 38px; }
+    .cta-btns { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
 
-    /* Footer */
+    /* ── Footer ── */
     footer {
-      border-top: 1px solid var(--line);
-      padding: 24px 32px;
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 24px;
+      border-top: 1px solid var(--line); padding: 30px 36px;
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px;
     }
-    .footer-built { text-align: right; }
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .footer-wordmark {
-      font-family: var(--serif);
-      font-weight: 400;
-      font-size: 14px;
-      letter-spacing: -0.01em;
-      color: var(--text-dim);
-    }
-    .footer-links {
-      display: flex;
-      gap: 32px;
-      align-items: center;
-      justify-content: center;
-    }
-    .footer-links a {
-      font-family: var(--sans);
-      font-weight: 300;
-      font-size: 12px;
-      color: var(--text-faint);
-      transition: color 0.2s;
-    }
+    .footer-logo { display: flex; align-items: center; gap: 9px; }
+    .footer-wordmark { font-family: var(--serif); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; color: var(--text-dim); }
+    .footer-links { display: flex; gap: 28px; align-items: center; justify-content: center; }
+    .footer-links a { font-family: var(--mono); font-size: 12px; color: var(--text-faint); transition: color 0.2s; }
     .footer-links a:hover { color: var(--text-dim); }
-    .footer-built {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text-faint);
-    }
-    .footer-built a {
-      color: var(--text-faint);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 1px;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .footer-built a:hover {
-      color: var(--text-dim);
-      border-color: rgba(255, 255, 255, 0.25);
-    }
+    .footer-built { font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-align: right; }
+    .footer-built a { color: var(--text-faint); border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 1px; transition: color 0.2s, border-color 0.2s; }
+    .footer-built a:hover { color: var(--text-dim); border-color: rgba(255,255,255,0.28); }
 
-    /* Mobile */
-    @media (max-width: 640px) {
-      nav { padding: 0 16px; }
-      .nav-links { display: none; }
-
-      .splash { padding: 48px 16px 64px; }
-      .splash-wordmark { font-size: 40px; }
-      .splash-cards { flex-direction: column; align-items: center; }
-      .splash-card { width: 100%; max-width: 320px; height: auto; padding: 22px 24px; flex-direction: row; align-items: center; justify-content: space-between; }
-
-      .section { padding: 64px 16px; }
-      .section-title { font-size: 28px; margin-bottom: 32px; }
-      .preview-section { padding: 64px 16px; }
-
-      .mode-split { grid-template-columns: 1fr; }
-      .mode-panel { padding: 28px 24px; }
-
+    /* ── Responsive ── */
+    @media (max-width: 920px) {
+      .hero { grid-template-columns: 1fr; gap: 48px; min-height: auto; padding: 56px 24px 72px; text-align: left; }
+      .hero-aura { right: 50%; transform: translate(50%, -50%); }
+      .hero-viz { order: 2; max-width: 440px; }
+      .studio-grid { grid-template-columns: 1fr; }
       .features-grid { grid-template-columns: 1fr; }
-      .feature-cell { border-right: none; border-bottom: 1px solid var(--line) !important; }
+      .feature-cell { border-right: none !important; border-bottom: 1px solid var(--line) !important; }
       .feature-cell:last-child { border-bottom: none !important; }
-      .feature-cell { padding: 32px 24px; }
-
-      .step { grid-template-columns: 36px 1fr; gap: 14px; padding: 28px 0; }
+    }
+    @media (max-width: 640px) {
+      nav { padding: 0 18px; }
+      .nav-links { display: none; }
+      .section { padding: 80px 22px; }
+      .mode-split { grid-template-columns: 1fr; }
+      .smode-desc { min-height: 0; }
+      .step { grid-template-columns: 40px 1fr; gap: 16px; padding: 28px 0; }
       .step-title { font-size: 20px; }
-
-      .cta-section { padding: 64px 16px; }
-      .cta-title { font-size: 32px; }
-
-      footer {
-        padding: 24px 16px;
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
+      footer { grid-template-columns: 1fr; gap: 18px; }
+      .footer-links { justify-content: flex-start; }
       .footer-built { text-align: left; }
     }
   </style>
@@ -904,19 +573,17 @@
 </head>
 <body>
 
+<!-- Animated canvas layers -->
+<div id="aurora"><i></i></div>
+<div id="grain"></div>
+
 <!-- Page-transition overlay -->
-<div id="pt-overlay" style="position:fixed;inset:0;background:#0a0a0c;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.45s cubic-bezier(0.4,0,0.2,1)"></div>
+<div id="pt-overlay" style="position:fixed;inset:0;background:#07080b;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.45s cubic-bezier(0.4,0,0.2,1)"></div>
 
 <!-- Shared logo mark symbols -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-  <symbol id="lm-sm" viewBox="0 0 28 28" fill="none">
-    <circle cx="14" cy="14" r="12.5" stroke="rgba(255,255,255,0.1)"  stroke-width="0.75"/>
-    <circle cx="14" cy="14" r="8.5"  stroke="rgba(255,255,255,0.15)" stroke-width="0.75"/>
-    <circle cx="14" cy="14" r="4.5"  stroke="rgba(255,255,255,0.2)"  stroke-width="0.75"/>
-    <circle cx="14" cy="14" r="1.8"  fill="#c9a77a"/>
-  </symbol>
   <symbol id="lm-lg" viewBox="0 0 40 40" fill="none">
-    <circle cx="20" cy="20" r="18"  stroke="rgba(255,255,255,0.1)"  stroke-width="1"/>
+    <circle cx="20" cy="20" r="18"  stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
     <circle cx="20" cy="20" r="12"  stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
     <circle cx="20" cy="20" r="6.5" stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
     <circle cx="20" cy="20" r="2.5" fill="#c9a77a"/>
@@ -926,296 +593,323 @@
 <!-- Nav -->
 <nav>
   <a href="/" class="nav-logo">
-    <img src="/assets/logo.png" alt="OpClave" width="28" height="28" style="object-fit:contain;display:block;flex-shrink:0">
+    <img src="/assets/logo.png" alt="OpClave" width="30" height="30" style="object-fit:contain;display:block;flex-shrink:0">
     <span class="nav-wordmark">OpClave</span>
   </a>
   <ul class="nav-links">
-    <li><a href="#about">About</a></li>
+    <li><a href="#voyance">Voyance</a></li>
     <li><a href="#studio">Studio</a></li>
+    <li><a href="#features">Features</a></li>
     <li><a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">GitHub</a></li>
   </ul>
   <a href="/app" class="nav-cta">Try for free</a>
 </nav>
 
+<main>
+
 <!-- Hero -->
-<section class="splash">
-  <div class="splash-inner">
-    <h1 class="splash-wordmark fade-in">Four minds. <em>One answer.</em></h1>
+<section class="hero">
+  <div class="hero-aura"></div>
 
-    <p class="splash-tagline fade-in" style="transition-delay:.1s">
-      Ask Voyance for answers synthesized from GPT, Claude, Gemini, and Grok. Or switch to Studio to build complete applications and research documents.
+  <div class="hero-copy">
+    <span class="hero-eyebrow"><span class="pip"></span>GPT · Claude · Gemini · Grok</span>
+    <h1 class="hero-title">Four minds.<br><em class="grad">One answer.</em></h1>
+    <p class="hero-tagline">
+      Ask once and get independent responses from four frontier models, synthesized into a single answer. Then open Studio to build applications, write research, and review code, all from one prompt.
     </p>
+    <div class="hero-ctas">
+      <a href="/app?mode=chat" class="btn btn-primary">Ask Voyance <span class="arr">→</span></a>
+      <a href="/app?mode=studio" class="btn btn-ghost">Open Studio <span class="arr">→</span></a>
+    </div>
+    <div class="hero-trust">
+      <span>Free to use</span><span class="dot"></span><span>No account required</span><span class="dot"></span><span>Both modes included</span>
+    </div>
+  </div>
 
-    <div class="splash-cards fade-in" style="transition-delay:.2s">
-      <a href="/app?mode=chat" class="splash-card splash-card--primary">
-        <div class="card-text">
-          <div class="card-label">Try Voyance</div>
-          <div class="card-sub">Synthesis and analysis · Free · No account required</div>
+  <!-- Hero merge visual: four sources resolve into one synthesis -->
+  <div class="hero-viz">
+    <div class="vm" role="img" aria-label="Four independent models resolved into one synthesized answer">
+      <div class="vm-caption"><span>Four independent models</span><span>n = 4</span></div>
+
+      <div class="vm-chips">
+        <div class="vm-chip"><span class="vm-chip-idx">01</span><span class="vm-chip-name">GPT</span></div>
+        <div class="vm-chip"><span class="vm-chip-idx">02</span><span class="vm-chip-name">Claude</span></div>
+        <div class="vm-chip"><span class="vm-chip-idx">03</span><span class="vm-chip-name">Gemini</span></div>
+        <div class="vm-chip"><span class="vm-chip-idx">04</span><span class="vm-chip-name">Grok</span></div>
+      </div>
+
+      <!-- four hairlines merge to a single point -->
+      <svg class="vm-connect" viewBox="0 0 460 60" preserveAspectRatio="none" aria-hidden="true">
+        <path class="vm-line vm-line-draw l1" d="M57,0 C57,34 230,22 230,52"/>
+        <path class="vm-line vm-line-draw l2" d="M173,0 C173,38 230,30 230,52"/>
+        <path class="vm-line vm-line-draw l3" d="M287,0 C287,38 230,30 230,52"/>
+        <path class="vm-line vm-line-draw l4" d="M403,0 C403,34 230,22 230,52"/>
+        <circle class="vm-merge-ring" cx="230" cy="52" r="5.5"/>
+        <circle class="vm-merge-dot"  cx="230" cy="52" r="2.4"/>
+      </svg>
+
+      <div class="vm-synth">
+        <div class="vm-synth-head"><span class="vm-diamond"></span><span class="vm-synth-label">Voyance · Synthesis</span></div>
+        <div class="vm-synth-text">One answer, reconciled from four.</div>
+        <div class="vm-synth-sub">Consensus where they agree, the conflict where they don't, and the insight no single model surfaced alone.</div>
+        <div class="vm-synth-tags">
+          <span class="vm-tag">Consensus</span>
+          <span class="vm-tag">Conflict</span>
+          <span class="vm-tag">Insight</span>
         </div>
-        <div class="card-arrow">→</div>
-      </a>
-      <a href="/app?mode=studio" class="splash-card splash-card--secondary">
-        <div class="card-text">
-          <div class="card-label">Try Studio</div>
-          <div class="card-sub">Build applications and research documents</div>
-        </div>
-        <div class="card-arrow">→</div>
-      </a>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- About -->
-<div id="about">
+<!-- Voyance preview -->
+<section class="section" id="voyance">
+  <p class="eyebrow reveal">Voyance · in action</p>
+  <h2 class="section-title reveal" style="transition-delay:.05s">See the difference <em class="grad">four voices</em> make.</h2>
+  <p class="section-lede reveal" style="transition-delay:.1s">Every model answers independently. Switch between them, then read the synthesis that reconciles all four: surfacing consensus, flagging conflict, and finding what no single model said alone.</p>
 
-  <!-- App Preview: Voyance -->
-  <section class="preview-section">
-    <div class="preview-inner">
-      <div class="preview-header fade-in">
-        <p class="eyebrow">Voyance in action</p>
-        <h2 class="section-title" style="margin-bottom:0">See the difference <em>four voices</em> make.</h2>
+  <div class="browser reveal" style="transition-delay:.15s">
+    <div class="browser-top">
+      <div class="browser-dots">
+        <div class="browser-dot dot-red"></div>
+        <div class="browser-dot dot-yellow"></div>
+        <div class="browser-dot dot-green"></div>
       </div>
+      <div class="browser-url">opclave.com/app</div>
+    </div>
+    <div class="browser-tabs" id="previewTabs">
+      <div class="browser-tab active" data-tab="synthesis">Synthesis</div>
+      <div class="browser-tab" data-tab="gpt">GPT</div>
+      <div class="browser-tab" data-tab="claude">Claude</div>
+      <div class="browser-tab" data-tab="gemini">Gemini</div>
+      <div class="browser-tab" data-tab="grok">Grok</div>
+    </div>
+    <div class="browser-body" id="previewBody">
+      <div class="browser-q-label">Question</div>
+      <div class="browser-q-text">RAG or fine-tuning: which should you use for a production LLM application?</div>
+      <div id="previewBadge">
+        <div class="synthesis-badge">
+          <div class="synthesis-dot"></div>
+          <span class="synthesis-tag">Synthesis</span>
+        </div>
+      </div>
+      <div class="synthesis-body" id="previewContent">
+        <strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.
+      </div>
+    </div>
+  </div>
+</section>
 
-      <div class="browser-chrome fade-in" style="margin-top:36px;transition-delay:.08s">
-        <div class="browser-top">
-          <div class="browser-dots">
-            <div class="browser-dot dot-red"></div>
-            <div class="browser-dot dot-yellow"></div>
-            <div class="browser-dot dot-green"></div>
-          </div>
-          <div class="browser-url">opclave.com/app</div>
+<!-- Two modes -->
+<section class="section" id="modes">
+  <p class="eyebrow reveal">Two modes</p>
+  <h2 class="section-title reveal" style="transition-delay:.05s">Ask questions. <em class="grad">Build things.</em></h2>
+  <p class="section-lede reveal" style="transition-delay:.1s">One workspace, two ways to think. Voyance is for answers. Studio is for output you can ship.</p>
+
+  <div class="mode-split reveal" style="transition-delay:.15s">
+    <div class="mode-panel voyance">
+      <span class="mode-badge">Voyance</span>
+      <div class="mode-title">Synthesized <em class="grad">answers</em></div>
+      <p class="mode-desc">Ask any question and get four independent responses from GPT, Claude, Gemini, and Grok. A fifth model reads all four and produces one unified answer, surfacing where the models agree, flagging where they diverge, and finding what no single model said on its own.</p>
+      <div class="mode-tags">
+        <span class="mode-tag-item">Q&amp;A</span>
+        <span class="mode-tag-item">Analysis</span>
+        <span class="mode-tag-item">Web search</span>
+        <span class="mode-tag-item">File upload</span>
+      </div>
+    </div>
+    <div class="mode-panel studio">
+      <span class="mode-badge">Studio</span>
+      <div class="mode-title">Complete <em class="grad">artifacts</em></div>
+      <p class="mode-desc">Give a prompt and get a finished, polished artifact. Studio coordinates the models in parallel, then synthesizes their contributions into one complete output. Every artifact is saved to your library and can be opened, exported, or followed up on at any time.</p>
+      <div class="mode-tags">
+        <span class="mode-tag-item">Build</span>
+        <span class="mode-tag-item">Research</span>
+        <span class="mode-tag-item">Review</span>
+        <span class="mode-tag-item">Artifact library</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Studio three modes -->
+<section class="section" id="studio">
+  <p class="eyebrow reveal">Studio</p>
+  <h2 class="section-title reveal" style="transition-delay:.05s">Three ways to <em class="grad">create.</em></h2>
+  <p class="section-lede reveal" style="transition-delay:.1s">Pick a mode, give a prompt, and watch the council work. Each output is a complete artifact, saved automatically and ready to follow up on.</p>
+
+  <div class="studio-grid">
+    <!-- Build -->
+    <div class="smode reveal" data-mode="build" style="transition-delay:.12s">
+      <div class="smode-head">
+        <div class="smode-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
         </div>
-        <div class="browser-tabs" id="previewTabs">
-          <div class="browser-tab active" data-tab="synthesis">Synthesis</div>
-          <div class="browser-tab" data-tab="gpt">GPT</div>
-          <div class="browser-tab" data-tab="claude">Claude</div>
-          <div class="browser-tab" data-tab="gemini">Gemini</div>
-          <div class="browser-tab" data-tab="grok">Grok</div>
+        <span class="smode-cmd">/build</span>
+      </div>
+      <div class="smode-title">Build</div>
+      <p class="smode-desc">Describe an app and get a complete, working build. Code streams into a live block you can iterate on with follow-ups.</p>
+      <ul class="smode-list">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Apps, dashboards &amp; games</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Live streaming code blocks</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Conversational follow-ups</li>
+      </ul>
+      <span class="smode-go">Open Build →</span>
+    </div>
+
+    <!-- Research -->
+    <div class="smode reveal" data-mode="research" style="transition-delay:.18s">
+      <div class="smode-head">
+        <div class="smode-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         </div>
-        <div class="browser-body" id="previewBody">
-          <div class="browser-q-label">Question</div>
-          <div class="browser-q-text">RAG or fine-tuning: which should you use for a production LLM application?</div>
-          <div id="previewBadge">
-            <div class="synthesis-badge">
-              <div class="synthesis-dot"></div>
-              <span class="synthesis-tag">Synthesis</span>
-            </div>
-          </div>
-          <div class="synthesis-body" id="previewContent">
-            <strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.
-          </div>
+        <span class="smode-cmd">/research</span>
+      </div>
+      <div class="smode-title">Research</div>
+      <p class="smode-desc">Ask anything and get a structured document, synthesized from multiple perspectives, with citations and clear sections.</p>
+      <ul class="smode-list">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Deep dives &amp; comparisons</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Peer-reviewed sources</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Export to Markdown or PDF</li>
+      </ul>
+      <span class="smode-go">Open Research →</span>
+    </div>
+
+    <!-- Review -->
+    <div class="smode reveal" data-mode="review" style="transition-delay:.24s">
+      <div class="smode-head">
+        <div class="smode-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <span class="smode-cmd">/review</span>
+      </div>
+      <div class="smode-title">Review</div>
+      <p class="smode-desc">Paste code, upload a file, or point at a GitHub repo. The council audits it for bugs, security, and quality in parallel.</p>
+      <ul class="smode-list">
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Paste, upload or GitHub</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Security &amp; bug detection</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Prioritized, actionable findings</li>
+      </ul>
+      <span class="smode-go">Open Review →</span>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="section" id="features">
+  <p class="eyebrow reveal">Features</p>
+  <h2 class="section-title reveal" style="transition-delay:.05s">Everything you need. <em class="grad">Nothing you don't.</em></h2>
+  <div class="features-grid reveal" style="transition-delay:.1s">
+    <div class="feature-cell">
+      <div class="feature-num">01</div>
+      <div class="feature-title">Four models, <em class="grad">one query</em></div>
+      <p class="feature-desc">Send your question once and get independent responses from GPT, Claude, Gemini, and Grok in parallel. No tab switching, no copy-pasting. See exactly where they agree and where they don't.</p>
+    </div>
+    <div class="feature-cell">
+      <div class="feature-num">02</div>
+      <div class="feature-title"><em class="grad">Voyance</em> synthesis</div>
+      <p class="feature-desc">A fifth model reads all four responses and produces one unified answer, surfacing where the models converge, flagging where they diverge, and finding what no single model said alone.</p>
+    </div>
+    <div class="feature-cell">
+      <div class="feature-num">03</div>
+      <div class="feature-title">Studio <em class="grad">Build</em></div>
+      <p class="feature-desc">Type a build prompt and watch code stream into a live block. The council collaborates on architecture and UX, then you iterate with conversational follow-ups, all in one place.</p>
+    </div>
+    <div class="feature-cell">
+      <div class="feature-num">04</div>
+      <div class="feature-title">Research &amp; <em class="grad">Review</em></div>
+      <p class="feature-desc">Generate structured research documents with citations, or audit code for bugs, security, and quality. Paste, upload, or connect a GitHub repository for a full multi-model review.</p>
+    </div>
+    <div class="feature-cell">
+      <div class="feature-num">05</div>
+      <div class="feature-title">File <em class="grad">attachments</em></div>
+      <p class="feature-desc">Upload a PDF, image, or document and every active model reasons over it simultaneously. Attach a research paper to Voyance, or a design mockup to Studio to inform what it builds.</p>
+    </div>
+    <div class="feature-cell">
+      <div class="feature-num">06</div>
+      <div class="feature-title">Saved <em class="grad">artifact library</em></div>
+      <p class="feature-desc">Every Studio output is saved automatically. Open any artifact, export it as Markdown or HTML, or follow up with a new prompt. Attach a saved document to your next session for full context.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="section section-tight" id="how-it-works">
+  <p class="eyebrow reveal">How it works</p>
+  <h2 class="section-title reveal" style="transition-delay:.05s">Simple by <em class="grad">design.</em></h2>
+
+  <div class="track-voyance">
+    <div class="track-header reveal"><span class="track-label">Voyance</span><div class="track-line"></div></div>
+    <div class="steps">
+      <div class="step reveal">
+        <span class="step-num">01</span>
+        <div>
+          <div class="step-title">Ask your <em class="grad">question</em></div>
+          <p class="step-desc">Type anything: a hard question, a decision you're wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <span class="step-num">02</span>
+        <div>
+          <div class="step-title"><em class="grad">Four models</em> respond</div>
+          <p class="step-desc">GPT, Claude, Gemini, and Grok answer independently and in parallel. Each perspective lives in its own tab, unfiltered and fully attributable to its source.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <span class="step-num">03</span>
+        <div>
+          <div class="step-title">One <em class="grad">synthesis</em></div>
+          <p class="step-desc">A synthesis model reads all four responses and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Two modes -->
-  <section class="section" id="modes">
-    <div class="section-inner">
-      <p class="eyebrow fade-in">Two modes</p>
-      <h2 class="section-title fade-in" style="transition-delay:.05s;margin-bottom:32px">Ask questions. <em>Build things.</em></h2>
-      <div class="mode-split fade-in" style="transition-delay:.1s">
-        <div class="mode-panel">
-          <div class="mode-badge">Voyance</div>
-          <div class="mode-title">Synthesized <em>answers</em></div>
-          <p class="mode-desc">Ask any question and get four independent responses from GPT, Claude, Gemini, and Grok. A fifth model reads all four and produces one unified answer, surfacing where the models agree, flagging where they diverge, and finding what no single model said on its own.</p>
-          <div class="mode-tags">
-            <span class="mode-tag-item">Q and A</span>
-            <span class="mode-tag-item">Analysis</span>
-            <span class="mode-tag-item">Research</span>
-            <span class="mode-tag-item">Web search</span>
-            <span class="mode-tag-item">File upload</span>
-          </div>
+  <div class="track-studio" style="margin-top:24px">
+    <div class="track-header reveal"><span class="track-label">Studio</span><div class="track-line"></div></div>
+    <div class="steps">
+      <div class="step reveal">
+        <span class="step-num">01</span>
+        <div>
+          <div class="step-title">Pick a <em class="grad">mode</em></div>
+          <p class="step-desc">Choose Build, Research, or Review and give a prompt. Be as specific or as broad as you want. Attach a saved artifact to give the models full context from your previous work.</p>
         </div>
-        <div class="mode-panel" style="border-left:1px solid rgba(255,255,255,0.06)">
-          <div class="mode-badge">Studio</div>
-          <div class="mode-title">Complete <em>artifacts</em></div>
-          <p class="mode-desc">Give a build prompt and get a finished, polished artifact. Studio coordinates GPT, Claude, and Gemini in parallel, then synthesizes their contributions into one complete output. Every artifact is saved to your library and can be opened, exported, or followed up on at any time.</p>
-          <div class="mode-tags">
-            <span class="mode-tag-item">/code</span>
-            <span class="mode-tag-item">/research</span>
-            <span class="mode-tag-item">Artifact library</span>
-            <span class="mode-tag-item">Follow-up</span>
-          </div>
+      </div>
+      <div class="step reveal">
+        <span class="step-num">02</span>
+        <div>
+          <div class="step-title">The council <em class="grad">collaborates</em></div>
+          <p class="step-desc">The models work simultaneously, each contributing different strengths: implementations for code, independent findings for research, parallel audits for review.</p>
+        </div>
+      </div>
+      <div class="step reveal">
+        <span class="step-num">03</span>
+        <div>
+          <div class="step-title">Complete <em class="grad">artifact</em></div>
+          <p class="step-desc">A synthesis model composes a single polished artifact, resolving conflicts and combining the best of each. The result is saved to your library, ready to follow up on.</p>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Studio section -->
-  <section class="section" id="studio" style="padding-top:0">
-    <div class="section-inner">
-      <p class="eyebrow fade-in">Studio</p>
-      <h2 class="section-title fade-in" style="transition-delay:.05s">Build in one <em>prompt.</em></h2>
+</main>
 
-      <!-- Studio code mockup -->
-      <div class="studio-mock fade-in" style="transition-delay:.1s">
-        <div class="studio-mock-header">
-          <span class="studio-cmd-chip">/code</span>
-          <span class="studio-mock-prompt">Build a personal finance dashboard with spending by category and monthly trend charts</span>
-        </div>
-        <div class="studio-mock-body">
-          <div class="studio-artifact-label">
-            <div class="studio-artifact-dot"></div>
-            Artifact
-          </div>
-          <div class="studio-code-block">
-<span class="cm">&lt;!-- Finance Dashboard, generated by Studio --&gt;</span><br>
-<span class="ct">&lt;!DOCTYPE</span> <span class="cp">html</span><span class="ct">&gt;</span><br>
-<span class="ct">&lt;html</span> <span class="cp">lang</span><span class="cn">=</span><span class="cs">"en"</span><span class="ct">&gt;</span><br>
-<span class="ct">&lt;head&gt;</span><br>
-&nbsp;&nbsp;<span class="ct">&lt;meta</span> <span class="cp">charset</span><span class="cn">=</span><span class="cs">"UTF-8"</span><span class="ct">&gt;</span><br>
-&nbsp;&nbsp;<span class="ct">&lt;title&gt;</span><span class="cn">Finance Dashboard</span><span class="ct">&lt;/title&gt;</span><br>
-&nbsp;&nbsp;<span class="ct">&lt;script</span> <span class="cp">src</span><span class="cn">=</span><span class="cs">"https://cdn.jsdelivr.net/npm/chart.js"</span><span class="ct">&gt;&lt;/script&gt;</span><br>
-<span class="ct">&lt;/head&gt;</span><br>
-<span class="ct">&lt;body&gt;</span><br>
-&nbsp;&nbsp;<span class="ct">&lt;div</span> <span class="cp">class</span><span class="cn">=</span><span class="cs">"dashboard"</span><span class="ct">&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;h1&gt;</span><span class="cn">Monthly Overview</span><span class="ct">&lt;/h1&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;div</span> <span class="cp">class</span><span class="cn">=</span><span class="cs">"cards"</span><span class="ct">&gt;</span><span class="cm">&lt;!-- KPI cards --&gt;</span><span class="ct">&lt;/div&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;canvas</span> <span class="cp">id</span><span class="cn">=</span><span class="cs">"spendingChart"</span><span class="ct">&gt;&lt;/canvas&gt;</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="ct">&lt;canvas</span> <span class="cp">id</span><span class="cn">=</span><span class="cs">"trendChart"</span><span class="ct">&gt;&lt;/canvas&gt;</span><br>
-&nbsp;&nbsp;<span class="ct">&lt;/div&gt;</span><br>
-<span class="ct">&lt;/body&gt;</span><br>
-<span class="ct">&lt;/html&gt;</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Studio capability cards -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px">
-        <div class="fade-in" style="border:1px solid var(--line);border-radius:10px;padding:28px 28px;transition-delay:.12s">
-          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">/code</div>
-          <div style="font-family:var(--serif);font-weight:300;font-size:20px;letter-spacing:-.01em;font-variation-settings:'opsz' 72;color:var(--text);margin-bottom:10px">Applications</div>
-          <p style="font-size:13px;color:var(--text-dim);line-height:1.7;font-weight:300">Build full HTML, CSS, and JavaScript applications in a single prompt. Dashboards, games, landing pages, data visualizers, interactive tools, and more. All four models collaborate on architecture, UX, and performance before the final artifact is synthesized.</p>
-        </div>
-        <div class="fade-in" style="border:1px solid var(--line);border-radius:10px;padding:28px 28px;transition-delay:.18s">
-          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:14px">/research</div>
-          <div style="font-family:var(--serif);font-weight:300;font-size:20px;letter-spacing:-.01em;font-variation-settings:'opsz' 72;color:var(--text);margin-bottom:10px">Documents</div>
-          <p style="font-size:13px;color:var(--text-dim);line-height:1.7;font-weight:300">Generate comprehensive research documents with structured sections, citations, and analysis. Multiple models contribute independent findings, and the synthesis model assembles them into a single cohesive report. Follow up on any saved artifact to extend, transform, or build on it.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section class="section" id="features">
-    <div class="section-inner">
-      <p class="eyebrow fade-in">Features</p>
-      <h2 class="section-title fade-in" style="transition-delay:.05s">Everything you need. <em>Nothing you don't.</em></h2>
-      <div class="features-grid">
-        <div class="feature-cell fade-in">
-          <div class="feature-num">01</div>
-          <div class="feature-title">Four models, <em>one query</em></div>
-          <p class="feature-desc">Send your question once and get independent responses from GPT, Claude, Gemini, and Grok in parallel. No tab switching. No copy-pasting. See exactly where they agree and where they don't.</p>
-        </div>
-        <div class="feature-cell fade-in" style="transition-delay:.06s">
-          <div class="feature-num">02</div>
-          <div class="feature-title"><em>Voyance</em> synthesis</div>
-          <p class="feature-desc">A fifth model reads all four responses and produces one unified answer, surfacing where the models converge, flagging where they diverge, and finding what no single model said alone.</p>
-        </div>
-        <div class="feature-cell fade-in" style="transition-delay:.08s">
-          <div class="feature-num">03</div>
-          <div class="feature-title">Studio <em>code generation</em></div>
-          <p class="feature-desc">Switch to Studio and type a build prompt. GPT, Claude, and Gemini work in parallel, each contributing different strengths, and a synthesis model composes the final complete application. Works for dashboards, games, tools, landing pages, and anything that runs in a browser.</p>
-        </div>
-        <div class="feature-cell fade-in" style="transition-delay:.12s">
-          <div class="feature-num">04</div>
-          <div class="feature-title">Research <em>documents</em></div>
-          <p class="feature-desc">Studio's research mode produces structured, multi-section documents from a single prompt. Each model contributes independent findings and the synthesizer assembles them into one cohesive artifact. Use the follow-up feature to extend any saved document or turn research into a working application.</p>
-        </div>
-        <div class="feature-cell fade-in" style="transition-delay:.14s">
-          <div class="feature-num">05</div>
-          <div class="feature-title">File <em>attachments</em></div>
-          <p class="feature-desc">Upload a PDF, image, or document and all active models reason over it simultaneously. Attach a research paper to Voyance for multi-perspective analysis, or attach a design mockup to Studio to inform how it builds your application.</p>
-        </div>
-        <div class="feature-cell fade-in" style="transition-delay:.18s">
-          <div class="feature-num">06</div>
-          <div class="feature-title">Saved <em>artifact library</em></div>
-          <p class="feature-desc">Every Studio output is automatically saved to your artifact library. Open any artifact at any time, export it as Markdown or HTML, or follow up on it with a new prompt. Attach a saved research document to your next Studio session and the models will use it as full context for what they build.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <section class="section" id="how-it-works">
-    <div class="section-inner">
-      <p class="eyebrow fade-in">How it works</p>
-      <h2 class="section-title fade-in" style="transition-delay:.05s">Simple by <em>design.</em></h2>
-
-      <!-- Voyance steps -->
-      <div class="steps">
-        <div class="step fade-in">
-          <span class="step-num">01</span>
-          <div>
-            <div class="step-title">Ask your <em>question</em></div>
-            <p class="step-desc">Type anything: a hard question, a decision you are wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p>
-          </div>
-        </div>
-        <div class="step fade-in">
-          <span class="step-num">02</span>
-          <div>
-            <div class="step-title"><em>Four models</em> respond</div>
-            <p class="step-desc">GPT, Claude, Gemini, and Grok answer independently and in parallel. You get each perspective in its own tab, unfiltered and fully attributable to its source.</p>
-          </div>
-        </div>
-        <div class="step fade-in">
-          <span class="step-num">03</span>
-          <div>
-            <div class="step-title">One <em>synthesis</em></div>
-            <p class="step-desc">A synthesis model reads all four responses and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Studio steps -->
-      <div class="studio-steps-header fade-in">
-        <span class="studio-steps-label">Studio</span>
-        <div class="studio-steps-line"></div>
-      </div>
-      <div class="steps" style="border-top:none">
-        <div class="step fade-in">
-          <span class="step-num">01</span>
-          <div>
-            <div class="step-title">Give a <em>build prompt</em></div>
-            <p class="step-desc">Use the /code command to describe an application, or /research to describe a document. Be as specific or as broad as you want. Attach a saved artifact to give the models full context from your previous work.</p>
-          </div>
-        </div>
-        <div class="step fade-in">
-          <span class="step-num">02</span>
-          <div>
-            <div class="step-title">Models <em>collaborate</em></div>
-            <p class="step-desc">GPT, Claude, and Gemini each work on the build simultaneously, contributing different strengths. For code, they each produce working implementations. For research, they each contribute independent findings.</p>
-          </div>
-        </div>
-        <div class="step fade-in">
-          <span class="step-num">03</span>
-          <div>
-            <div class="step-title">Complete <em>artifact</em></div>
-            <p class="step-desc">A synthesis model reads all three contributions and composes a single polished artifact, resolving conflicts and combining the best of each. The result is saved to your library automatically.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="cta-section">
-    <svg class="cta-logo fade-in" width="40" height="40" aria-hidden="true"><use href="#lm-lg"/></svg>
-    <h2 class="cta-title fade-in" style="transition-delay:.05s">Stop asking <em>one.</em><br>Ask all of them.</h2>
-    <p class="cta-sub fade-in" style="transition-delay:.1s">Free to use. No account required. Voyance and Studio both included.</p>
-    <div class="cta-btns fade-in" style="transition-delay:.15s">
-      <a href="/app?mode=chat" class="cta-btn">Ask Voyance</a>
-      <a href="/app?mode=studio" class="cta-btn cta-btn--ghost">Open Studio</a>
-    </div>
-  </section>
-
-</div>
+<!-- CTA -->
+<section class="cta">
+  <svg class="cta-logo reveal" width="44" height="44" aria-hidden="true"><use href="#lm-lg"/></svg>
+  <h2 class="cta-title reveal" style="transition-delay:.05s">Stop asking <em class="grad">one.</em><br>Ask all of them.</h2>
+  <p class="cta-sub reveal" style="transition-delay:.1s">Free to use · No account required · Voyance and Studio both included</p>
+  <div class="cta-btns reveal" style="transition-delay:.15s">
+    <a href="/app?mode=chat" class="btn btn-primary">Ask Voyance <span class="arr">→</span></a>
+    <a href="/app?mode=studio" class="btn btn-ghost">Open Studio <span class="arr">→</span></a>
+  </div>
+</section>
 
 <!-- Footer -->
 <footer>
   <a href="/" class="footer-logo">
-    <img src="/assets/logo.png" alt="OpClave" width="22" height="22" style="object-fit:contain;display:block;flex-shrink:0">
+    <img src="/assets/logo.png" alt="OpClave" width="24" height="24" style="object-fit:contain;display:block;flex-shrink:0">
     <span class="footer-wordmark">OpClave</span>
   </a>
   <div class="footer-links">
@@ -1228,12 +922,12 @@
 </footer>
 
 <script>
-  // Fade-in on scroll
+  // Scroll reveal
   const observer = new IntersectionObserver(
-    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
-    { threshold: 0.08, rootMargin: '0px 0px -32px 0px' }
+    entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
+    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
   );
-  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
   // Interactive preview tabs
   const tabContent = {
@@ -1242,7 +936,7 @@
       body: `<strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.`
     },
     gpt: {
-      badge: `<div class="model-tag">GPT-4o</div>`,
+      badge: `<div class="model-tag">GPT</div>`,
       body: `Start with RAG. It is faster to iterate, cheaper to maintain, and your data stays auditable. Fine-tuning makes sense when you need the model to follow a very specific output format consistently, adopt a voice or persona at scale, or when retrieval latency is a hard constraint. The failure mode I see most often: teams spend weeks fine-tuning because they want the model to "know" something, when what they actually need is better retrieval. Fine-tuned models do not know things more reliably; they just pattern-match differently. If your problem is factual accuracy or knowledge recency, fine-tuning will not fix it.`
     },
     claude: {
@@ -1268,10 +962,8 @@
     tab.addEventListener('click', () => {
       const key = tab.dataset.tab;
       if (tab.classList.contains('active')) return;
-
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-
       body.classList.add('fading');
       setTimeout(() => {
         badge.innerHTML = tabContent[key].badge;
@@ -1281,15 +973,23 @@
     });
   });
 
-  // Fade transition for /app links (handles ?mode=studio too)
+  // Studio mode cards link to /app?mode=studio
+  document.querySelectorAll('.smode').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.addEventListener('click', () => goToApp('/app?mode=studio'));
+  });
+
+  // Fade transition for /app links
+  function goToApp(dest) {
+    var overlay = document.getElementById('pt-overlay');
+    overlay.style.pointerEvents = 'all';
+    overlay.style.opacity = '1';
+    setTimeout(function() { window.location.href = dest; }, 450);
+  }
   document.querySelectorAll('a[href^="/app"]').forEach(function(link) {
     link.addEventListener('click', function(e) {
       e.preventDefault();
-      var dest = link.getAttribute('href');
-      var overlay = document.getElementById('pt-overlay');
-      overlay.style.pointerEvents = 'all';
-      overlay.style.opacity = '1';
-      setTimeout(function() { window.location.href = dest; }, 450);
+      goToApp(link.getAttribute('href'));
     });
   });
 </script>
