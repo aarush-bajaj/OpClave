@@ -1,10 +1,6 @@
 {
-  "functions": {
-    "api/index.py": { "maxDuration": 60 }
-  },
   "rewrites": [
     { "source": "/assets/(.*)", "destination": "/api/index" },
-    { "source": "/research",    "destination": "/api/index" },
     { "source": "/stream",      "destination": "/api/index" },
     { "source": "/extract-file",       "destination": "/api/index" },
     { "source": "/feedback",    "destination": "/api/index" },
