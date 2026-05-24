@@ -21,26 +21,40 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #07080b;
-      --bg-raised: #0e1016;
-      --bg-glass: rgba(11,13,18,0.64);
-      --bg-glass-2: rgba(9,11,15,0.80);
-      --line: rgba(255,255,255,0.06);
-      --line-hover: rgba(255,255,255,0.12);
-      --text: #e4e7ed;
-      --text-dim: #8e96a4;
-      --text-faint: #545b69;
-      --accent: #c9a77a;        /* gold */
+      --bg: #050608;
+      --bg-raised: #0b0d12;
+      --bg-glass: rgba(13,15,21,0.55);
+      --bg-glass-2: rgba(9,11,16,0.74);
+
+      --line: rgba(255,255,255,0.055);
+      --line-2: rgba(255,255,255,0.09);
+      --line-hover: rgba(255,255,255,0.16);
+
+      --text: #edf0f4;
+      --text-dim: #969cab;
+      --text-faint: #5b6271;
+
+      --accent: #c9a77a;
       --accent-bright: #e7c79c;
-      --accent-soft: rgba(201,167,122,0.12);
-      --cyan: #46e0d4;          /* teal */
+      --cyan: #46e0d4;
       --cyan-bright: #7af0e7;
-      --cyan-soft: rgba(70,224,212,0.12);
-      --violet: #8b7cf6;        /* review */
-      --violet-bright: #b3a8ff;
+      --violet: #8b7cf6;
+
+      --gpt: #7af0e7;
+      --claude: #e7c79c;
+      --gemini: #8b7cf6;
+      --grok: #46e0d4;
+
       --serif: 'Bricolage Grotesque', sans-serif;
       --sans: 'Hanken Grotesk', sans-serif;
       --mono: 'JetBrains Mono', monospace;
+
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+      --r-shell: 24px;
+      --r-core: 18px;
     }
 
     html { scroll-behavior: smooth; }
@@ -58,512 +72,473 @@
       text-rendering: optimizeLegibility;
       position: relative;
     }
-
     a { color: inherit; text-decoration: none; }
+    ::selection { background: rgba(201,167,122,0.22); color: #fff; }
 
-    /* ── Aurora mesh (cyan, violet, gold drift), matches app ── */
-    #aurora { position: fixed; inset: -15% -8%; z-index: 0; pointer-events: none; overflow: hidden; }
-    #aurora::before, #aurora::after, #aurora > i {
-      content: ""; position: absolute; border-radius: 50%; display: block;
-      filter: blur(105px); opacity: 0.28; mix-blend-mode: screen; will-change: transform;
-    }
-    #aurora::before {
-      width: 44vw; height: 44vw; left: -14vw; top: -22vh;
-      background: radial-gradient(circle, rgba(34,150,148,0.52), transparent 64%);
-      animation: auroraA 26s ease-in-out infinite alternate;
-    }
-    #aurora::after {
-      width: 46vw; height: 46vw; right: -18vw; top: -8vh;
-      background: radial-gradient(circle, rgba(78,66,158,0.48), transparent 64%);
-      animation: auroraB 31s ease-in-out infinite alternate;
-    }
-    #aurora > i {
-      width: 50vw; height: 50vw; left: 36%; top: 72%;
-      background: radial-gradient(circle, rgba(150,118,78,0.42), transparent 62%);
-      animation: auroraC 35s ease-in-out infinite alternate;
-    }
-    @keyframes auroraA { to { transform: translate(9vw,11vh) scale(1.18); } }
-    @keyframes auroraB { to { transform: translate(-8vw,9vh) scale(1.14); } }
-    @keyframes auroraC { to { transform: translate(-7vw,-10vh) scale(1.22); } }
-
-    /* ── Film grain overlay ── */
-    #grain {
-      position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0.035;
-      mix-blend-mode: overlay;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    }
-
-    /* All page content sits above the canvas */
     nav, main, footer { position: relative; z-index: 2; }
 
-    /* ── Gradient text utility ── */
+    /* ── Gradient text ── */
     .grad {
-      background: linear-gradient(102deg, var(--accent-bright) 6%, var(--cyan-bright));
-      -webkit-background-clip: text; background-clip: text;
-      -webkit-text-fill-color: transparent; color: transparent;
-    }
-    .grad-word {
-      background: linear-gradient(96deg, #ffffff 8%, var(--accent-bright) 64%, var(--cyan-bright));
+      background: linear-gradient(100deg, #ffffff 2%, var(--accent-bright) 52%, var(--cyan-bright));
       -webkit-background-clip: text; background-clip: text;
       -webkit-text-fill-color: transparent; color: transparent;
     }
 
-    /* ── Reveal animations ── */
-    .reveal { opacity: 0; transform: translateY(18px); filter: blur(6px);
-      transition: opacity 0.7s cubic-bezier(.2,.7,.2,1), transform 0.7s cubic-bezier(.2,.7,.2,1), filter 0.7s ease; }
+    /* ── Reveal ── */
+    .reveal {
+      opacity: 0; transform: translateY(30px) scale(0.985); filter: blur(10px);
+      transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out), filter 0.9s var(--ease-out);
+    }
     .reveal.visible { opacity: 1; transform: none; filter: blur(0); }
-    @keyframes luxIn { from { opacity: 0; transform: translateY(16px); filter: blur(7px); } to { opacity: 1; transform: none; filter: blur(0); } }
+    @keyframes luxIn { from { opacity: 0; transform: translateY(20px); filter: blur(10px); } to { opacity: 1; transform: none; filter: blur(0); } }
 
     @media (prefers-reduced-motion: reduce) {
-      #aurora::before, #aurora::after, #aurora > i { animation: none !important; }
       .reveal { transition: none; }
-      .lux > * { animation: none !important; }
-      [data-float] { animation: none !important; }
+      .hero-center > *, .hero-node { animation: none !important; }
+      .core-glow, .hero-grid-fade { animation: none !important; }
     }
 
-    /* ── Nav ── */
+    /* ── Nav: floating glass island ── */
     nav {
-      position: sticky; top: 0; z-index: 100;
-      background: linear-gradient(180deg, rgba(8,9,13,0.82), rgba(8,9,13,0.30));
-      -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-      padding: 0 36px; height: 60px;
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100;
+      width: min(1180px, calc(100% - 32px));
+      background: var(--bg-glass);
+      -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+      border: 1px solid var(--line); border-radius: 18px;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 20px 50px -22px rgba(0,0,0,0.8);
+      padding: 0 12px 0 20px; height: 58px;
       display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      animation: navDrop 0.9s var(--ease-out) 0.1s backwards;
     }
+    @keyframes navDrop { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
     .nav-logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .nav-wordmark {
-      font-family: var(--serif); font-weight: 600; font-size: 18px;
-      letter-spacing: -0.02em; line-height: 1;
-    }
-    .nav-links { display: flex; align-items: center; gap: 34px; list-style: none; }
+    .nav-wordmark { font-family: var(--serif); font-weight: 600; font-size: 18px; letter-spacing: -0.025em; line-height: 1; }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
     .nav-links a {
-      font-family: var(--mono); font-weight: 400; font-size: 12px;
-      letter-spacing: 0.02em; color: var(--text-dim); transition: color 0.2s;
+      position: relative; font-family: var(--mono); font-weight: 400; font-size: 12px;
+      letter-spacing: 0.01em; color: var(--text-dim); transition: color 0.2s var(--ease-out);
+    }
+    .nav-links a::after {
+      content: ""; position: absolute; left: 0; bottom: -5px; height: 1px; width: 0;
+      background: var(--accent); transition: width 0.28s var(--ease-out);
     }
     .nav-links a:hover { color: var(--text); }
-    .nav-cta {
-      font-family: var(--sans); font-weight: 500; font-size: 13px; color: #07080b;
-      border: none; background: linear-gradient(135deg, var(--accent-bright), var(--accent));
-      padding: 8px 20px; border-radius: 999px; cursor: pointer; flex-shrink: 0;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 0 16px 1px rgba(201,167,122,0.30), 0 0 30px 6px rgba(70,224,212,0.12);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .nav-cta:hover {
-      transform: translateY(-1px);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.26), 0 0 22px 4px rgba(201,167,122,0.46), 0 0 40px 10px rgba(70,224,212,0.22);
-    }
+    .nav-links a:hover::after { width: 100%; }
 
-    /* ── Hero ── */
-    .hero {
-      position: relative; min-height: calc(100vh - 60px);
-      display: grid; grid-template-columns: 1.05fr 0.95fr; align-items: center; gap: 56px;
-      max-width: 1180px; margin: 0 auto; padding: 60px 36px 80px;
-    }
-    .hero-aura {
-      position: absolute; right: 8%; top: 42%; transform: translateY(-50%);
-      width: min(640px, 52vw); height: min(640px, 52vw); z-index: -1; pointer-events: none;
-      background: radial-gradient(circle, rgba(70,224,212,0.07), rgba(201,167,122,0.045) 44%, transparent 70%);
-      animation: heroPulse 8s ease-in-out infinite alternate;
-    }
-    @keyframes heroPulse { from { opacity: 0.4; transform: translateY(-50%) scale(0.95); } to { opacity: 0.7; transform: translateY(-50%) scale(1.06); } }
-
-    .hero-copy { max-width: 540px; }
-    .hero-copy > * { animation: luxIn 0.8s cubic-bezier(.2,.7,.2,1) backwards; }
-    .hero-eyebrow { animation-delay: 0.02s; }
-    .hero-title { animation-delay: 0.10s; }
-    .hero-tagline { animation-delay: 0.22s; }
-    .hero-ctas { animation-delay: 0.34s; }
-    .hero-trust { animation-delay: 0.46s; }
-
-    .hero-eyebrow {
-      display: inline-flex; align-items: center; gap: 9px;
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--text-dim); margin-bottom: 26px;
-      padding: 6px 14px; border-radius: 999px;
-      border: 1px solid var(--line); background: rgba(255,255,255,0.02);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    }
-    .hero-eyebrow .pip {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--cyan); box-shadow: 0 0 10px 1px var(--cyan);
-      animation: pipPulse 2.4s ease-in-out infinite;
-    }
-    @keyframes pipPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
-
-    .hero-title {
-      font-family: var(--serif); font-weight: 600;
-      font-size: clamp(46px, 6.4vw, 82px); line-height: 0.98;
-      letter-spacing: -0.04em; font-variation-settings: "opsz" 96;
-      margin-bottom: 24px;
-    }
-    .hero-title em { font-style: normal; font-weight: 700; }
-
-    .hero-tagline {
-      font-size: 16px; font-weight: 300; color: var(--text-dim);
-      line-height: 1.7; max-width: 460px; margin-bottom: 36px;
-    }
-
-    .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 32px; }
+    /* ── Button system ── */
     .btn {
       display: inline-flex; align-items: center; gap: 10px;
       font-family: var(--sans); font-weight: 500; font-size: 14px;
-      padding: 13px 26px; border-radius: 999px; cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+      padding: 8px 8px 8px 22px; border-radius: 999px; cursor: pointer;
+      transition: transform 0.2s var(--ease-out), box-shadow 0.25s var(--ease-out),
+                  border-color 0.25s var(--ease-out), background 0.25s var(--ease-out);
     }
-    .btn .arr { transition: transform 0.3s cubic-bezier(.34,1.4,.64,1); }
-    .btn:hover .arr { transform: translateX(4px); }
+    .btn:active { transform: scale(0.975); }
+    .btn .arr {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center; font-size: 13px; line-height: 1;
+      transition: transform 0.3s var(--ease-out), background 0.25s var(--ease-out);
+    }
+    .btn:hover .arr { transform: translate(2px, -1px); }
     .btn-primary {
-      color: #07080b; border: none;
+      color: #08090c; border: none;
       background: linear-gradient(135deg, var(--accent-bright), var(--accent));
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 0 18px 2px rgba(201,167,122,0.40), 0 0 38px 8px rgba(70,224,212,0.16);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 12px 34px -10px rgba(201,167,122,0.55);
     }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.26), 0 0 26px 5px rgba(201,167,122,0.55), 0 0 50px 12px rgba(70,224,212,0.26);
-    }
+    .btn-primary .arr { background: rgba(8,9,12,0.16); }
+    .btn-primary:hover { box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 16px 42px -10px rgba(201,167,122,0.7); }
+    .btn-primary:hover .arr { background: rgba(8,9,12,0.26); }
     .btn-ghost {
-      color: var(--text); border: 1px solid var(--line-hover); background: rgba(255,255,255,0.02);
+      color: var(--text); border: 1px solid var(--line-2); background: rgba(255,255,255,0.02);
       -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     }
-    .btn-ghost:hover { border-color: rgba(70,224,212,0.45); background: rgba(70,224,212,0.05); transform: translateY(-2px); }
+    .btn-ghost .arr { background: rgba(255,255,255,0.05); }
+    .btn-ghost:hover { border-color: var(--line-hover); background: rgba(255,255,255,0.045); }
+    .btn-ghost:hover .arr { background: rgba(70,224,212,0.14); }
+    .nav-cta {
+      font-family: var(--sans); font-weight: 500; font-size: 13px; color: #08090c;
+      border: none; background: linear-gradient(135deg, var(--accent-bright), var(--accent));
+      padding: 8px 18px; border-radius: 999px; cursor: pointer; flex-shrink: 0;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset, 0 8px 22px -10px rgba(201,167,122,0.5);
+      transition: transform 0.2s var(--ease-out), box-shadow 0.25s var(--ease-out);
+    }
+    .nav-cta:hover { box-shadow: 0 1px 0 rgba(255,255,255,0.3) inset, 0 12px 28px -10px rgba(201,167,122,0.65); }
+    .nav-cta:active { transform: scale(0.97); }
 
+    /* ═══════════════════════════════════════════════════════
+       HERO — The Convergence (full-viewport kinetic showpiece)
+       ═══════════════════════════════════════════════════════ */
+    .hero {
+      position: relative; width: 100%;
+      min-height: 100vh; min-height: 100svh;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; isolation: isolate;
+      padding: 120px 24px 80px;
+    }
+    /* convergence canvas fills the hero */
+    #conv {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
+    /* faint grid floor for depth */
+    .hero-grid-fade {
+      position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 64px 64px;
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 42%, #000 30%, transparent 75%);
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 42%, #000 30%, transparent 75%);
+    }
+    /* bottom fade into page */
+    .hero::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 220px; z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(180deg, transparent, var(--bg));
+    }
+
+    /* model nodes — live chips arced across the upper hero */
+    .hero-nodes {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+      max-width: 1080px; margin: 0 auto; height: 100%;
+      pointer-events: none;
+    }
+    .hero-node {
+      position: absolute; display: inline-flex; align-items: center; gap: 8px;
+      padding: 7px 14px 7px 11px; border-radius: 999px;
+      border: 1px solid var(--line-2); background: rgba(9,11,16,0.6);
+      -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; color: var(--text-dim);
+      white-space: nowrap; pointer-events: auto;
+      animation: luxIn 0.8s var(--ease-out) backwards;
+      transition: border-color 0.3s var(--ease-out), transform 0.3s var(--ease-out), color 0.3s var(--ease-out);
+    }
+    .hero-node:hover { transform: translateY(-2px); color: var(--text); border-color: var(--line-hover); }
+    .hero-node .nlogo {
+      width: 15px; height: 15px; flex-shrink: 0; color: var(--c); display: block;
+      filter: drop-shadow(0 0 5px color-mix(in srgb, var(--c) 55%, transparent));
+      animation: ndPulse 3.4s ease-in-out infinite;
+    }
+    @keyframes ndPulse { 0%,100% { opacity: 0.78; } 50% { opacity: 1; } }
+    /* positions (desktop) */
+    .hero-node.n1 { top: 19%; left: 4%;  --c: var(--gpt);    animation-delay: 0.5s; }
+    .hero-node.n2 { top: 12%; left: 27%; --c: var(--claude); animation-delay: 0.62s; }
+    .hero-node.n3 { top: 12%; right: 27%; --c: var(--gemini); animation-delay: 0.74s; }
+    .hero-node.n4 { top: 19%; right: 4%; --c: var(--grok);   animation-delay: 0.86s; }
+    .hero-node.n2 .nlogo { animation-delay: .4s; }
+    .hero-node.n3 .nlogo { animation-delay: .8s; }
+    .hero-node.n4 .nlogo { animation-delay: 1.2s; }
+
+    /* center: the synthesis output */
+    .hero-center {
+      position: relative; z-index: 3; text-align: center;
+      max-width: 880px; margin: 0 auto;
+    }
+    .hero-center > * { animation: luxIn 0.95s var(--ease-out) backwards; }
+    .core-glow {
+      position: absolute; left: 50%; top: 38%; transform: translate(-50%,-50%);
+      width: 620px; height: 620px; z-index: -1; pointer-events: none;
+      background: radial-gradient(circle, rgba(231,199,156,0.12), rgba(70,224,212,0.06) 38%, transparent 68%);
+      animation: coreBreathe 7s var(--ease-in-out) infinite alternate;
+    }
+    @keyframes coreBreathe { from { opacity: 0.7; transform: translate(-50%,-50%) scale(0.92); } to { opacity: 1; transform: translate(-50%,-50%) scale(1.08); } }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 9px;
+      font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--text-dim); margin-bottom: 30px;
+      padding: 7px 16px; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.022);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      animation-delay: 0.2s;
+    }
+    .hero-eyebrow .pip { width: 5px; height: 5px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px 1px var(--cyan); }
+    .hero-title {
+      font-family: var(--serif); font-weight: 700;
+      font-size: clamp(54px, 9.5vw, 132px); line-height: 0.9;
+      letter-spacing: -0.05em; font-variation-settings: "opsz" 96;
+      margin-bottom: 30px; text-wrap: balance;
+    }
+    .hero-title .l1 { display: block; font-weight: 500; color: var(--text); animation-delay: 0.28s; }
+    .hero-title .l2 { display: block; animation-delay: 0.4s; }
+    .hero-tagline {
+      font-size: 17px; font-weight: 300; color: var(--text-dim);
+      line-height: 1.65; max-width: 540px; margin: 0 auto 40px; animation-delay: 0.52s;
+    }
+    .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-bottom: 34px; animation-delay: 0.62s; }
     .hero-trust {
-      display: flex; align-items: center; gap: 16px;
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--text-faint);
+      display: flex; align-items: center; gap: 16px; justify-content: center;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em; color: var(--text-faint);
+      animation-delay: 0.72s;
     }
     .hero-trust .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-faint); }
 
-    /* ── Hero merge visual: four sources → one synthesis ── */
-    .hero-viz {
-      position: relative; width: 100%; max-width: 460px; margin: 0 auto;
-      animation: luxIn 1s cubic-bezier(.2,.7,.2,1) 0.4s backwards;
+    .scroll-cue {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 3;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-faint);
+      animation: luxIn 1s var(--ease-out) 1s backwards;
     }
-    .vm { display: flex; flex-direction: column; }
-    .vm-caption {
-      display: flex; align-items: center; justify-content: space-between;
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 14px; padding: 0 2px;
+    .scroll-cue .line { width: 1px; height: 32px; background: linear-gradient(var(--text-faint), transparent); overflow: hidden; position: relative; }
+    .scroll-cue .line::after {
+      content: ""; position: absolute; top: 0; left: 0; width: 1px; height: 12px; background: var(--accent);
+      animation: scrollDrop 2.2s var(--ease-in-out) infinite;
     }
-    .vm-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .vm-chip {
-      display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
-      padding: 16px 14px; border-radius: 13px;
-      border: 1px solid var(--line); background: rgba(255,255,255,0.022);
-      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-      transition: border-color 0.3s, background 0.3s, transform 0.3s;
-    }
-    .hero-viz:hover .vm-chip { border-color: var(--line-hover); }
-    .vm-chip-idx { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--text-faint); }
-    .vm-chip-name { font-family: var(--sans); font-weight: 500; font-size: 14px; color: var(--text-dim); letter-spacing: -0.01em; }
+    @keyframes scrollDrop { 0% { transform: translateY(-14px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateY(34px); opacity: 0; } }
 
-    .vm-connect { width: 100%; height: 60px; display: block; }
-    .vm-line { stroke: rgba(255,255,255,0.13); stroke-width: 1; fill: none; }
-    .vm-line-draw {
-      stroke-dasharray: 120; stroke-dashoffset: 120;
-      animation: vmDraw 1.1s cubic-bezier(.4,0,.2,1) forwards;
-    }
-    .vm-line-draw.l1 { animation-delay: 0.55s; }
-    .vm-line-draw.l2 { animation-delay: 0.68s; }
-    .vm-line-draw.l3 { animation-delay: 0.81s; }
-    .vm-line-draw.l4 { animation-delay: 0.94s; }
-    @keyframes vmDraw { to { stroke-dashoffset: 0; } }
-    .vm-merge-ring { stroke: rgba(201,167,122,0.5); stroke-width: 1; fill: none; }
-    .vm-merge-dot  { fill: var(--accent-bright); }
-
-    .vm-synth {
-      position: relative; overflow: hidden;
-      border: 1px solid var(--line); border-radius: 16px;
-      padding: 22px 24px 24px; background: var(--bg-glass-2);
-      -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
-    }
-    .vm-synth::before {
-      content: ""; position: absolute; inset: 0 0 auto 0; height: 1.5px;
-      background: linear-gradient(90deg, transparent 8%, var(--accent) 38%, var(--cyan) 62%, transparent 92%);
-      opacity: 0.7;
-    }
-    .vm-synth-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .vm-diamond {
-      width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1px;
-      background: linear-gradient(135deg, var(--accent-bright), var(--cyan));
-    }
-    .vm-synth-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-bright); }
-    .vm-synth-text {
-      font-family: var(--serif); font-weight: 500; font-size: 21px; line-height: 1.28;
-      letter-spacing: -0.015em; color: var(--text); margin-bottom: 12px;
-    }
-    .vm-synth-sub { font-size: 13px; font-weight: 300; color: var(--text-dim); line-height: 1.6; margin-bottom: 18px; }
-    .vm-synth-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-    .vm-tag {
-      font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--text-dim);
-      border: 1px solid var(--line-hover); border-radius: 5px; padding: 3px 9px;
-    }
-
-    /* ── Section scaffolding ── */
+    /* ── Sections ── */
     main { display: block; }
-    .section { padding: 110px 36px; max-width: 1080px; margin: 0 auto; }
+    .section { padding: 130px 36px; max-width: 1080px; margin: 0 auto; }
     .section-tight { max-width: 920px; }
+    .section-head { text-align: center; max-width: 640px; margin: 0 auto 64px; }
     .eyebrow {
-      display: inline-block; font-family: var(--mono); font-size: 11px;
-      letter-spacing: 0.16em; text-transform: uppercase; color: var(--cyan); margin-bottom: 18px;
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 20px; padding: 5px 14px; border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--cyan) 22%, transparent);
+      background: color-mix(in srgb, var(--cyan) 7%, transparent);
     }
     .section-title {
       font-family: var(--serif); font-weight: 600;
-      font-size: clamp(30px, 4vw, 46px); line-height: 1.08;
-      letter-spacing: -0.03em; font-variation-settings: "opsz" 72;
-      margin-bottom: 22px;
+      font-size: clamp(34px, 4.6vw, 54px); line-height: 1.04;
+      letter-spacing: -0.04em; font-variation-settings: "opsz" 72; margin-bottom: 20px;
     }
-    .section-title em { font-style: normal; }
-    .section-lede {
-      font-size: 16px; font-weight: 300; color: var(--text-dim); line-height: 1.7;
-      max-width: 560px; margin-bottom: 52px;
+    .section-lede { font-size: 16px; font-weight: 300; color: var(--text-dim); line-height: 1.72; max-width: 56ch; }
+    .section-head .section-lede { margin: 0 auto; }
+
+    /* double-bezel */
+    .bezel {
+      padding: 7px; border-radius: var(--r-shell);
+      background: rgba(255,255,255,0.022); border: 1px solid var(--line);
+      box-shadow: 0 40px 100px -40px rgba(0,0,0,0.9);
     }
 
-    /* ── Voyance preview (glass browser) ── */
+    /* ── Voyance live demo ── */
     .browser {
-      border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+      position: relative;
+      border: 1px solid var(--line-2); border-radius: var(--r-core); overflow: hidden;
       background: var(--bg-glass-2);
       -webkit-backdrop-filter: blur(26px) saturate(1.2); backdrop-filter: blur(26px) saturate(1.2);
-      box-shadow: 0 40px 100px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
     }
-    .browser-top {
-      background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--line);
-      padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+    .browser::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; z-index: 3; opacity: 0.7;
+      background: linear-gradient(90deg, transparent, var(--accent) 35%, var(--cyan) 65%, transparent);
+      background-size: 220% 100%; animation: beamSlide 6.5s linear infinite;
     }
+    .browser-top { background: rgba(255,255,255,0.018); border-bottom: 1px solid var(--line); padding: 13px 16px; display: flex; align-items: center; gap: 12px; }
     .browser-dots { display: flex; gap: 7px; flex-shrink: 0; }
-    .browser-dot { width: 11px; height: 11px; border-radius: 50%; }
-    .dot-red { background: #ff5f57; } .dot-yellow { background: #febc2e; } .dot-green { background: #28c840; }
-    .browser-url {
-      flex: 1; max-width: 300px; margin: 0 auto;
-      background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 7px;
-      padding: 5px 14px; font-family: var(--mono); font-size: 11px; color: var(--text-faint);
-      text-align: center; white-space: nowrap; overflow: hidden;
-    }
+    .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-red { background: rgba(255,255,255,0.14); } .dot-yellow { background: rgba(255,255,255,0.10); } .dot-green { background: rgba(255,255,255,0.07); }
+    .browser-url { flex: 1; max-width: 300px; margin: 0 auto; background: rgba(255,255,255,0.025); border: 1px solid var(--line); border-radius: 8px; padding: 5px 14px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-align: center; white-space: nowrap; overflow: hidden; }
     .browser-tabs { border-bottom: 1px solid var(--line); padding: 0 16px; display: flex; overflow-x: auto; }
     .browser-tabs::-webkit-scrollbar { display: none; }
     .browser-tab {
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
-      padding: 12px 16px; color: var(--text-faint); border-bottom: 2px solid transparent;
-      white-space: nowrap; cursor: pointer; flex-shrink: 0; transition: color 0.15s; user-select: none;
+      font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em;
+      padding: 13px 16px; color: var(--text-faint); border-bottom: 1.5px solid transparent;
+      white-space: nowrap; cursor: pointer; flex-shrink: 0;
+      transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out); user-select: none;
     }
     .browser-tab:hover:not(.active) { color: var(--text-dim); }
     .browser-tab.active { color: var(--accent-bright); border-bottom-color: var(--accent); }
-    .browser-body { padding: 30px 30px 34px; transition: opacity 0.15s ease; }
+    .browser-body { padding: 32px 32px 36px; transition: opacity 0.18s var(--ease-out); }
     .browser-body.fading { opacity: 0; }
-    .browser-q-label {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--text-faint); margin-bottom: 9px;
-    }
-    .browser-q-text {
-      font-family: var(--serif); font-weight: 500; font-size: 18px; letter-spacing: -0.01em;
-      color: var(--text); margin-bottom: 26px; padding-bottom: 26px; border-bottom: 1px solid var(--line);
-    }
+    .browser-q-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 9px; }
+    .browser-q-text { font-family: var(--serif); font-weight: 500; font-size: 19px; letter-spacing: -0.02em; color: var(--text); margin-bottom: 26px; padding-bottom: 26px; border-bottom: 1px solid var(--line); }
     .synthesis-badge { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-    .synthesis-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
-      box-shadow: 0 0 10px 1px var(--accent); flex-shrink: 0;
-    }
-    .synthesis-tag, .model-tag {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-    }
+    .synthesis-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); opacity: 0.8; flex-shrink: 0; animation: dotPulse 2.2s var(--ease-in-out) infinite; }
+    @keyframes dotPulse { 0%,100% { opacity: 0.5; box-shadow: 0 0 0 0 rgba(201,167,122,0); } 50% { opacity: 1; box-shadow: 0 0 0 5px rgba(201,167,122,0.07); } }
+    .synthesis-tag, .model-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
     .synthesis-tag { color: var(--accent-bright); }
     .model-tag { color: var(--text-faint); margin-bottom: 16px; }
     .synthesis-body { font-size: 14px; font-weight: 300; color: var(--text-dim); line-height: 1.85; }
     .synthesis-body strong { color: var(--text); font-weight: 500; }
     .synthesis-body em { font-style: italic; color: var(--accent-bright); }
 
-    /* ── Mode split (Voyance vs Studio) ── */
-    .mode-split {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
-      border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--line);
-    }
+    /* ── Mode split ── */
+    .mode-split { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .mode-panel {
-      background: rgba(10,12,17,0.6);
-      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-      padding: 44px 38px; position: relative; overflow: hidden;
+      background: rgba(255,255,255,0.018); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      border: 1px solid var(--line); border-radius: 20px; padding: 40px 36px; position: relative; overflow: hidden;
+      transition: border-color 0.35s var(--ease-out), transform 0.35s var(--ease-out), background 0.35s var(--ease-out);
     }
     .mode-panel::before {
-      content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 1px; z-index: 2;
       background: linear-gradient(90deg, transparent, var(--m, var(--cyan)), transparent);
-      opacity: 0.5;
+      background-size: 220% 100%; opacity: 0.5; animation: beamSlide 5.5s linear infinite;
     }
+    .mode-panel.studio::before { animation-delay: -2.6s; }
+    .mode-panel:hover { transform: translateY(-3px); border-color: var(--line-2); background: rgba(255,255,255,0.03); }
     .mode-panel.voyance { --m: var(--cyan); }
     .mode-panel.studio  { --m: var(--accent); }
     .mode-badge {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--m); border: 1px solid color-mix(in srgb, var(--m) 35%, transparent);
-      background: color-mix(in srgb, var(--m) 10%, transparent);
+      font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--m); border: 1px solid color-mix(in srgb, var(--m) 32%, transparent);
+      background: color-mix(in srgb, var(--m) 9%, transparent);
       border-radius: 999px; padding: 4px 13px; display: inline-block; margin-bottom: 22px;
     }
-    .mode-title {
-      font-family: var(--serif); font-weight: 600; font-size: 28px; line-height: 1.15;
-      letter-spacing: -0.02em; color: var(--text); margin-bottom: 14px;
-    }
-    .mode-title em { font-style: normal; }
+    .mode-title { font-family: var(--serif); font-weight: 600; font-size: 28px; line-height: 1.12; letter-spacing: -0.025em; color: var(--text); margin-bottom: 14px; }
     .mode-desc { font-size: 14px; color: var(--text-dim); line-height: 1.75; margin-bottom: 24px; font-weight: 300; }
     .mode-tags { display: flex; gap: 7px; flex-wrap: wrap; }
-    .mode-tag-item {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-dim);
-      border: 1px solid var(--line-hover); border-radius: 6px; padding: 3px 10px;
-    }
+    .mode-tag-item { font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; color: var(--text-dim); border: 1px solid var(--line-2); border-radius: 6px; padding: 3px 10px; }
 
     /* ── Studio three modes ── */
-    .studio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .studio-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .smode {
-      position: relative; overflow: hidden; border-radius: 20px;
-      padding: 28px 26px 26px; border: 1px solid var(--line);
-      background: rgba(255,255,255,0.018);
+      position: relative; overflow: hidden; border-radius: 20px; padding: 28px 26px 26px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.016);
       -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-      display: flex; flex-direction: column;
-      transition: transform 0.28s cubic-bezier(.2,.7,.2,1), border-color 0.28s, box-shadow 0.28s, background 0.28s;
+      display: flex; flex-direction: column; cursor: pointer;
+      transition: transform 0.32s var(--ease-out), border-color 0.32s var(--ease-out), box-shadow 0.32s var(--ease-out), background 0.32s var(--ease-out);
     }
     .smode::before {
-      content: ""; position: absolute; inset: 0 0 auto 0; height: 2px;
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 1px; z-index: 2;
       background: linear-gradient(90deg, transparent, var(--m), transparent);
-      opacity: 0.5; transition: opacity 0.28s;
+      background-size: 220% 100%; opacity: 0.45; animation: beamSlide 5s linear infinite;
+      transition: opacity 0.32s var(--ease-out);
     }
-    .smode[data-mode="build"]    { --m: #46e0d4; }
+    .smode[data-mode="research"]::before { animation-delay: -1.7s; }
+    .smode[data-mode="review"]::before { animation-delay: -3.4s; }
+    .smode[data-mode="build"] { --m: #46e0d4; }
     .smode[data-mode="research"] { --m: #e7c79c; }
-    .smode[data-mode="review"]   { --m: #8b7cf6; }
-    .smode:hover {
-      transform: translateY(-5px);
-      border-color: color-mix(in srgb, var(--m) 45%, transparent);
-      background: rgba(255,255,255,0.03);
-      box-shadow: 0 20px 54px rgba(0,0,0,0.5), 0 0 38px -8px var(--m);
-    }
-    .smode:hover::before { opacity: 1; }
+    .smode[data-mode="review"] { --m: #8b7cf6; }
+    .smode:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--m) 35%, transparent); background: rgba(255,255,255,0.028); box-shadow: 0 24px 50px -24px rgba(0,0,0,0.85); }
+    .smode:hover::before { opacity: 0.9; }
+    .smode:active { transform: translateY(-2px) scale(0.992); }
     .smode-head { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; }
-    .smode-icon {
-      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center; color: var(--m);
-      background: color-mix(in srgb, var(--m) 14%, transparent);
-      border: 1px solid color-mix(in srgb, var(--m) 30%, transparent);
-      box-shadow: 0 0 22px -7px var(--m);
-    }
-    .smode-cmd {
-      font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--m);
-      padding: 4px 9px; border-radius: 7px;
-      background: color-mix(in srgb, var(--m) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--m) 22%, transparent);
-    }
-    .smode-title {
-      font-family: var(--serif); font-size: 27px; font-weight: 600; color: var(--text);
-      letter-spacing: -0.02em; line-height: 1.05; margin-bottom: 9px;
-    }
+    .smode-icon { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--m); background: color-mix(in srgb, var(--m) 10%, transparent); border: 1px solid color-mix(in srgb, var(--m) 22%, transparent); }
+    .smode-cmd { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: var(--m); padding: 4px 9px; border-radius: 7px; background: color-mix(in srgb, var(--m) 9%, transparent); border: 1px solid color-mix(in srgb, var(--m) 20%, transparent); }
+    .smode-title { font-family: var(--serif); font-size: 26px; font-weight: 600; color: var(--text); letter-spacing: -0.025em; line-height: 1.05; margin-bottom: 9px; }
     .smode-desc { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 20px; min-height: 62px; }
     .smode-list { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 22px; }
-    .smode-list li {
-      display: flex; align-items: flex-start; gap: 9px;
-      font-size: 12.5px; color: var(--text-dim); line-height: 1.4;
-    }
+    .smode-list li { display: flex; align-items: flex-start; gap: 9px; font-size: 12.5px; color: var(--text-dim); line-height: 1.4; }
     .smode-list li svg { flex-shrink: 0; margin-top: 3px; color: var(--m); }
-    .smode-go {
-      margin-top: auto; display: inline-flex; align-items: center; gap: 6px;
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
-      color: var(--m); opacity: 0.82; transition: gap 0.2s, opacity 0.2s;
-    }
+    .smode-go { margin-top: auto; display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em; color: var(--m); opacity: 0.82; transition: gap 0.25s var(--ease-out), opacity 0.25s var(--ease-out); }
     .smode:hover .smode-go { opacity: 1; gap: 10px; }
 
-    /* ── Features grid ── */
-    .features-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
-      background: rgba(10,12,17,0.4);
-      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-    }
+    /* ── Features bento ── */
+    .features-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
     .feature-cell {
-      padding: 38px 32px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
-      transition: background 0.25s;
+      position: relative; overflow: hidden;
+      grid-column: span 2; padding: 34px 30px; border: 1px solid var(--line); border-radius: 18px;
+      background: rgba(255,255,255,0.014); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      transition: border-color 0.3s var(--ease-out), background 0.3s var(--ease-out), transform 0.3s var(--ease-out);
     }
-    .feature-cell:hover { background: rgba(255,255,255,0.018); }
-    .feature-cell:nth-child(3n) { border-right: none; }
-    .feature-cell:nth-child(n+4) { border-bottom: none; }
-    .feature-num {
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--cyan); margin-bottom: 18px;
-    }
-    .feature-title {
-      font-family: var(--serif); font-weight: 600; font-size: 20px; line-height: 1.25;
-      letter-spacing: -0.01em; color: var(--text); margin-bottom: 11px;
-    }
-    .feature-title em { font-style: normal; }
+    .feature-cell:hover { background: rgba(255,255,255,0.028); border-color: var(--line-2); transform: translateY(-3px); }
+    .feature-cell.wide { grid-column: span 3; }
+    .feature-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--cyan); margin-bottom: 18px; }
+    .feature-title { font-family: var(--serif); font-weight: 600; font-size: 21px; line-height: 1.22; letter-spacing: -0.02em; color: var(--text); margin-bottom: 11px; }
     .feature-desc { font-family: var(--sans); font-weight: 300; font-size: 13px; color: var(--text-dim); line-height: 1.7; }
 
     /* ── How it works ── */
-    .track-header { display: flex; align-items: center; gap: 14px; margin: 12px 0 8px; }
-    .track-label {
-      font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--m, var(--cyan));
-    }
+    .track-header { display: flex; align-items: center; gap: 14px; margin: 12px 0 4px; }
+    .track-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--m, var(--cyan)); }
     .track-line { flex: 1; height: 1px; background: color-mix(in srgb, var(--m, var(--cyan)) 22%, transparent); }
-    .steps { display: block; }
-    .step {
-      display: grid; grid-template-columns: 56px 1fr; gap: 22px; padding: 34px 0;
-      border-bottom: 1px solid var(--line); align-items: start;
-    }
+    .step { display: grid; grid-template-columns: 56px 1fr; gap: 24px; padding: 34px 0; border-bottom: 1px solid var(--line); align-items: start; }
     .step:last-child { border-bottom: none; }
-    .step-num {
-      font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--m, var(--cyan)); padding-top: 6px;
-    }
-    .step-title {
-      font-family: var(--serif); font-weight: 600; font-size: 23px; line-height: 1.2;
-      letter-spacing: -0.01em; color: var(--text); margin-bottom: 9px;
-    }
-    .step-title em { font-style: normal; }
-    .step-desc { font-family: var(--sans); font-weight: 300; font-size: 14px; color: var(--text-dim); line-height: 1.7; max-width: 560px; }
+    .step-num { font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em; color: var(--m, var(--cyan)); padding-top: 6px; }
+    .step-title { font-family: var(--serif); font-weight: 600; font-size: 23px; line-height: 1.18; letter-spacing: -0.02em; color: var(--text); margin-bottom: 9px; }
+    .step-desc { font-family: var(--sans); font-weight: 300; font-size: 14px; color: var(--text-dim); line-height: 1.7; max-width: 60ch; }
     .track-voyance { --m: var(--cyan); }
-    .track-studio  { --m: var(--accent); }
+    .track-studio { --m: var(--accent); }
 
     /* ── CTA ── */
-    .cta {
-      position: relative; padding: 120px 36px; text-align: center; overflow: hidden;
-      border-top: 1px solid var(--line);
-    }
+    .cta { position: relative; padding: 150px 36px; text-align: center; overflow: hidden; border-top: 1px solid var(--line); }
     .cta::before {
       content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
-      width: min(720px, 90vw); height: min(720px, 90vw); pointer-events: none; z-index: -1;
+      width: min(760px, 92vw); height: min(760px, 92vw); pointer-events: none; z-index: -1;
       background: radial-gradient(circle, rgba(70,224,212,0.06), rgba(201,167,122,0.04) 45%, transparent 70%);
-      animation: heroPulse 9s ease-in-out infinite alternate;
+      animation: coreBreathe 10s var(--ease-in-out) infinite alternate;
     }
     .cta-logo { margin: 0 auto 28px; display: block; }
-    .cta-title {
-      font-family: var(--serif); font-weight: 600; font-size: clamp(34px, 5vw, 56px);
-      line-height: 1.08; letter-spacing: -0.035em; font-variation-settings: "opsz" 96; margin-bottom: 18px;
-    }
+    .cta-title { font-family: var(--serif); font-weight: 600; font-size: clamp(38px, 5.4vw, 64px); line-height: 1.04; letter-spacing: -0.045em; font-variation-settings: "opsz" 96; margin-bottom: 18px; }
     .cta-title em { font-style: normal; }
-    .cta-sub { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--text-faint); margin-bottom: 38px; }
+    .cta-sub { font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em; color: var(--text-faint); margin-bottom: 40px; }
     .cta-btns { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
 
     /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--line); padding: 30px 36px;
-      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px;
-    }
+    footer { border-top: 1px solid var(--line); padding: 36px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 24px; max-width: 1180px; margin: 0 auto; }
     .footer-logo { display: flex; align-items: center; gap: 9px; }
-    .footer-wordmark { font-family: var(--serif); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; color: var(--text-dim); }
+    .footer-wordmark { font-family: var(--serif); font-weight: 600; font-size: 15px; letter-spacing: -0.02em; color: var(--text-dim); }
     .footer-links { display: flex; gap: 28px; align-items: center; justify-content: center; }
-    .footer-links a { font-family: var(--mono); font-size: 12px; color: var(--text-faint); transition: color 0.2s; }
+    .footer-links a { font-family: var(--mono); font-size: 12px; color: var(--text-faint); transition: color 0.2s var(--ease-out); }
     .footer-links a:hover { color: var(--text-dim); }
     .footer-built { font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-align: right; }
-    .footer-built a { color: var(--text-faint); border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 1px; transition: color 0.2s, border-color 0.2s; }
+    .footer-built a { color: var(--text-faint); border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 1px; transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out); }
     .footer-built a:hover { color: var(--text-dim); border-color: rgba(255,255,255,0.28); }
+
+    /* ═══════ Ambient energy + kinetic widgets ═══════ */
+    .ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .ambient > span { position: absolute; border-radius: 50%; filter: blur(150px); will-change: transform; }
+    .ambient .a1 { width: 52vw; height: 52vw; left: -12vw; top: 22%;  background: radial-gradient(circle, rgba(70,224,212,0.05), transparent 64%);  animation: drift1 38s var(--ease-in-out) infinite alternate; }
+    .ambient .a2 { width: 56vw; height: 56vw; right: -16vw; top: 50%; background: radial-gradient(circle, rgba(201,167,122,0.05), transparent 64%); animation: drift2 46s var(--ease-in-out) infinite alternate; }
+    .ambient .a3 { width: 46vw; height: 46vw; left: 28%; top: 82%;    background: radial-gradient(circle, rgba(139,124,246,0.045), transparent 64%); animation: drift3 54s var(--ease-in-out) infinite alternate; }
+    @keyframes drift1 { to { transform: translate(8vw, -6vh); } }
+    @keyframes drift2 { to { transform: translate(-7vw, -8vh); } }
+    @keyframes drift3 { to { transform: translate(-6vw, -10vh); } }
+
+    /* traveling light beam — echoes the hero convergence streams */
+    @keyframes beamSlide { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+    /* cursor-tracked spotlight on cards */
+    .smode::after, .mode-panel::after, .feature-cell::after {
+      content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+      opacity: 0; transition: opacity 0.45s var(--ease-out);
+      background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--m, var(--cyan)) 13%, transparent), transparent 62%);
+    }
+    .smode:hover::after, .mode-panel:hover::after, .feature-cell:hover::after { opacity: 1; }
+    .smode > *, .mode-panel > *, .feature-cell > * { position: relative; z-index: 1; }
+
+    /* feature cells: top beam on hover */
+    .feature-cell::before {
+      content: ""; position: absolute; inset: 0 0 auto 0; height: 1px; z-index: 2; opacity: 0;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      background-size: 220% 100%; animation: beamSlide 5s linear infinite;
+      transition: opacity 0.4s var(--ease-out);
+    }
+    .feature-cell:hover::before { opacity: 0.7; }
+
+    /* timeline: a light current flowing down the process */
+    .track-header { padding-left: 28px; }
+    .steps { position: relative; padding-left: 28px; }
+    .steps::before {
+      content: ""; position: absolute; left: 9px; top: 40px; bottom: 40px; width: 1px; opacity: 0.6;
+      background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--m, var(--cyan)) 38%, transparent) 14%, color-mix(in srgb, var(--m, var(--cyan)) 38%, transparent) 86%, transparent);
+    }
+    .steps::after {
+      content: ""; position: absolute; left: 7px; top: 4%; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--m, var(--cyan)); box-shadow: 0 0 9px 1px var(--m, var(--cyan));
+      animation: beamDrop 4.4s var(--ease-in-out) infinite;
+    }
+    @keyframes beamDrop { 0% { top: 4%; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: 96%; opacity: 0; } }
+
+    /* respect reduced motion for all ambient/continuous motion */
+    @media (prefers-reduced-motion: reduce) {
+      .ambient > span, .steps::after, .smode::before, .mode-panel::before,
+      .feature-cell::before, .browser::before, .synthesis-dot { animation: none !important; }
+    }
 
     /* ── Responsive ── */
     @media (max-width: 920px) {
-      .hero { grid-template-columns: 1fr; gap: 48px; min-height: auto; padding: 56px 24px 72px; text-align: left; }
-      .hero-aura { right: 50%; transform: translate(50%, -50%); }
-      .hero-viz { order: 2; max-width: 440px; }
+      .mode-split { grid-template-columns: 1fr; }
       .studio-grid { grid-template-columns: 1fr; }
       .features-grid { grid-template-columns: 1fr; }
-      .feature-cell { border-right: none !important; border-bottom: 1px solid var(--line) !important; }
-      .feature-cell:last-child { border-bottom: none !important; }
+      .feature-cell, .feature-cell.wide { grid-column: span 1; }
+    }
+    @media (max-width: 720px) {
+      .hero-node.n1 { top: 13%; left: 2%; } .hero-node.n2 { top: 7%; left: auto; right: 2%; }
+      .hero-node.n3 { top: 20%; left: 2%; right: auto; } .hero-node.n4 { top: 14%; right: 2%; }
+      .hero-title { font-size: clamp(46px, 14vw, 76px); }
     }
     @media (max-width: 640px) {
-      nav { padding: 0 18px; }
+      nav { padding: 0 10px 0 16px; height: 54px; }
       .nav-links { display: none; }
-      .section { padding: 80px 22px; }
-      .mode-split { grid-template-columns: 1fr; }
-      .smode-desc { min-height: 0; }
+      .section { padding: 90px 22px; }
+      .section-head { margin-bottom: 48px; }
       .step { grid-template-columns: 40px 1fr; gap: 16px; padding: 28px 0; }
       .step-title { font-size: 20px; }
+      .smode-desc { min-height: 0; }
+      .hero-nodes { display: none; }
       footer { grid-template-columns: 1fr; gap: 18px; }
       .footer-links { justify-content: flex-start; }
       .footer-built { text-align: left; }
@@ -573,14 +548,12 @@
 </head>
 <body>
 
-<!-- Animated canvas layers -->
-<div id="aurora"><i></i></div>
-<div id="grain"></div>
-
 <!-- Page-transition overlay -->
-<div id="pt-overlay" style="position:fixed;inset:0;background:#07080b;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.45s cubic-bezier(0.4,0,0.2,1)"></div>
+<div id="pt-overlay" style="position:fixed;inset:0;background:#050608;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.45s cubic-bezier(0.32,0.72,0,1)"></div>
 
-<!-- Shared logo mark symbols -->
+<!-- Ambient energy: drifting glows behind the whole page -->
+<div class="ambient" aria-hidden="true"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
   <symbol id="lm-lg" viewBox="0 0 40 40" fill="none">
     <circle cx="20" cy="20" r="18"  stroke="rgba(255,255,255,0.10)" stroke-width="1"/>
@@ -593,7 +566,7 @@
 <!-- Nav -->
 <nav>
   <a href="/" class="nav-logo">
-    <img src="/assets/logo.png" alt="OpClave" width="30" height="30" style="object-fit:contain;display:block;flex-shrink:0">
+    <img src="/assets/logo.png" alt="OpClave" width="28" height="28" style="object-fit:contain;display:block;flex-shrink:0">
     <span class="nav-wordmark">OpClave</span>
   </a>
   <ul class="nav-links">
@@ -605,17 +578,24 @@
   <a href="/app" class="nav-cta">Try for free</a>
 </nav>
 
-<main>
-
-<!-- Hero -->
+<!-- ════════ HERO: The Convergence ════════ -->
 <section class="hero">
-  <div class="hero-aura"></div>
+  <canvas id="conv" aria-hidden="true"></canvas>
+  <div class="hero-grid-fade" aria-hidden="true"></div>
 
-  <div class="hero-copy">
-    <span class="hero-eyebrow"><span class="pip"></span>GPT · Claude · Gemini · Grok</span>
-    <h1 class="hero-title">Four minds.<br><em class="grad">One answer.</em></h1>
+  <!-- live model nodes -->
+  <div class="hero-nodes" aria-hidden="true">
+    <span class="hero-node n1"><svg class="nlogo" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>GPT</span>
+    <span class="hero-node n2"><svg class="nlogo" viewBox="0 0 24 24" fill="currentColor"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>Claude</span>
+    <span class="hero-node n3"><svg class="nlogo" viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>Gemini</span>
+    <span class="hero-node n4"><svg class="nlogo" viewBox="0 0 24 24" fill="currentColor"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>Grok</span>
+  </div>
+
+  <div class="hero-center">
+    <div class="core-glow" aria-hidden="true"></div>
+    <h1 class="hero-title"><span class="l1">Four minds.</span><span class="l2 grad">One answer.</span></h1>
     <p class="hero-tagline">
-      Ask once and get independent responses from four frontier models, synthesized into a single answer. Then open Studio to build applications, write research, and review code, all from one prompt.
+      Ask once and get independent responses from GPT, Claude, Gemini, and Grok, reconciled into a single synthesized answer. Then open Studio to build, research, and review.
     </p>
     <div class="hero-ctas">
       <a href="/app?mode=chat" class="btn btn-primary">Ask Voyance <span class="arr">→</span></a>
@@ -626,75 +606,41 @@
     </div>
   </div>
 
-  <!-- Hero merge visual: four sources resolve into one synthesis -->
-  <div class="hero-viz">
-    <div class="vm" role="img" aria-label="Four independent models resolved into one synthesized answer">
-      <div class="vm-caption"><span>Four independent models</span><span>n = 4</span></div>
-
-      <div class="vm-chips">
-        <div class="vm-chip"><span class="vm-chip-idx">01</span><span class="vm-chip-name">GPT</span></div>
-        <div class="vm-chip"><span class="vm-chip-idx">02</span><span class="vm-chip-name">Claude</span></div>
-        <div class="vm-chip"><span class="vm-chip-idx">03</span><span class="vm-chip-name">Gemini</span></div>
-        <div class="vm-chip"><span class="vm-chip-idx">04</span><span class="vm-chip-name">Grok</span></div>
-      </div>
-
-      <!-- four hairlines merge to a single point -->
-      <svg class="vm-connect" viewBox="0 0 460 60" preserveAspectRatio="none" aria-hidden="true">
-        <path class="vm-line vm-line-draw l1" d="M57,0 C57,34 230,22 230,52"/>
-        <path class="vm-line vm-line-draw l2" d="M173,0 C173,38 230,30 230,52"/>
-        <path class="vm-line vm-line-draw l3" d="M287,0 C287,38 230,30 230,52"/>
-        <path class="vm-line vm-line-draw l4" d="M403,0 C403,34 230,22 230,52"/>
-        <circle class="vm-merge-ring" cx="230" cy="52" r="5.5"/>
-        <circle class="vm-merge-dot"  cx="230" cy="52" r="2.4"/>
-      </svg>
-
-      <div class="vm-synth">
-        <div class="vm-synth-head"><span class="vm-diamond"></span><span class="vm-synth-label">Voyance · Synthesis</span></div>
-        <div class="vm-synth-text">One answer, reconciled from four.</div>
-        <div class="vm-synth-sub">Consensus where they agree, the conflict where they don't, and the insight no single model surfaced alone.</div>
-        <div class="vm-synth-tags">
-          <span class="vm-tag">Consensus</span>
-          <span class="vm-tag">Conflict</span>
-          <span class="vm-tag">Insight</span>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div class="scroll-cue" aria-hidden="true"><span>Scroll</span><span class="line"></span></div>
 </section>
+
+<main>
 
 <!-- Voyance preview -->
 <section class="section" id="voyance">
-  <p class="eyebrow reveal">Voyance · in action</p>
-  <h2 class="section-title reveal" style="transition-delay:.05s">See the difference <em class="grad">four voices</em> make.</h2>
-  <p class="section-lede reveal" style="transition-delay:.1s">Every model answers independently. Switch between them, then read the synthesis that reconciles all four: surfacing consensus, flagging conflict, and finding what no single model said alone.</p>
+  <div class="section-head">
+    <p class="eyebrow reveal">Voyance · in action</p>
+    <h2 class="section-title reveal" style="transition-delay:.05s">See the difference four voices make.</h2>
+    <p class="section-lede reveal" style="transition-delay:.1s">Every model answers independently. Switch between them, then read the synthesis that reconciles all four: surfacing consensus, flagging conflict, and finding what no single model said alone.</p>
+  </div>
 
-  <div class="browser reveal" style="transition-delay:.15s">
-    <div class="browser-top">
-      <div class="browser-dots">
-        <div class="browser-dot dot-red"></div>
-        <div class="browser-dot dot-yellow"></div>
-        <div class="browser-dot dot-green"></div>
+  <div class="bezel reveal" style="transition-delay:.15s">
+    <div class="browser">
+      <div class="browser-top">
+        <div class="browser-dots"><div class="browser-dot dot-red"></div><div class="browser-dot dot-yellow"></div><div class="browser-dot dot-green"></div></div>
+        <div class="browser-url">opclave.com/app</div>
       </div>
-      <div class="browser-url">opclave.com/app</div>
-    </div>
-    <div class="browser-tabs" id="previewTabs">
-      <div class="browser-tab active" data-tab="synthesis">Synthesis</div>
-      <div class="browser-tab" data-tab="gpt">GPT</div>
-      <div class="browser-tab" data-tab="claude">Claude</div>
-      <div class="browser-tab" data-tab="gemini">Gemini</div>
-      <div class="browser-tab" data-tab="grok">Grok</div>
-    </div>
-    <div class="browser-body" id="previewBody">
-      <div class="browser-q-label">Question</div>
-      <div class="browser-q-text">RAG or fine-tuning: which should you use for a production LLM application?</div>
-      <div id="previewBadge">
-        <div class="synthesis-badge">
-          <div class="synthesis-dot"></div>
-          <span class="synthesis-tag">Synthesis</span>
+      <div class="browser-tabs" id="previewTabs">
+        <div class="browser-tab active" data-tab="synthesis">Synthesis</div>
+        <div class="browser-tab" data-tab="gpt">GPT</div>
+        <div class="browser-tab" data-tab="claude">Claude</div>
+        <div class="browser-tab" data-tab="gemini">Gemini</div>
+        <div class="browser-tab" data-tab="grok">Grok</div>
+      </div>
+      <div class="browser-body" id="previewBody">
+        <div class="browser-q-label">Question</div>
+        <div class="browser-q-text">RAG or fine-tuning: which should you use for a production LLM application?</div>
+        <div id="previewBadge">
+          <div class="synthesis-badge"><div class="synthesis-dot"></div><span class="synthesis-tag">Synthesis</span></div>
         </div>
-      </div>
-      <div class="synthesis-body" id="previewContent">
-        <strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.
+        <div class="synthesis-body" id="previewContent">
+          <strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.
+        </div>
       </div>
     </div>
   </div>
@@ -702,93 +648,78 @@
 
 <!-- Two modes -->
 <section class="section" id="modes">
-  <p class="eyebrow reveal">Two modes</p>
-  <h2 class="section-title reveal" style="transition-delay:.05s">Ask questions. <em class="grad">Build things.</em></h2>
-  <p class="section-lede reveal" style="transition-delay:.1s">One workspace, two ways to think. Voyance is for answers. Studio is for output you can ship.</p>
+  <div class="section-head">
+    <p class="eyebrow reveal">Two modes</p>
+    <h2 class="section-title reveal" style="transition-delay:.05s">Ask questions. Build things.</h2>
+    <p class="section-lede reveal" style="transition-delay:.1s">One workspace, two ways to think. Voyance is for answers. Studio is for output you can ship.</p>
+  </div>
 
-  <div class="mode-split reveal" style="transition-delay:.15s">
-    <div class="mode-panel voyance">
+  <div class="mode-split">
+    <div class="mode-panel voyance reveal" style="transition-delay:.12s">
       <span class="mode-badge">Voyance</span>
-      <div class="mode-title">Synthesized <em class="grad">answers</em></div>
+      <div class="mode-title">Synthesized answers</div>
       <p class="mode-desc">Ask any question and get four independent responses from GPT, Claude, Gemini, and Grok. A fifth model reads all four and produces one unified answer, surfacing where the models agree, flagging where they diverge, and finding what no single model said on its own.</p>
-      <div class="mode-tags">
-        <span class="mode-tag-item">Q&amp;A</span>
-        <span class="mode-tag-item">Analysis</span>
-        <span class="mode-tag-item">Web search</span>
-        <span class="mode-tag-item">File upload</span>
-      </div>
+      <div class="mode-tags"><span class="mode-tag-item">Q&amp;A</span><span class="mode-tag-item">Analysis</span><span class="mode-tag-item">Web search</span><span class="mode-tag-item">File upload</span></div>
     </div>
-    <div class="mode-panel studio">
+    <div class="mode-panel studio reveal" style="transition-delay:.18s">
       <span class="mode-badge">Studio</span>
-      <div class="mode-title">Complete <em class="grad">artifacts</em></div>
+      <div class="mode-title">Complete artifacts</div>
       <p class="mode-desc">Give a prompt and get a finished, polished artifact. Studio coordinates the models in parallel, then synthesizes their contributions into one complete output. Every artifact is saved to your library and can be opened, exported, or followed up on at any time.</p>
-      <div class="mode-tags">
-        <span class="mode-tag-item">Build</span>
-        <span class="mode-tag-item">Research</span>
-        <span class="mode-tag-item">Review</span>
-        <span class="mode-tag-item">Artifact library</span>
-      </div>
+      <div class="mode-tags"><span class="mode-tag-item">Build</span><span class="mode-tag-item">Research</span><span class="mode-tag-item">Review</span><span class="mode-tag-item">Artifact library</span></div>
     </div>
   </div>
 </section>
 
 <!-- Studio three modes -->
 <section class="section" id="studio">
-  <p class="eyebrow reveal">Studio</p>
-  <h2 class="section-title reveal" style="transition-delay:.05s">Three ways to <em class="grad">create.</em></h2>
-  <p class="section-lede reveal" style="transition-delay:.1s">Pick a mode, give a prompt, and watch the council work. Each output is a complete artifact, saved automatically and ready to follow up on.</p>
+  <div class="section-head">
+    <p class="eyebrow reveal">Studio</p>
+    <h2 class="section-title reveal" style="transition-delay:.05s">Three ways to create.</h2>
+    <p class="section-lede reveal" style="transition-delay:.1s">Pick a mode, give a prompt, and watch the council work. Each output is a complete artifact, saved automatically and ready to follow up on.</p>
+  </div>
 
   <div class="studio-grid">
-    <!-- Build -->
     <div class="smode reveal" data-mode="build" style="transition-delay:.12s">
       <div class="smode-head">
-        <div class="smode-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        </div>
+        <div class="smode-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
         <span class="smode-cmd">/build</span>
       </div>
       <div class="smode-title">Build</div>
       <p class="smode-desc">Describe an app and get a complete, working build. Code streams into a live block you can iterate on with follow-ups.</p>
       <ul class="smode-list">
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Apps, dashboards &amp; games</li>
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Live streaming code blocks</li>
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Conversational follow-ups</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Apps, dashboards &amp; games</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Live streaming code blocks</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Conversational follow-ups</li>
       </ul>
       <span class="smode-go">Open Build →</span>
     </div>
 
-    <!-- Research -->
     <div class="smode reveal" data-mode="research" style="transition-delay:.18s">
       <div class="smode-head">
-        <div class="smode-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        </div>
+        <div class="smode-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
         <span class="smode-cmd">/research</span>
       </div>
       <div class="smode-title">Research</div>
       <p class="smode-desc">Ask anything and get a structured document, synthesized from multiple perspectives, with citations and clear sections.</p>
       <ul class="smode-list">
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Deep dives &amp; comparisons</li>
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Peer-reviewed sources</li>
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Export to Markdown or PDF</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Deep dives &amp; comparisons</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Peer-reviewed sources</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Export to Markdown or PDF</li>
       </ul>
       <span class="smode-go">Open Research →</span>
     </div>
 
-    <!-- Review -->
     <div class="smode reveal" data-mode="review" style="transition-delay:.24s">
       <div class="smode-head">
-        <div class="smode-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        </div>
+        <div class="smode-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
         <span class="smode-cmd">/review</span>
       </div>
       <div class="smode-title">Review</div>
       <p class="smode-desc">Paste code, upload a file, or point at a GitHub repo. The council audits it for bugs, security, and quality in parallel.</p>
       <ul class="smode-list">
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Paste, upload or GitHub</li>
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Security &amp; bug detection</li>
-        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Prioritized, actionable findings</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Paste, upload or GitHub</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Security &amp; bug detection</li>
+        <li><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Prioritized, actionable findings</li>
       </ul>
       <span class="smode-go">Open Review →</span>
     </div>
@@ -797,37 +728,39 @@
 
 <!-- Features -->
 <section class="section" id="features">
-  <p class="eyebrow reveal">Features</p>
-  <h2 class="section-title reveal" style="transition-delay:.05s">Everything you need. <em class="grad">Nothing you don't.</em></h2>
-  <div class="features-grid reveal" style="transition-delay:.1s">
-    <div class="feature-cell">
+  <div class="section-head">
+    <p class="eyebrow reveal">Features</p>
+    <h2 class="section-title reveal" style="transition-delay:.05s">Everything you need. Nothing you don't.</h2>
+  </div>
+  <div class="features-grid">
+    <div class="feature-cell wide reveal" style="transition-delay:.08s">
       <div class="feature-num">01</div>
-      <div class="feature-title">Four models, <em class="grad">one query</em></div>
+      <div class="feature-title">Four models, one query</div>
       <p class="feature-desc">Send your question once and get independent responses from GPT, Claude, Gemini, and Grok in parallel. No tab switching, no copy-pasting. See exactly where they agree and where they don't.</p>
     </div>
-    <div class="feature-cell">
+    <div class="feature-cell wide reveal" style="transition-delay:.12s">
       <div class="feature-num">02</div>
-      <div class="feature-title"><em class="grad">Voyance</em> synthesis</div>
+      <div class="feature-title">Voyance synthesis</div>
       <p class="feature-desc">A fifth model reads all four responses and produces one unified answer, surfacing where the models converge, flagging where they diverge, and finding what no single model said alone.</p>
     </div>
-    <div class="feature-cell">
+    <div class="feature-cell reveal" style="transition-delay:.14s">
       <div class="feature-num">03</div>
-      <div class="feature-title">Studio <em class="grad">Build</em></div>
-      <p class="feature-desc">Type a build prompt and watch code stream into a live block. The council collaborates on architecture and UX, then you iterate with conversational follow-ups, all in one place.</p>
+      <div class="feature-title">Studio Build</div>
+      <p class="feature-desc">Type a build prompt and watch code stream into a live block. The council collaborates on architecture and UX, then you iterate with conversational follow-ups.</p>
     </div>
-    <div class="feature-cell">
+    <div class="feature-cell reveal" style="transition-delay:.16s">
       <div class="feature-num">04</div>
-      <div class="feature-title">Research &amp; <em class="grad">Review</em></div>
+      <div class="feature-title">Research &amp; Review</div>
       <p class="feature-desc">Generate structured research documents with citations, or audit code for bugs, security, and quality. Paste, upload, or connect a GitHub repository for a full multi-model review.</p>
     </div>
-    <div class="feature-cell">
+    <div class="feature-cell reveal" style="transition-delay:.18s">
       <div class="feature-num">05</div>
-      <div class="feature-title">File <em class="grad">attachments</em></div>
-      <p class="feature-desc">Upload a PDF, image, or document and every active model reasons over it simultaneously. Attach a research paper to Voyance, or a design mockup to Studio to inform what it builds.</p>
+      <div class="feature-title">File attachments</div>
+      <p class="feature-desc">Upload a PDF, image, or document and every active model reasons over it simultaneously. Attach a research paper to Voyance, or a design mockup to Studio.</p>
     </div>
-    <div class="feature-cell">
+    <div class="feature-cell wide reveal" style="transition-delay:.2s">
       <div class="feature-num">06</div>
-      <div class="feature-title">Saved <em class="grad">artifact library</em></div>
+      <div class="feature-title">Saved artifact library</div>
       <p class="feature-desc">Every Studio output is saved automatically. Open any artifact, export it as Markdown or HTML, or follow up with a new prompt. Attach a saved document to your next session for full context.</p>
     </div>
   </div>
@@ -835,60 +768,26 @@
 
 <!-- How it works -->
 <section class="section section-tight" id="how-it-works">
-  <p class="eyebrow reveal">How it works</p>
-  <h2 class="section-title reveal" style="transition-delay:.05s">Simple by <em class="grad">design.</em></h2>
+  <div class="section-head">
+    <p class="eyebrow reveal">How it works</p>
+    <h2 class="section-title reveal" style="transition-delay:.05s">Simple by design.</h2>
+  </div>
 
   <div class="track-voyance">
     <div class="track-header reveal"><span class="track-label">Voyance</span><div class="track-line"></div></div>
     <div class="steps">
-      <div class="step reveal">
-        <span class="step-num">01</span>
-        <div>
-          <div class="step-title">Ask your <em class="grad">question</em></div>
-          <p class="step-desc">Type anything: a hard question, a decision you're wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p>
-        </div>
-      </div>
-      <div class="step reveal">
-        <span class="step-num">02</span>
-        <div>
-          <div class="step-title"><em class="grad">Four models</em> respond</div>
-          <p class="step-desc">GPT, Claude, Gemini, and Grok answer independently and in parallel. Each perspective lives in its own tab, unfiltered and fully attributable to its source.</p>
-        </div>
-      </div>
-      <div class="step reveal">
-        <span class="step-num">03</span>
-        <div>
-          <div class="step-title">One <em class="grad">synthesis</em></div>
-          <p class="step-desc">A synthesis model reads all four responses and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p>
-        </div>
-      </div>
+      <div class="step reveal"><span class="step-num">01</span><div><div class="step-title">Ask your question</div><p class="step-desc">Type anything: a hard question, a decision you're wrestling with, a concept you want explained from multiple angles. Attach a file if you have one.</p></div></div>
+      <div class="step reveal"><span class="step-num">02</span><div><div class="step-title">Four models respond</div><p class="step-desc">GPT, Claude, Gemini, and Grok answer independently and in parallel. Each perspective lives in its own tab, unfiltered and fully attributable to its source.</p></div></div>
+      <div class="step reveal"><span class="step-num">03</span><div><div class="step-title">One synthesis</div><p class="step-desc">A synthesis model reads all four responses and produces a unified answer, capturing consensus, surfacing conflict, and showing you what no single model would have said on its own.</p></div></div>
     </div>
   </div>
 
   <div class="track-studio" style="margin-top:24px">
     <div class="track-header reveal"><span class="track-label">Studio</span><div class="track-line"></div></div>
     <div class="steps">
-      <div class="step reveal">
-        <span class="step-num">01</span>
-        <div>
-          <div class="step-title">Pick a <em class="grad">mode</em></div>
-          <p class="step-desc">Choose Build, Research, or Review and give a prompt. Be as specific or as broad as you want. Attach a saved artifact to give the models full context from your previous work.</p>
-        </div>
-      </div>
-      <div class="step reveal">
-        <span class="step-num">02</span>
-        <div>
-          <div class="step-title">The council <em class="grad">collaborates</em></div>
-          <p class="step-desc">The models work simultaneously, each contributing different strengths: implementations for code, independent findings for research, parallel audits for review.</p>
-        </div>
-      </div>
-      <div class="step reveal">
-        <span class="step-num">03</span>
-        <div>
-          <div class="step-title">Complete <em class="grad">artifact</em></div>
-          <p class="step-desc">A synthesis model composes a single polished artifact, resolving conflicts and combining the best of each. The result is saved to your library, ready to follow up on.</p>
-        </div>
-      </div>
+      <div class="step reveal"><span class="step-num">01</span><div><div class="step-title">Pick a mode</div><p class="step-desc">Choose Build, Research, or Review and give a prompt. Be as specific or as broad as you want. Attach a saved artifact to give the models full context from your previous work.</p></div></div>
+      <div class="step reveal"><span class="step-num">02</span><div><div class="step-title">The council collaborates</div><p class="step-desc">The models work simultaneously, each contributing different strengths: implementations for code, independent findings for research, parallel audits for review.</p></div></div>
+      <div class="step reveal"><span class="step-num">03</span><div><div class="step-title">Complete artifact</div><p class="step-desc">A synthesis model composes a single polished artifact, resolving conflicts and combining the best of each. The result is saved to your library, ready to follow up on.</p></div></div>
     </div>
   </div>
 </section>
@@ -898,7 +797,7 @@
 <!-- CTA -->
 <section class="cta">
   <svg class="cta-logo reveal" width="44" height="44" aria-hidden="true"><use href="#lm-lg"/></svg>
-  <h2 class="cta-title reveal" style="transition-delay:.05s">Stop asking <em class="grad">one.</em><br>Ask all of them.</h2>
+  <h2 class="cta-title reveal" style="transition-delay:.05s">Stop asking one.<br><em class="grad">Ask all of them.</em></h2>
   <p class="cta-sub reveal" style="transition-delay:.1s">Free to use · No account required · Voyance and Studio both included</p>
   <div class="cta-btns reveal" style="transition-delay:.15s">
     <a href="/app?mode=chat" class="btn btn-primary">Ask Voyance <span class="arr">→</span></a>
@@ -912,52 +811,135 @@
     <img src="/assets/logo.png" alt="OpClave" width="24" height="24" style="object-fit:contain;display:block;flex-shrink:0">
     <span class="footer-wordmark">OpClave</span>
   </a>
-  <div class="footer-links">
-    <a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">GitHub</a>
-  </div>
-  <div class="footer-built">
-    built by&nbsp;<a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">aarush bajaj</a>
-    &nbsp;&amp;&nbsp;<a href="https://www.linkedin.com/in/adityamishra-fintech/" target="_blank" rel="noopener">aditya mishra</a>
-  </div>
+  <div class="footer-links"><a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">GitHub</a></div>
+  <div class="footer-built">built by&nbsp;<a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">aarush bajaj</a>&nbsp;&amp;&nbsp;<a href="https://www.linkedin.com/in/adityamishra-fintech/" target="_blank" rel="noopener">aditya mishra</a></div>
 </footer>
 
 <script>
-  // Scroll reveal
+  /* ════════ Convergence engine ════════ */
+  (function () {
+    const canvas = document.getElementById('conv');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let W = 0, H = 0, dpr = 1, nodes = [], core = { x: 0, y: 0 }, particles = [], pulse = 0, raf = null, running = false;
+    const COLORS = ['#7af0e7', '#e7c79c', '#8b7cf6', '#46e0d4'];
+
+    function layout() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const r = canvas.getBoundingClientRect();
+      W = r.width; H = r.height;
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const ny = H * 0.18;
+      const fx = [0.12, 0.36, 0.64, 0.88];
+      nodes = fx.map((f, i) => ({ x: f * W, y: ny + (i === 0 || i === 3 ? H * 0.02 : 0), color: COLORS[i] }));
+      core = { x: W * 0.5, y: H * 0.40 };
+    }
+
+    function ctrl(n) {
+      return { x: (n.x + core.x) / 2, y: (n.y + core.y) / 2 + H * 0.06 };
+    }
+    function spawn() {
+      const n = nodes[(Math.random() * nodes.length) | 0];
+      particles.push({ n, cp: ctrl(n), t: 0, speed: 0.0038 + Math.random() * 0.0042, size: 0.8 + Math.random() * 1.6, color: n.color });
+    }
+    function bez(p0, p1, p2, t) {
+      const u = 1 - t;
+      return { x: u * u * p0.x + 2 * u * t * p1.x + t * t * p2.x, y: u * u * p0.y + 2 * u * t * p1.y + t * t * p2.y };
+    }
+
+    function drawGuides() {
+      for (const n of nodes) {
+        const cp = ctrl(n);
+        ctx.beginPath();
+        ctx.moveTo(n.x, n.y);
+        ctx.quadraticCurveTo(cp.x, cp.y, core.x, core.y);
+        ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // node glow
+        ctx.beginPath(); ctx.arc(n.x, n.y, 2.6, 0, 7);
+        ctx.fillStyle = n.color; ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+      }
+    }
+    function drawCore() {
+      pulse *= 0.93;
+      const cr = 54 + pulse * 26;
+      const g = ctx.createRadialGradient(core.x, core.y, 0, core.x, core.y, cr);
+      g.addColorStop(0, 'rgba(231,199,156,' + (0.16 + pulse * 0.22) + ')');
+      g.addColorStop(0.45, 'rgba(70,224,212,0.05)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(core.x, core.y, cr, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(core.x, core.y, 2.4 + pulse, 0, 7);
+      ctx.fillStyle = '#e7c79c'; ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
+    }
+
+    function frame() {
+      ctx.clearRect(0, 0, W, H);
+      drawGuides();
+      drawCore();
+      if (particles.length < 100 && Math.random() < 0.75) spawn();
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.t += p.speed;
+        if (p.t >= 1) { particles.splice(i, 1); pulse = Math.min(pulse + 0.22, 2.2); continue; }
+        const pos = bez(p.n, p.cp, core, p.t);
+        const fade = p.t < 0.12 ? p.t / 0.12 : (p.t > 0.82 ? (1 - p.t) / 0.18 : 1);
+        ctx.globalAlpha = fade * 0.85;
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(pos.x, pos.y, p.size, 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (running) raf = requestAnimationFrame(frame);
+    }
+
+    function start() { if (running || reduce) return; running = true; raf = requestAnimationFrame(frame); }
+    function stop() { running = false; if (raf) cancelAnimationFrame(raf); }
+
+    function staticFrame() { ctx.clearRect(0, 0, W, H); drawGuides(); drawCore(); }
+
+    layout();
+    if (reduce) { staticFrame(); }
+    else {
+      // seed a few particles so it's alive immediately
+      for (let i = 0; i < 30; i++) { spawn(); particles[particles.length - 1].t = Math.random(); }
+      start();
+    }
+
+    let rT;
+    window.addEventListener('resize', () => { clearTimeout(rT); rT = setTimeout(() => { layout(); if (reduce) staticFrame(); }, 150); });
+    // pause when hero scrolls offscreen
+    const hero = document.querySelector('.hero');
+    if (hero && 'IntersectionObserver' in window) {
+      new IntersectionObserver((e) => { e[0].isIntersecting ? start() : stop(); }, { threshold: 0.02 }).observe(hero);
+    }
+    document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
+  })();
+
+  /* ════════ Scroll reveal ════════ */
   const observer = new IntersectionObserver(
     entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
     { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
   );
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  // Interactive preview tabs
+  /* ════════ Preview tabs ════════ */
   const tabContent = {
     synthesis: {
       badge: `<div class="synthesis-badge"><div class="synthesis-dot"></div><span class="synthesis-tag">Synthesis</span></div>`,
       body: `<strong>Start with RAG.</strong> All four models converge on the same default recommendation, but diverge sharply on <em>when</em> to move to fine-tuning. GPT and Claude both argue that most teams reach for fine-tuning prematurely, when what they actually need is better retrieval or prompting. Gemini flags the infrastructure cost: a fine-tuned model requires ongoing versioning, retraining, and drift monitoring. Grok takes the sharpest angle: the real question is not RAG versus fine-tuning, but whether your problem is a knowledge problem or a behavior problem. Most teams misdiagnose this. If your use case involves dynamic data or requires auditability, RAG wins by default. Fine-tuning earns its place only when you need to reshape how the model reasons or responds, not what it knows.`
     },
-    gpt: {
-      badge: `<div class="model-tag">GPT</div>`,
-      body: `Start with RAG. It is faster to iterate, cheaper to maintain, and your data stays auditable. Fine-tuning makes sense when you need the model to follow a very specific output format consistently, adopt a voice or persona at scale, or when retrieval latency is a hard constraint. The failure mode I see most often: teams spend weeks fine-tuning because they want the model to "know" something, when what they actually need is better retrieval. Fine-tuned models do not know things more reliably; they just pattern-match differently. If your problem is factual accuracy or knowledge recency, fine-tuning will not fix it.`
-    },
-    claude: {
-      badge: `<div class="model-tag">Claude</div>`,
-      body: `The distinction I would draw is between knowledge and behavior. RAG changes what the model knows at inference time. Fine-tuning changes how it responds: its tone, format, reasoning style, and task-specific conventions. If you need your model to cite internal documents, respect proprietary terminology, or stay within a knowledge boundary, RAG handles that with far less cost and much better transparency. Fine-tuning becomes worth the investment when the target behavior is genuinely hard to specify in a prompt, or when you are running at a volume where retrieval latency and token costs become a meaningful constraint.`
-    },
-    gemini: {
-      badge: `<div class="model-tag">Gemini</div>`,
-      body: `In production the answer is often both, staged. Start with prompt engineering, then layer in RAG for knowledge grounding, and only evaluate fine-tuning if there is a measurable gap in behavior alignment. The most common mistake is committing to fine-tuning before you have a rigorous benchmark that tells you what is actually failing. Fine-tuning without good evaluation data tends to produce models that feel better in demos but regress on production edge cases. Worth noting: a fine-tuned model is an ongoing infrastructure commitment. Versioning, retraining schedules, and drift detection all become your responsibility.`
-    },
-    grok: {
-      badge: `<div class="model-tag">Grok</div>`,
-      body: `Most teams reach for fine-tuning because it feels like the serious engineering move. It usually is not. RAG is underestimated partly because it is easier to explain and easier to debug. The harder question is not RAG versus fine-tuning. It is whether you have actually defined what "working" looks like for your application. I have seen teams fine-tune on internal data expecting domain expertise to emerge, then wonder why the model still fails on their actual use cases. Fine-tuning optimizes for patterns in your training data. If your evaluation set does not represent real production queries, you are just overfitting to your own assumptions about the problem.`
-    }
+    gpt: { badge: `<div class="model-tag">GPT</div>`, body: `Start with RAG. It is faster to iterate, cheaper to maintain, and your data stays auditable. Fine-tuning makes sense when you need the model to follow a very specific output format consistently, adopt a voice or persona at scale, or when retrieval latency is a hard constraint. The failure mode I see most often: teams spend weeks fine-tuning because they want the model to "know" something, when what they actually need is better retrieval. Fine-tuned models do not know things more reliably; they just pattern-match differently. If your problem is factual accuracy or knowledge recency, fine-tuning will not fix it.` },
+    claude: { badge: `<div class="model-tag">Claude</div>`, body: `The distinction I would draw is between knowledge and behavior. RAG changes what the model knows at inference time. Fine-tuning changes how it responds: its tone, format, reasoning style, and task-specific conventions. If you need your model to cite internal documents, respect proprietary terminology, or stay within a knowledge boundary, RAG handles that with far less cost and much better transparency. Fine-tuning becomes worth the investment when the target behavior is genuinely hard to specify in a prompt, or when you are running at a volume where retrieval latency and token costs become a meaningful constraint.` },
+    gemini: { badge: `<div class="model-tag">Gemini</div>`, body: `In production the answer is often both, staged. Start with prompt engineering, then layer in RAG for knowledge grounding, and only evaluate fine-tuning if there is a measurable gap in behavior alignment. The most common mistake is committing to fine-tuning before you have a rigorous benchmark that tells you what is actually failing. Fine-tuning without good evaluation data tends to produce models that feel better in demos but regress on production edge cases. Worth noting: a fine-tuned model is an ongoing infrastructure commitment. Versioning, retraining schedules, and drift detection all become your responsibility.` },
+    grok: { badge: `<div class="model-tag">Grok</div>`, body: `Most teams reach for fine-tuning because it feels like the serious engineering move. It usually is not. RAG is underestimated partly because it is easier to explain and easier to debug. The harder question is not RAG versus fine-tuning. It is whether you have actually defined what "working" looks like for your application. I have seen teams fine-tune on internal data expecting domain expertise to emerge, then wonder why the model still fails on their actual use cases. Fine-tuning optimizes for patterns in your training data. If your evaluation set does not represent real production queries, you are just overfitting to your own assumptions about the problem.` }
   };
 
   const tabs = document.querySelectorAll('.browser-tab');
   const body = document.getElementById('previewBody');
   const badge = document.getElementById('previewBadge');
   const content = document.getElementById('previewContent');
-
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const key = tab.dataset.tab;
@@ -969,29 +951,50 @@
         badge.innerHTML = tabContent[key].badge;
         content.innerHTML = tabContent[key].body;
         body.classList.remove('fading');
-      }, 150);
+      }, 180);
     });
   });
 
-  // Studio mode cards link to /app?mode=studio
-  document.querySelectorAll('.smode').forEach(card => {
-    card.style.cursor = 'pointer';
-    card.addEventListener('click', () => goToApp('/app?mode=studio'));
-  });
-
-  // Fade transition for /app links
+  /* ════════ Studio cards + page transition ════════ */
+  document.querySelectorAll('.smode').forEach(card => card.addEventListener('click', () => goToApp('/app?mode=studio')));
   function goToApp(dest) {
     var overlay = document.getElementById('pt-overlay');
     overlay.style.pointerEvents = 'all';
     overlay.style.opacity = '1';
-    setTimeout(function() { window.location.href = dest; }, 450);
+    setTimeout(function () { window.location.href = dest; }, 450);
   }
-  document.querySelectorAll('a[href^="/app"]').forEach(function(link) {
-    link.addEventListener('click', function(e) {
-      e.preventDefault();
-      goToApp(link.getAttribute('href'));
+  document.querySelectorAll('a[href^="/app"]').forEach(function (link) {
+    link.addEventListener('click', function (e) { e.preventDefault(); goToApp(link.getAttribute('href')); });
+  });
+
+  /* ════════ Cursor-tracked spotlight on cards ════════ */
+  document.querySelectorAll('.smode, .feature-cell, .mode-panel').forEach(card => {
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
     });
   });
+
+  /* ════════ Self-playing Voyance demo ════════ */
+  (function () {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const browserEl = document.querySelector('#voyance .browser');
+    if (!browserEl || reduce) return;
+    const order = ['gpt', 'claude', 'gemini', 'grok', 'synthesis'];
+    let idx = 4, timer = null, manual = false, inView = false, hovering = false;
+    const clickTab = key => { const t = document.querySelector('.browser-tab[data-tab="' + key + '"]'); if (t) t.click(); };
+    const tick = () => { if (manual || hovering || !inView) return; idx = (idx + 1) % order.length; clickTab(order[idx]); };
+    const start = () => { if (timer || manual) return; timer = setInterval(tick, 2800); };
+    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+    browserEl.addEventListener('pointerenter', () => { hovering = true; });
+    browserEl.addEventListener('pointerleave', () => { hovering = false; });
+    document.querySelectorAll('.browser-tab').forEach(t =>
+      t.addEventListener('click', e => { if (e.isTrusted) { manual = true; stop(); } }));
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(e => { inView = e[0].isIntersecting; inView ? start() : stop(); }, { threshold: 0.35 }).observe(browserEl);
+    }
+  })();
 </script>
 </body>
 </html>
