@@ -3009,6 +3009,17 @@
   let msgCounter = 0;
   let activeSSE = null;
   let isLoading = false;
+
+  // Resync the message-id counter to the restored DOM so a new turn never reuses
+  // an existing msg id (which would make its response overwrite an earlier message).
+  function syncMsgCounter() {
+    let max = -1;
+    messagesEl.querySelectorAll('[id^="msg-"]').forEach(el => {
+      const n = parseInt(el.id.slice(4), 10);
+      if (!Number.isNaN(n) && n > max) max = n;
+    });
+    msgCounter = max + 1;
+  }
   let _sessionToken = null; // Supabase access token, kept fresh by onAuthStateChange
   let activeStreams = {};
   let _genId = 0;
@@ -3601,6 +3612,7 @@
         currentThreadId = target;
         conversationHistory = [...(t.history || [])];
         messagesEl.innerHTML = t.messagesHTML || '';
+        syncMsgCounter();
         emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
         renderKatexInElement(messagesEl);
         scrollToBottom(true);
@@ -4569,6 +4581,7 @@
     const t = threads[id];
     conversationHistory = [...(t.history || [])];
     messagesEl.innerHTML = t.messagesHTML || '';
+    syncMsgCounter();
     updateRing(promptCount);
     isLoading = false;
     updateSendBtn();
