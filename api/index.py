@@ -38,7 +38,7 @@ _UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
 MODELS_GENERAL = {
     "gpt":    "gpt-5.4-mini-2026-03-17",
     "claude": "claude-sonnet-4-6",
-    "gemini": "gemini-3.1-flash-lite-preview",
+    "gemini": "gemini-3.5-flash",
     "grok":   "grok-4-1-fast-non-reasoning",
 }
 MODELS_INTENSIVE = {
