@@ -6578,16 +6578,12 @@
     const format = document.getElementById('research-format-select').value;
     const audience = document.getElementById('research-audience-select').value;
     const extra = document.getElementById('research-context-input').value.trim();
-    const ctxBits = [];
-    if (format) ctxBits.push(`Preferred framing: ${format}`);
-    if (audience) ctxBits.push(`Write for a ${audience} audience`);
-    if (extra) ctxBits.push(extra);
     document.getElementById('research-prompt-input').value = '';
     document.getElementById('research-context-input').value = '';
-    runResearch(text, '', ctxBits.join('. '));
+    runResearch(text, '', extra, format, audience);
   }
 
-  async function runResearch(topic, followUpOf = '', context = '') {
+  async function runResearch(topic, followUpOf = '', context = '', format = 'Overview', audience = '') {
     const researchTopic = (topic || '').trim();
     if (!researchTopic) return;
     if (_researchSSE) { _researchSSE.abort(); _researchSSE = null; }
@@ -6637,7 +6633,7 @@
       const res = await fetch('/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({ topic: researchTopic, follow_up_of: followUpOf || '', context: context || '' }),
+        body: JSON.stringify({ topic: researchTopic, follow_up_of: followUpOf || '', context: context || '', format: format || 'Overview', audience: audience || '' }),
         signal: controller.signal,
       });
       if (!res.ok) {

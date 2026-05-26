@@ -521,6 +521,8 @@ class StreamRequest(BaseModel):
 
 class ResearchRequest(BaseModel):
     topic: str = ""
+    format: str = "Overview"      # Overview | Deep dive | Comparison | Step-by-step guide | Literature review
+    audience: str = ""            # "" | technical | business | beginner | academic
     context: str = ""
     follow_up_of: str = ""        # previous topic, when this is a follow-up exploration
     history: List[dict] = []
@@ -2022,49 +2024,110 @@ def research(req: ResearchRequest, request: Request):
         f"\nThis is a follow-up exploration branching from the topic: {req.follow_up_of}"
         if req.follow_up_of else ""
     )
-    extra_context = f"\n\nAdditional context to consider: {req.context}" if req.context.strip() else ""
+    extra_context = f"\n\nAdditional context: {req.context}" if req.context.strip() else ""
+    fmt = req.format or "Overview"
+    audience = req.audience or ""
 
-    gpt_prompt = f"""You are a research analyst specializing in historical context and factual grounding.
+    _audience_suffix = {
+        "technical":  "\n\nYour reader is technically sophisticated. Use precise terminology and include technical specifics.",
+        "business":   "\n\nYour reader is a business professional. Frame every insight around decisions, business impact, and competitive implications.",
+        "beginner":   "\n\nYour reader is completely new to this. Define every term. Use plain language and concrete analogies.",
+        "academic":   "\n\nYour reader is an academic researcher. Use formal register, qualify claims, and reference theoretical frameworks by name.",
+    }.get(audience, "")
 
-Topic: {topic}{follow_up_context}{extra_context}
+    def _p(role, mandate, rules):
+        return (f"You are {role}.\n\nTopic: {topic}{follow_up_context}{extra_context}\n\n"
+                f"YOUR MANDATE: {mandate}\n\n{rules}{_audience_suffix}")
 
-YOUR MANDATE: Research this topic from a historical and factual angle. Cover:
-- How this topic developed over time
-- Key events, milestones, or turning points
-- Established facts and data points
-- Real world examples and case studies
-- What the evidence actually shows
+    if fmt == "Deep dive":
+        gpt_prompt = _p(
+            "an expert research analyst specializing in exhaustive historical and technical depth",
+            "Research this topic from a deep historical and technical angle. Cover the full evolution of the topic — its origins, key turning points, foundational contributions, and how expert understanding has shifted over time. Go well beyond surface facts: surface edge cases, contested history, and the less-known details that change how experts think about this.",
+            "Be specific and exhaustive. Cite real names, dates, and examples. 4-5 substantive paragraphs. No bullet points.")
+        claude_prompt = _p(
+            "an expert conceptual analyst specializing in advanced theoretical analysis",
+            "Research this topic with rigorous theoretical depth. Cover the underlying principles at a sophisticated level, competing frameworks and their proponents, ongoing scholarly debates, subtle distinctions experts draw, and what the most intellectually demanding questions in this area actually are. Do not oversimplify.",
+            "Be intellectually rigorous. Surface non-obvious insights and genuine complexity. 4-5 substantive paragraphs. No bullet points.")
+        gemini_prompt = _p(
+            "an expert applied research specialist focused on the cutting edge and open problems",
+            "Research the current state of the art and open frontiers of this topic. Cover the most advanced real-world applications, what leading practitioners are building now, the hard unsolved problems, emerging research directions, and where the field is going in the next 3-5 years.",
+            "Be concrete and specific about what is happening at the frontier. 4-5 substantive paragraphs. No bullet points.")
+        synthesis_instructions = (
+            "Synthesize into a comprehensive, expert-level deep dive. Do not simplify. "
+            "Embrace nuance, caveats, and complexity. Use detailed ## headers to organize the content. "
+            "Target 900-1100 words. Write for someone who wants to truly master this topic.")
 
-Be specific. Cite real examples. Avoid vague generalities.
-Write 3-4 substantive paragraphs. Do not use bullet points."""
+    elif fmt == "Comparison":
+        gpt_prompt = _p(
+            "a research analyst specializing in comparative historical analysis",
+            "Compare the subjects in this topic from a historical angle: how each originated, how they evolved, where they diverged, and what historical forces shaped each one differently. Use specific facts and real examples throughout.",
+            "Focus purely on historical and factual comparison. 3-4 paragraphs. No bullet points.")
+        claude_prompt = _p(
+            "a conceptual analyst specializing in philosophical and theoretical distinctions",
+            "Compare the subjects in this topic at a fundamental level: what makes them conceptually different, what assumptions or principles each rests on, how they represent different ways of thinking about the same problem, and what the deepest theoretical trade-offs are.",
+            "Focus on fundamental differences in thinking and design. 3-4 paragraphs. No bullet points.")
+        gemini_prompt = _p(
+            "an applied specialist focused on practical trade-offs and decision-making",
+            "Compare the subjects in this topic from a practical standpoint: real-world performance differences, concrete strengths and weaknesses, which use cases each excels at, common decision criteria, and a clear recommendation for when to choose one over the other.",
+            "Be concrete and opinionated. Give specific guidance. 3-4 paragraphs. No bullet points.")
+        synthesis_instructions = (
+            "Write a structured comparison. Organize clearly with ## headers: "
+            "Overview, Key Differences, Strengths & Weaknesses, When to Use Each, Verdict. "
+            "End with a concrete, direct recommendation. Target 700-900 words.")
 
-    claude_prompt = f"""You are a conceptual analyst specializing in deep theoretical understanding.
+    elif fmt == "Step-by-step guide":
+        gpt_prompt = _p(
+            "a research analyst focusing on prerequisites and foundational context",
+            "Identify and explain everything someone needs to know BEFORE starting with this topic: required background knowledge, essential vocabulary, tools or resources to gather, common misconceptions that trip beginners up, and what realistic expectations look like.",
+            "Be practical about what actually matters as a prerequisite. 3-4 paragraphs. No bullet points.")
+        claude_prompt = _p(
+            "a conceptual teacher who explains the 'why' behind a process",
+            "Explain the core concepts and reasoning that make the steps in this topic make sense. If someone understands your response, they will understand WHY each step works, not just what to do. Cover the mental models and principles that unlock real understanding.",
+            "Connect theory directly to practice. 3-4 paragraphs. No bullet points.")
+        gemini_prompt = _p(
+            "an experienced practitioner writing a concrete, actionable step-by-step guide",
+            "Write clear, numbered, step-by-step instructions for this topic. Each step should be specific and actionable. Include practical tips within each step, warn about common mistakes, and end with next steps or how to go deeper.",
+            "Be concrete and actionable. Number each step. Include tips and pitfall warnings. 3-4 paragraphs or numbered steps.")
+        synthesis_instructions = (
+            "Write a practical, well-organized guide. Use ## headers to structure as: "
+            "Prerequisites, Core Concepts (brief), Step-by-Step Instructions, Common Mistakes to Avoid, Next Steps. "
+            "Be concrete and actionable throughout. Target 700-900 words.")
 
-Topic: {topic}{follow_up_context}{extra_context}
+    elif fmt == "Literature review":
+        gpt_prompt = _p(
+            "an academic historian of science and scholarship",
+            "Survey the foundational and seminal works in this topic: the research that established the field, the key papers and authors that defined early thinking, how the scholarly consensus formed over time, and which early debates shaped the trajectory of the field.",
+            "Be specific about foundational contributions and their significance. 3-4 paragraphs. No bullet points.")
+        claude_prompt = _p(
+            "an academic theorist specializing in research frameworks and scholarly debates",
+            "Survey the theoretical frameworks, schools of thought, and ongoing debates in the academic literature on this topic. Identify the main competing perspectives, the most significant unresolved disagreements among researchers, and what the theoretical landscape looks like today.",
+            "Be precise about theoretical distinctions. 3-4 paragraphs. No bullet points.")
+        gemini_prompt = _p(
+            "an academic researcher tracking the current frontier of a field",
+            "Survey the most recent developments in the literature on this topic: recent high-impact publications, emerging research directions, open questions the community is actively investigating, methodological advances, and where the field appears to be heading.",
+            "Be specific about recent work and open problems. 3-4 paragraphs. No bullet points.")
+        synthesis_instructions = (
+            "Write a formal academic literature review. Use ## headers for: "
+            "Introduction, Historical Development, Theoretical Frameworks, Current Debates, Emerging Directions, Conclusion. "
+            "Maintain an academic register. Qualify claims appropriately. Target 800-1000 words.")
 
-YOUR MANDATE: Research this topic from a conceptual and theoretical angle. Cover:
-- The underlying principles and frameworks
-- Why things work the way they do at a fundamental level
-- Competing theories or schools of thought
-- What experts debate and why
-- The most important ideas someone needs to understand this topic deeply
-
-Be intellectually rigorous. Surface non-obvious insights.
-Write 3-4 substantive paragraphs. Do not use bullet points."""
-
-    gemini_prompt = f"""You are an applied research specialist focusing on practical implications and future directions.
-
-Topic: {topic}{follow_up_context}{extra_context}
-
-YOUR MANDATE: Research this topic from a practical and forward-looking angle. Cover:
-- How this topic applies in the real world today
-- Current challenges and open problems
-- Emerging trends and future directions
-- Who is working on this and what they are building
-- What someone could actually do with this knowledge
-
-Be concrete and actionable. Focus on what is happening now and next.
-Write 3-4 substantive paragraphs. Do not use bullet points."""
+    else:  # Overview (default)
+        gpt_prompt = _p(
+            "a research analyst specializing in historical context and factual grounding",
+            "Research this topic from a historical and factual angle. Cover how it developed over time, key milestones, established facts and data points, and real-world examples that illustrate it clearly.",
+            "Be specific. Cite real examples. 3-4 substantive paragraphs. No bullet points.")
+        claude_prompt = _p(
+            "a conceptual analyst specializing in deep theoretical understanding",
+            "Research this topic from a conceptual angle. Cover the underlying principles, why things work the way they do, competing theories or frameworks, and the most important ideas someone needs to truly understand it.",
+            "Be intellectually rigorous. Surface non-obvious insights. 3-4 paragraphs. No bullet points.")
+        gemini_prompt = _p(
+            "an applied research specialist focusing on practical implications",
+            "Research this topic from a practical angle. Cover how it applies in the real world today, current challenges and trends, who is working on it and what they are building, and what someone could actually do with this knowledge.",
+            "Be concrete and actionable. 3-4 paragraphs. No bullet points.")
+        synthesis_instructions = (
+            "Synthesize into a clear, accessible overview. Organize naturally with ## headers covering: "
+            "what it is and why it matters, how it works at a conceptual level, and where it is applied today. "
+            "Target 600-900 words. Write for a curious, intelligent reader.")
 
     diagram_prompt = f"""You are a knowledge visualization expert.
 
@@ -2191,25 +2254,21 @@ Return ONLY a JSON array of 5 strings. No preamble, no markdown:
 
         synthesis_prompt = f"""You are synthesizing three research perspectives on: {topic}
 
-Historical/Factual perspective:
+Perspective 1 (historical/background angle):
 {results.get('GPT', 'Not available')}
 
-Conceptual/Theoretical perspective:
+Perspective 2 (conceptual/theoretical angle):
 {results.get('Claude', 'Not available')}
 
-Practical/Applied perspective:
+Perspective 3 (applied/practical angle):
 {results.get('Gemini', 'Not available')}
 
-Synthesize these three perspectives into one cohesive, well-structured exploration.
+{synthesis_instructions}
 
-Rules:
-- Do NOT mention which model said what
-- Weave all three perspectives together naturally
-- Use clear section headers (## Header) to organize the content
-- Start with the most important insight, not background
-- Be intellectually honest about what is debated vs settled
-- Total length: 600 to 900 words
-- Write for a curious, intelligent reader who wants real depth"""
+Additional rules:
+- Do NOT mention which model or perspective said what
+- Weave all three angles together naturally — do not summarize each in sequence
+- Be intellectually honest about what is debated vs settled{_audience_suffix}"""
 
         yield f"data: {json.dumps({'type': 'synthesis_start'})}\n\n"
         try:
