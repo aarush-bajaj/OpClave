@@ -6250,12 +6250,19 @@
         localStorage.setItem('opclave-thread-order', JSON.stringify(threadOrder));
       } catch(_) {}
 
+      // If the user is currently in Studio, update the thread data silently in the
+      // background without resetting the UI — Supabase fires SIGNED_IN on token
+      // refresh (e.g. on tab switch), which would otherwise stomp Studio every time.
+      const inStudio = appMode === 'studio';
+      renderThreadList();
+      if (inStudio) return;
+
       currentThreadId = null;
       conversationHistory = [];
       messagesEl.innerHTML = '';
-      renderThreadList();
       if (threadOrder.length > 0) {
         switchThread(threadOrder[0]);
+        if (localStorage.getItem('opclave-last-mode') === 'studio') switchAppMode('studio');
       } else {
         emptyState.style.display = '';
         updateSendBtn();
