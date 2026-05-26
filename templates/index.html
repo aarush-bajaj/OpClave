@@ -2046,10 +2046,11 @@
     .dfm-btn:hover { border-color:var(--accent); color:var(--accent-bright); }
     .dfm-close { position:absolute; top:12px; right:16px; /* overlaps dfm-btns row */ }
     #diagram-fullscreen-svg {
-      max-width:90vw; max-height:80vh; overflow:auto;
-      background:rgba(14,16,22,0.7); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:32px;
+      width:min(94vw,1400px); max-height:84vh; overflow:auto;
+      background:rgba(14,16,22,0.7); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:36px;
+      display:flex; align-items:center; justify-content:center;
     }
-    #diagram-fullscreen-svg svg { width:100%; height:auto; max-height:72vh; display:block; }
+    #diagram-fullscreen-svg svg { width:100% !important; height:auto !important; max-height:78vh; display:block; }
 
     /* Custom question input in Explore Further card */
     .rx-custom-input-row {
@@ -6893,6 +6894,14 @@
     const label  = document.getElementById('dfm-title');
     if (label) label.textContent = (document.getElementById('diagram-type-label')?.textContent || 'Visual Map').toUpperCase();
     target.innerHTML = srcSvg.outerHTML;
+    // Strip Mermaid's hardcoded pixel width/height so CSS can scale the SVG to fill the modal
+    const clonedSvg = target.querySelector('svg');
+    if (clonedSvg) {
+      clonedSvg.removeAttribute('width');
+      clonedSvg.removeAttribute('height');
+      clonedSvg.style.width = '100%';
+      clonedSvg.style.height = 'auto';
+    }
     modal.classList.add('open');
     document.addEventListener('keydown', _rxDiagramEsc);
   }
