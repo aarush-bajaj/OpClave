@@ -11,6 +11,9 @@
         window.location.replace('/app' + q + h);
       }
     })();
+    // Mark that JS is running so anime.js-driven elements start hidden (no flash).
+    // If the anime module fails to load, the .js-anime class is removed and CSS reveals them.
+    document.documentElement.classList.add('js-anime');
   </script>
   <title>OpClave: Four minds. One answer.</title>
   <meta name="description" content="Ask once. Get independent answers from four AI models, synthesized into one. Or open Studio to build applications, write research, and review code.">
@@ -518,6 +521,16 @@
       .feature-cell::before, .browser::before, .synthesis-dot { animation: none !important; }
     }
 
+    /* ═══════ anime.js gating (no flash; CSS fallback if the module fails) ═══════ */
+    /* While JS runs, hold hero content + nodes hidden until anime animates them in. */
+    .js-anime .hero-title,
+    .js-anime .hero-tagline,
+    .js-anime .hero-ctas,
+    .js-anime .hero-trust,
+    .js-anime .hero-node { opacity: 0; animation: none !important; }
+    /* anime drives reveals via inline styles — drop the CSS transition so they don't double up. */
+    .js-anime .reveal { transition: none !important; }
+
     /* ── Responsive ── */
     @media (max-width: 920px) {
       .mode-split { grid-template-columns: 1fr; }
@@ -593,7 +606,7 @@
 
   <div class="hero-center">
     <div class="core-glow" aria-hidden="true"></div>
-    <h1 class="hero-title"><span class="l1">Four minds.</span><span class="l2 grad">One answer.</span></h1>
+    <h1 class="hero-title" aria-label="Four minds. One answer."><span class="l1">Four minds.</span><span class="l2 grad">One answer.</span></h1>
     <p class="hero-tagline">
       Ask once and get independent responses from GPT, Claude, Gemini, and Grok, reconciled into a single synthesized answer. Then open Studio to build, research, and review.
     </p>
@@ -796,7 +809,12 @@
 
 <!-- CTA -->
 <section class="cta">
-  <svg class="cta-logo reveal" width="44" height="44" aria-hidden="true"><use href="#lm-lg"/></svg>
+  <svg class="cta-logo reveal" width="46" height="46" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+    <circle class="cta-ring" cx="20" cy="20" r="18"  stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+    <circle class="cta-ring" cx="20" cy="20" r="12"  stroke="rgba(255,255,255,0.2)"  stroke-width="1"/>
+    <circle class="cta-ring" cx="20" cy="20" r="6.5" stroke="rgba(201,167,122,0.55)" stroke-width="1"/>
+    <circle class="cta-core" cx="20" cy="20" r="2.5" fill="#c9a77a"/>
+  </svg>
   <h2 class="cta-title reveal" style="transition-delay:.05s">Stop asking one.<br><em class="grad">Ask all of them.</em></h2>
   <p class="cta-sub reveal" style="transition-delay:.1s">Free to use · No account required · Voyance and Studio both included</p>
   <div class="cta-btns reveal" style="transition-delay:.15s">
@@ -917,12 +935,7 @@
     document.addEventListener('visibilitychange', () => { document.hidden ? stop() : start(); });
   })();
 
-  /* ════════ Scroll reveal ════════ */
-  const observer = new IntersectionObserver(
-    entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } }),
-    { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
-  );
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  /* Scroll reveals are driven by anime.js (see the module script below). */
 
   /* ════════ Preview tabs ════════ */
   const tabContent = {
@@ -951,6 +964,7 @@
         badge.innerHTML = tabContent[key].badge;
         content.innerHTML = tabContent[key].body;
         body.classList.remove('fading');
+        if (window.__animeReveal) window.__animeReveal(content);
       }, 180);
     });
   });
@@ -995,6 +1009,124 @@
       new IntersectionObserver(e => { inView = e[0].isIntersecting; inView ? start() : stop(); }, { threshold: 0.35 }).observe(browserEl);
     }
   })();
+</script>
+
+<!-- ════════ anime.js: split-text hero, scroll parallax, word-reveal headings ════════ -->
+<script type="module">
+  const html = document.documentElement;
+  const showAll = () => document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduce) {
+    // Honor reduced motion: reveal everything immediately, no animation.
+    html.classList.remove('js-anime');
+    showAll();
+  } else {
+    import('/assets/anime.esm.min.js').then(({ animate, createTimeline, createAnimatable, stagger, splitText, scrambleText, svg, utils }) => {
+
+      /* ── Hero headline: split into characters and cascade them out of a clip mask ── */
+      const heroTitle = document.querySelector('.hero-title');
+      const titleSplit = splitText('.hero-title .l1', { words: { wrap: 'clip' }, chars: true });
+      utils.set(titleSplit.chars, { opacity: 0, translateY: '120%' });
+      utils.set('.hero-title .l2', { opacity: 0, translateY: 36, filter: 'blur(16px)' });
+      heroTitle.style.opacity = '1'; // parent visible; chars/line2 stay hidden until animated
+
+      // Once the headline + nodes land, give the four model nodes a slow, staggered float.
+      const startFloat = () => animate('.hero-node', {
+        translateY: -9, duration: 4200, loop: true, alternate: true, delay: stagger(320), ease: 'inOutSine',
+      });
+
+      const tl = createTimeline({ defaults: { ease: 'out(4)' }, onComplete: startFloat });
+      tl.add(titleSplit.chars,    { translateY: ['130%', '0%'], opacity: [0, 1], duration: 1100, delay: stagger(52) }, 80)
+        .add('.hero-title .l2',   { translateY: [36, 0], opacity: [0, 1], filter: ['blur(16px)', 'blur(0px)'], duration: 1100 }, 760)
+        .add('.hero-tagline',     { opacity: [0, 1], translateY: [18, 0], duration: 820 }, 1180)
+        .add('.hero-ctas',        { opacity: [0, 1], translateY: [14, 0], duration: 820 }, 1320)
+        .add('.hero-trust',       { opacity: [0, 1], translateY: [12, 0], duration: 820 }, 1440)
+        .add('.hero-node',        { opacity: [0, 1], translateY: [18, 0], scale: [0.86, 1], duration: 860, delay: stagger(90) }, 640);
+
+      /* ── Magnetic CTAs: button + its arrow circle pull toward the cursor ── */
+      const magnetize = (el, strength = 0.34) => {
+        const a = createAnimatable(el, { x: 360, y: 360, ease: 'out(3)' });
+        const arr = el.querySelector('.arr');
+        const aArr = arr ? createAnimatable(arr, { x: 320, y: 320, ease: 'out(3)' }) : null;
+        el.addEventListener('pointermove', e => {
+          const b = el.getBoundingClientRect();
+          const dx = e.clientX - (b.left + b.width / 2);
+          const dy = e.clientY - (b.top + b.height / 2);
+          a.x(dx * strength); a.y(dy * strength);
+          if (aArr) { aArr.x(dx * strength * 0.55); aArr.y(dy * strength * 0.55); }
+        });
+        el.addEventListener('pointerleave', () => { a.x(0); a.y(0); if (aArr) { aArr.x(0); aArr.y(0); } });
+      };
+      document.querySelectorAll('.hero-ctas .btn, .cta-btns .btn, .nav-cta').forEach(b => magnetize(b));
+
+      /* ── Pre-split section headings (word-by-word reveal) ── */
+      document.querySelectorAll('.section-title').forEach(el => {
+        const s = splitText(el, { words: { wrap: 'clip' } });
+        utils.set(el, { opacity: 1, translateY: 0, scale: 1, filter: 'blur(0px)' });
+        utils.set(s.words, { opacity: 0, translateY: '110%' });
+        el._split = s;
+      });
+
+      /* ── Pre-load the CTA logo rings as undrawn strokes ── */
+      let ctaRings = [];
+      try { ctaRings = svg.createDrawable('.cta-ring'); ctaRings.forEach(r => { r.draw = '0 0'; }); } catch (_) {}
+
+      /* ── Card grids reveal as a choreographed group, rippling out from center ── */
+      const grouped = new Set();
+      document.querySelectorAll('.studio-grid, .features-grid, .mode-split').forEach(grid => {
+        const items = [...grid.children].filter(c => c.classList.contains('reveal'));
+        if (!items.length) return;
+        items.forEach(i => grouped.add(i));
+        const gio = new IntersectionObserver((ents) => {
+          ents.forEach(en => {
+            if (!en.isIntersecting) return;
+            gio.unobserve(en.target);
+            animate(items, {
+              opacity: [0, 1], translateY: [46, 0], scale: [0.92, 1], filter: ['blur(10px)', 'blur(0px)'],
+              duration: 900, ease: 'out(3)', delay: stagger(85, { from: 'center' }),
+            });
+          });
+        }, { threshold: 0.16 });
+        gio.observe(grid);
+      });
+
+      /* ── Per-element reveals: eyebrows decode, headings build, the CTA mark draws itself ── */
+      const revealOne = (el) => {
+        if (el.classList.contains('eyebrow')) {
+          utils.set(el, { translateY: 0, scale: 1, filter: 'blur(0px)' });
+          animate(el, { opacity: [0, 1], translateY: [12, 0], duration: 520, ease: 'out(3)' });
+          animate(el, { innerHTML: scrambleText(), duration: 1000, ease: 'out(2)' });
+        } else if (el._split) {
+          animate(el._split.words, { translateY: ['110%', '0%'], opacity: [0, 1], duration: 800, ease: 'out(3)', delay: stagger(55) });
+        } else if (el.classList.contains('cta-logo')) {
+          utils.set(el, { opacity: 1, translateY: 0, scale: 1, filter: 'blur(0px)' });
+          if (ctaRings.length) animate(ctaRings, { draw: ['0 0', '0 1'], duration: 1000, ease: 'inOutQuad', delay: stagger(170) });
+          animate(el.querySelector('.cta-core'), { scale: [0, 1], opacity: [0, 1], duration: 620, ease: 'out(4)', delay: 760 });
+        } else {
+          animate(el, { opacity: [0, 1], translateY: [30, 0], scale: [0.985, 1], filter: ['blur(10px)', 'blur(0px)'], duration: 860, ease: 'out(3)' });
+        }
+      };
+
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (!e.isIntersecting) return;
+          io.unobserve(e.target);
+          revealOne(e.target);
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+      document.querySelectorAll('.reveal').forEach(el => { if (!grouped.has(el)) io.observe(el); });
+
+      /* ── Live demo: animate the answer text in whenever a tab switches ── */
+      window.__animeReveal = (el) => animate(el, { opacity: [0, 1], translateY: [10, 0], duration: 480, ease: 'out(3)' });
+
+    }).catch((err) => {
+      // Module failed to load — fall back to plain CSS reveals so nothing stays hidden.
+      console.error('[anime] failed to load', err);
+      html.classList.remove('js-anime');
+      showAll();
+    });
+  }
 </script>
 </body>
 </html>
