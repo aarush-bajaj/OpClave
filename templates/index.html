@@ -3523,6 +3523,7 @@
     messagesEl.innerHTML = '';
 
     appMode = mode;
+    localStorage.setItem('opclave-last-mode', mode);
     document.querySelectorAll('.app-mode-btn, .hms-btn').forEach(b =>
       b.classList.toggle('active', b.dataset.mode === mode));
 
@@ -4952,6 +4953,7 @@
           const startId = (c && threads[c]) ? c : threadOrder[0];
           currentThreadId = null;
           switchThread(startId);
+          if (localStorage.getItem('opclave-last-mode') === 'studio') switchAppMode('studio');
           return;
         }
       }
@@ -4961,7 +4963,8 @@
     emptyState.style.display = '';
     renderThreadList();
     updateSendBtn();
-    inputEl.focus();
+    if (localStorage.getItem('opclave-last-mode') === 'studio') switchAppMode('studio');
+    else inputEl.focus();
   }
 
   // ── Artifact storage & UI ─────────────────────────
