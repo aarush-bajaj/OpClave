@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Request, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from mangum import Mangum
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, ConfigDict
+import re
 from openai import OpenAI
 import anthropic
 from anthropic import Anthropic
@@ -65,6 +66,12 @@ def _redis(command: list) -> object:
 FEEDBACK_LIMIT = 3          # max submissions per IP per hour
 FEEDBACK_WINDOW = 3600      # seconds
 
+VERIFY_ADMIN_LIMIT  = 5     # max attempts per IP per 15 minutes
+VERIFY_ADMIN_WINDOW = 900   # seconds
+
+EXTRACT_FILE_LIMIT  = 10    # max uploads per IP per hour
+EXTRACT_FILE_WINDOW = 3600  # seconds
+
 def check_feedback_rate_limit(ip: str) -> bool:
     """Returns True if the request is allowed, False if the IP is over the limit."""
     try:
@@ -76,6 +83,32 @@ def check_feedback_rate_limit(ip: str) -> bool:
         return count <= FEEDBACK_LIMIT
     except Exception:
         return True  # fail open — an Upstash outage shouldn't block feedback
+
+
+def check_verify_admin_limit(ip: str) -> bool:
+    """Returns True if allowed; blocks after VERIFY_ADMIN_LIMIT attempts per 15-minute window."""
+    try:
+        window = int(time.time() // VERIFY_ADMIN_WINDOW)
+        key = f"council:admin_verify:{ip}:{window}"
+        count = _redis(["INCR", key])
+        if count == 1:
+            _redis(["EXPIRE", key, VERIFY_ADMIN_WINDOW])
+        return count <= VERIFY_ADMIN_LIMIT
+    except Exception:
+        return True  # fail open on Upstash outage
+
+
+def check_extract_file_limit(ip: str) -> bool:
+    """Returns True if allowed; blocks after EXTRACT_FILE_LIMIT uploads per hour."""
+    try:
+        hour = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H')
+        key = f"council:extract:{ip}:{hour}"
+        count = _redis(["INCR", key])
+        if count == 1:
+            _redis(["EXPIRE", key, EXTRACT_FILE_WINDOW])
+        return count <= EXTRACT_FILE_LIMIT
+    except Exception:
+        return True
 
 
 def _extract_user_id(request: "Request") -> str | None:
@@ -134,10 +167,14 @@ def check_and_increment_intensive_limit(request: "Request") -> tuple[bool, int]:
 
 @app.get("/assets/{filename:path}")
 def serve_asset(filename: str):
-    path = os.path.join(_root, "templates", "assets", filename)
-    if not os.path.isfile(path):
+    # Resolve both paths to their canonical forms to prevent path traversal (e.g. ../../etc/passwd)
+    base = os.path.realpath(os.path.join(_root, "templates", "assets"))
+    full = os.path.realpath(os.path.join(base, filename))
+    if not full.startswith(base + os.sep):
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not os.path.isfile(full):
         raise HTTPException(status_code=404, detail="Asset not found")
-    return FileResponse(path)
+    return FileResponse(full)
 
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
@@ -497,42 +534,245 @@ def call_gemini_imagen(prompt):
     return [img for img in images if img]
 
 
+# ── Input validation constants ────────────────────────────────────────────────
+
+_ALLOWED_SYNTHESIZERS   = {"claude", "gpt", "gemini", "grok"}
+_ALLOWED_MODELS         = {"gpt", "claude", "gemini", "grok"}
+_ALLOWED_MODES          = {"general", "intensive"}
+_ALLOWED_ARTIFACT_TYPES = {"", "code", "research"}
+_ALLOWED_RESEARCH_DEPTHS = {"quick", "standard", "deep"}
+_ALLOWED_FORMATS        = {"Overview", "Deep dive", "Comparison", "Step-by-step guide", "Literature review"}
+_ALLOWED_AUDIENCES      = {"", "technical", "business", "beginner", "academic"}
+_ALLOWED_SENTIMENTS     = {"up", "down", ""}
+
+_MAX_QUESTION_LEN         = 4_000
+_MAX_TOPIC_LEN            = 500
+_MAX_CONTEXT_LEN          = 2_000
+_MAX_FEEDBACK_MSG_LEN     = 2_000
+_MAX_ADMIN_CODE_LEN       = 200
+_MAX_CODE_LEN             = 200_000   # single-file HTML apps can be large
+_MAX_HISTORY_ENTRIES      = 50
+_MAX_HISTORY_MSG_LEN      = 8_000     # per message content
+_MAX_ATTACHMENTS          = 5
+_MAX_ATTACHMENT_BYTES     = 500_000   # base64-encoded content
+_MAX_FILENAME_LEN         = 255
+_MAX_PRIOR_CODE_LEN       = 200_000
+_MAX_LANGUAGE_LEN         = 50
+_MAX_FOLLOW_UP_OF_LEN     = 500
+
+
 # ── Request models ────────────────────────────────────────────────────────────
 
 class Attachment(BaseModel):
-    type: str  # 'text' | 'image'
+    model_config = ConfigDict(extra='forbid')
+
+    type: str       # 'text' | 'image'
     content: str
     filename: str
 
+    @field_validator('type')
+    @classmethod
+    def _type(cls, v):
+        if v not in ('text', 'image'):
+            raise ValueError("Attachment type must be 'text' or 'image'")
+        return v
+
+    @field_validator('content')
+    @classmethod
+    def _content(cls, v):
+        if len(v) > _MAX_ATTACHMENT_BYTES:
+            raise ValueError(f"Attachment content exceeds {_MAX_ATTACHMENT_BYTES} characters")
+        return v
+
+    @field_validator('filename')
+    @classmethod
+    def _filename(cls, v):
+        if len(v) > _MAX_FILENAME_LEN:
+            raise ValueError(f"Filename exceeds {_MAX_FILENAME_LEN} characters")
+        return v
+
+
+def _validate_history(v: list) -> list:
+    """Shared history validator: cap entry count and per-message length."""
+    if len(v) > _MAX_HISTORY_ENTRIES:
+        raise ValueError(f"History exceeds {_MAX_HISTORY_ENTRIES} entries")
+    for entry in v:
+        if not isinstance(entry, dict):
+            raise ValueError("Each history entry must be an object")
+        role = entry.get("role", "")
+        if role not in ("user", "assistant", "system"):
+            raise ValueError(f"Invalid history role: {role!r}")
+        content = entry.get("content", "")
+        if isinstance(content, str) and len(content) > _MAX_HISTORY_MSG_LEN:
+            raise ValueError(f"History message content exceeds {_MAX_HISTORY_MSG_LEN} characters")
+    return v
+
+
 class StreamRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     question: str = ""
     synthesizer: str = "claude"
     models: List[str] = ["gpt", "claude", "gemini", "grok"]
     history: List[dict] = []
     image_mode: bool = False
     attachments: List[Attachment] = []
-    mode: str = "general"  # "general" or "intensive"
+    mode: str = "general"           # "general" or "intensive"
     web_search: bool = False
     artifact_mode: bool = False
     forced_artifact_type: str = ""  # "code" | "research" | "" (auto-detect)
-    research_depth: str = "standard"  # "quick" | "standard" | "deep"
-    prior_code: str = ""          # current build's code, sent on Studio Build follow-ups
-    studio_followup: bool = False # True when iterating on an existing build artifact
+    research_depth: str = "standard"
+    prior_code: str = ""
+    studio_followup: bool = False
+
+    @field_validator('question')
+    @classmethod
+    def _question(cls, v):
+        if len(v) > _MAX_QUESTION_LEN:
+            raise ValueError(f"Question exceeds {_MAX_QUESTION_LEN} characters")
+        return v
+
+    @field_validator('synthesizer')
+    @classmethod
+    def _synthesizer(cls, v):
+        if v.lower() not in _ALLOWED_SYNTHESIZERS:
+            raise ValueError(f"synthesizer must be one of {_ALLOWED_SYNTHESIZERS}")
+        return v.lower()
+
+    @field_validator('models')
+    @classmethod
+    def _models(cls, v):
+        if len(v) > len(_ALLOWED_MODELS):
+            raise ValueError("Too many models specified")
+        for m in v:
+            if m not in _ALLOWED_MODELS:
+                raise ValueError(f"Invalid model: {m!r}")
+        return v
+
+    @field_validator('mode')
+    @classmethod
+    def _mode(cls, v):
+        if v.lower() not in _ALLOWED_MODES:
+            raise ValueError(f"mode must be one of {_ALLOWED_MODES}")
+        return v.lower()
+
+    @field_validator('forced_artifact_type')
+    @classmethod
+    def _forced_artifact_type(cls, v):
+        if v not in _ALLOWED_ARTIFACT_TYPES:
+            raise ValueError(f"forced_artifact_type must be one of {_ALLOWED_ARTIFACT_TYPES}")
+        return v
+
+    @field_validator('research_depth')
+    @classmethod
+    def _research_depth(cls, v):
+        if v not in _ALLOWED_RESEARCH_DEPTHS:
+            raise ValueError(f"research_depth must be one of {_ALLOWED_RESEARCH_DEPTHS}")
+        return v
+
+    @field_validator('prior_code')
+    @classmethod
+    def _prior_code(cls, v):
+        if len(v) > _MAX_PRIOR_CODE_LEN:
+            raise ValueError(f"prior_code exceeds {_MAX_PRIOR_CODE_LEN} characters")
+        return v
+
+    @field_validator('attachments')
+    @classmethod
+    def _attachments(cls, v):
+        if len(v) > _MAX_ATTACHMENTS:
+            raise ValueError(f"Too many attachments (max {_MAX_ATTACHMENTS})")
+        return v
+
+    @field_validator('history')
+    @classmethod
+    def _history(cls, v):
+        return _validate_history(v)
+
 
 class ResearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     topic: str = ""
-    format: str = "Overview"      # Overview | Deep dive | Comparison | Step-by-step guide | Literature review
-    audience: str = ""            # "" | technical | business | beginner | academic
+    format: str = "Overview"
+    audience: str = ""
     context: str = ""
-    follow_up_of: str = ""        # previous topic, when this is a follow-up exploration
+    follow_up_of: str = ""
     history: List[dict] = []
 
+    @field_validator('topic')
+    @classmethod
+    def _topic(cls, v):
+        if len(v) > _MAX_TOPIC_LEN:
+            raise ValueError(f"Topic exceeds {_MAX_TOPIC_LEN} characters")
+        return v
+
+    @field_validator('format')
+    @classmethod
+    def _format(cls, v):
+        if v not in _ALLOWED_FORMATS:
+            raise ValueError(f"format must be one of {_ALLOWED_FORMATS}")
+        return v
+
+    @field_validator('audience')
+    @classmethod
+    def _audience(cls, v):
+        if v not in _ALLOWED_AUDIENCES:
+            raise ValueError(f"audience must be one of {_ALLOWED_AUDIENCES}")
+        return v
+
+    @field_validator('context')
+    @classmethod
+    def _context(cls, v):
+        if len(v) > _MAX_CONTEXT_LEN:
+            raise ValueError(f"context exceeds {_MAX_CONTEXT_LEN} characters")
+        return v
+
+    @field_validator('follow_up_of')
+    @classmethod
+    def _follow_up_of(cls, v):
+        if len(v) > _MAX_FOLLOW_UP_OF_LEN:
+            raise ValueError(f"follow_up_of exceeds {_MAX_FOLLOW_UP_OF_LEN} characters")
+        return v
+
+    @field_validator('history')
+    @classmethod
+    def _history(cls, v):
+        return _validate_history(v)
+
+
 class FeedbackRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     message: str = ""
     sentiment: str = ""
 
+    @field_validator('message')
+    @classmethod
+    def _message(cls, v):
+        if len(v) > _MAX_FEEDBACK_MSG_LEN:
+            raise ValueError(f"Message exceeds {_MAX_FEEDBACK_MSG_LEN} characters")
+        return v
+
+    @field_validator('sentiment')
+    @classmethod
+    def _sentiment(cls, v):
+        if v not in _ALLOWED_SENTIMENTS:
+            raise ValueError(f"sentiment must be one of {_ALLOWED_SENTIMENTS}")
+        return v
+
+
 class AdminVerifyRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     code: str = ""
+
+    @field_validator('code')
+    @classmethod
+    def _code(cls, v):
+        if len(v) > _MAX_ADMIN_CODE_LEN:
+            raise ValueError(f"Code exceeds {_MAX_ADMIN_CODE_LEN} characters")
+        return v
 
 
 # ── Perplexity Sonar (web-aware council member) ───────────────────────────────
@@ -1294,6 +1534,12 @@ def index():
         return HTMLResponse(f.read())
 
 
+@app.get("/privacy")
+def privacy_route():
+    with open(os.path.join(_root, "templates", "privacy.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
 @app.get("/studio")
 def studio_route():
     with open(os.path.join(_root, "templates", "studio.html"), encoding="utf-8") as f:
@@ -1306,16 +1552,24 @@ def app_route():
         html_content = f.read()
     supabase_url = os.getenv("SUPABASE_URL", "")
     supabase_anon_key = os.getenv("SUPABASE_ANON_KEY", "")
+    # json.dumps() ensures values are properly escaped — prevents script injection
+    # if environment variables ever contain quotes or special characters.
     config_script = (
-        f'<script>window._SUPABASE_URL="{supabase_url}";'
-        f'window._SUPABASE_ANON_KEY="{supabase_anon_key}";</script>'
+        f'<script>window._SUPABASE_URL={json.dumps(supabase_url)};'
+        f'window._SUPABASE_ANON_KEY={json.dumps(supabase_anon_key)};</script>'
     )
     html_content = html_content.replace("<!-- __SUPABASE_CONFIG__ -->", config_script)
     return HTMLResponse(html_content)
 
 
 @app.post("/extract-file")
-async def extract_file(file: UploadFile = File(...)):
+async def extract_file(request: Request, file: UploadFile = File(...)):
+    # Rate-limit by IP: max 10 uploads per hour
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    if not check_extract_file_limit(ip):
+        raise HTTPException(status_code=429, detail="Too many file uploads. Please wait before uploading again.")
+
     MAX_SIZE = 10 * 1024 * 1024  # 10 MB
     ALLOWED_EXTS = {'.pdf', '.txt', '.md', '.png', '.jpg', '.jpeg', '.webp'}
     IMAGE_EXTS = {'.png', '.jpg', '.jpeg', '.webp'}
@@ -1370,7 +1624,12 @@ async def extract_file(file: UploadFile = File(...)):
 
 
 @app.post("/verify-admin")
-def verify_admin(req: AdminVerifyRequest):
+def verify_admin(req: AdminVerifyRequest, request: Request):
+    # Rate-limit by IP to prevent brute-forcing the admin code (5 attempts per 15 min)
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    if not check_verify_admin_limit(ip):
+        raise HTTPException(status_code=429, detail="Too many attempts. Please wait before trying again.")
     secret = os.getenv("ADMIN_CODE", "")
     if not secret:
         return {"valid": False}
@@ -1427,8 +1686,22 @@ async def feedback(req: FeedbackRequest, request: Request):
         return {"ok": False, "error": str(e)}
 
 
+def _check_admin_auth(request: Request) -> bool:
+    """Verify the X-Admin-Code header against ADMIN_CODE env var (constant-time compare).
+    Returns True when no ADMIN_CODE is configured (open-by-default for local dev)."""
+    secret = os.getenv("ADMIN_CODE", "")
+    if not secret:
+        return True  # admin protection not configured — allow through
+    provided = request.headers.get("X-Admin-Code", "")
+    if not provided:
+        return False
+    return hmac.compare_digest(provided.encode(), secret.encode())
+
+
 @app.get("/logs")
-def get_logs():
+def get_logs(request: Request):
+    if not _check_admin_auth(request):
+        raise HTTPException(status_code=403, detail="Forbidden")
     # Try Redis first
     try:
         if _UPSTASH_URL and _UPSTASH_TOKEN:
@@ -1458,7 +1731,9 @@ def get_logs():
 
 
 @app.delete("/logs")
-def clear_logs():
+def clear_logs(request: Request):
+    if not _check_admin_auth(request):
+        raise HTTPException(status_code=403, detail="Forbidden")
     try:
         if _UPSTASH_URL and _UPSTASH_TOKEN:
             _redis(["DEL", _LOG_KEY])
@@ -1807,10 +2082,43 @@ def stream(req: StreamRequest, request: Request):
 
 
 class ReviewRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     code: str
     language: str = "auto"
     context: str = ""
     filename: str = ""
+
+    @field_validator('code')
+    @classmethod
+    def _code(cls, v):
+        if len(v) > _MAX_CODE_LEN:
+            raise ValueError(f"Code exceeds {_MAX_CODE_LEN} characters")
+        return v
+
+    @field_validator('language')
+    @classmethod
+    def _language(cls, v):
+        if len(v) > _MAX_LANGUAGE_LEN:
+            raise ValueError(f"Language exceeds {_MAX_LANGUAGE_LEN} characters")
+        # Allow only safe characters: alphanumeric, +, #, -, _, space, dot
+        if not re.match(r'^[a-zA-Z0-9+#\-_. ]*$', v):
+            raise ValueError("Invalid language value")
+        return v
+
+    @field_validator('context')
+    @classmethod
+    def _context(cls, v):
+        if len(v) > _MAX_CONTEXT_LEN:
+            raise ValueError(f"context exceeds {_MAX_CONTEXT_LEN} characters")
+        return v
+
+    @field_validator('filename')
+    @classmethod
+    def _filename(cls, v):
+        if len(v) > _MAX_FILENAME_LEN:
+            raise ValueError(f"Filename exceeds {_MAX_FILENAME_LEN} characters")
+        return v
 
 @app.post("/review")
 def code_review(req: ReviewRequest, request: Request):
@@ -2002,8 +2310,83 @@ If no performance issues found return an empty array: []"""
 
 # ── Research Explorer ─────────────────────────────────────────────────────────
 # Three models each take a distinct research angle (historical, conceptual,
-# applied), a fourth call drafts a Mermaid diagram, a fifth proposes follow-up
-# questions, and Claude synthesizes the three perspectives into one exploration.
+# applied), Gemini generates interactive Chart.js data visualizations, a call
+# proposes follow-up questions, and Claude synthesizes the three perspectives
+# into one exploration. Charts/questions never block synthesis.
+def generate_research_charts(topic: str) -> list:
+    """Ask Gemini to surface 2-3 quantitative insights about the topic and return
+    Chart.js-compatible specs. Returns [] on any failure so research still works."""
+    import re as _re
+    chart_prompt = f"""You are a data visualization specialist. Your job is to find compelling quantitative data about this research topic and turn it into interactive charts.
+
+Topic: {topic}
+
+Find 2 to 3 of the most interesting quantitative insights about this topic. For each one:
+1. Find or reasonably estimate real data points that illuminate an important dimension of the topic
+2. Choose the chart type that best tells this data story:
+   - "line" for trends over time
+   - "bar" for comparisons between categories
+   - "doughnut" for composition or breakdown
+   - "scatter" for correlations between two variables
+   - "radar" for comparing multiple attributes across categories
+3. Give it a clear descriptive title and a one sentence insight explaining why this data matters
+
+CRITICAL RULES:
+- Return ONLY a valid JSON array. No markdown, no backticks, no explanation outside the JSON.
+- Every data point must be a number, never a string
+- Labels array and data array must have the same length
+- Keep datasets to 1 or 2 per chart for clarity
+- Use realistic, reasonable estimates if exact data is unavailable
+
+Return this exact structure:
+[
+  {{
+    "title": "Descriptive chart title",
+    "insight": "One sentence explaining what this data reveals and why it matters",
+    "type": "line",
+    "data": {{
+      "labels": ["Label1", "Label2", "Label3"],
+      "datasets": [{{ "label": "Dataset name", "data": [10, 20, 30] }}]
+    }}
+  }}
+]
+
+Return ONLY the JSON array. Nothing else."""
+    def _parse_chart_array(s):
+        """Parse a JSON array, salvaging a truncated response by closing it after
+        the last complete object (models sometimes get cut off mid-object)."""
+        s = (s or "").strip()
+        start = s.find('[')
+        if start == -1:
+            return []
+        s = s[start:]
+        try:
+            return json.loads(s)
+        except Exception:
+            pass
+        last = s.rfind('}')
+        while last != -1:
+            try:
+                return json.loads(s[:last + 1] + ']')
+            except Exception:
+                last = s.rfind('}', 0, last)
+        return []
+
+    try:
+        raw, _usage = ask_gemini(chart_prompt, 3500)
+        clean = _re.sub(r'```(?:json)?|```', '', (raw or '').strip()).strip()
+        charts = _parse_chart_array(clean)
+        if not isinstance(charts, list):
+            return []
+        valid = [c for c in charts
+                 if isinstance(c, dict) and 'type' in c and isinstance(c.get('data'), dict)
+                 and isinstance(c['data'].get('datasets'), list) and c['data'].get('datasets')]
+        return valid[:3]
+    except Exception as e:
+        print(f"[CHARTS] Gemini chart generation failed: {e}", flush=True)
+        return []
+
+
 @app.post("/research")
 def research(req: ResearchRequest, request: Request):
     topic = req.topic.strip()
@@ -2129,35 +2512,6 @@ def research(req: ResearchRequest, request: Request):
             "what it is and why it matters, how it works at a conceptual level, and where it is applied today. "
             "Target 600-900 words. Write for a curious, intelligent reader.")
 
-    diagram_prompt = f"""You are a knowledge visualization expert.
-
-Topic: {topic}
-
-Analyze this topic and decide which diagram type best represents it:
-- "flowchart" — if the topic involves a process, system, or causal chain
-- "mindmap" — if the topic has many interconnected concepts branching from a center
-- "timeline" — if the topic has important historical progression or stages
-- "quadrantChart" — if the topic involves comparing things across two dimensions
-- "graph" — if the topic involves a network of relationships
-
-Then generate valid Mermaid.js diagram syntax for that diagram type.
-
-Rules:
-- Return ONLY a JSON object, no markdown, no backticks
-- The diagram must be valid Mermaid syntax that renders without errors
-- For flowchart use "flowchart TD" and arrows like A[Label] --> B[Label]
-- For graph use "graph TD" with the same arrow syntax
-- Keep it focused — 6 to 12 nodes maximum
-- Use clear, short labels on each node
-- Do not use parentheses, quotes, or special characters inside node labels
-
-Format:
-{{
-  "diagram_type": "mindmap",
-  "title": "Short descriptive title for the diagram",
-  "mermaid": "mindmap\\n  root((Urban Development))\\n    Housing\\n      Affordable\\n      Zoning\\n    Transport\\n      Transit\\n      Roads\\n    Economy\\n      Jobs\\n      Investment"
-}}"""
-
     questions_prompt = f"""You are an intellectual guide helping someone explore a topic deeply.
 
 Topic: {topic}
@@ -2199,58 +2553,56 @@ Return ONLY a JSON array of 5 strings. No preamble, no markdown:
             ('Gemini', ask_gemini, gemini_prompt),
         ]:
             executor.submit(run_model, name, func, prompt)
-        executor.submit(run_model, 'diagram',   ask_claude, diagram_prompt, 1200)
-        executor.submit(run_model, 'questions', ask_gpt,    questions_prompt, 800)
+        executor.submit(run_model, 'questions', ask_gpt, questions_prompt, 800)
+        # Gemini-powered interactive data charts, generated in parallel with the rest
+        def _chart_func(prompt, _max_tokens):
+            return json.dumps(generate_research_charts(prompt)), {"model": "gemini-chart", "input_tokens": 0, "output_tokens": 0}
+        executor.submit(run_model, 'charts', _chart_func, topic, 2000)
 
-        completed = 0
-        while completed < 5:
+        # Transform a finished side-task (questions/charts) event into its SSE form.
+        def side_event(ev):
+            m, et = ev.get('model'), ev['type']
+            if m == 'questions':
+                if et == 'model_error':
+                    return {'type': 'questions_error', 'error': ev.get('error', '')}
+                try:
+                    qs = json.loads(_re.sub(r'```(?:json)?|```', '', ev['response']).strip())
+                    return {'type': 'questions_ready', 'questions': qs if isinstance(qs, list) else []}
+                except Exception as e:
+                    return {'type': 'questions_error', 'error': str(e)}
+            if m == 'charts':
+                if et == 'model_error':
+                    return {'type': 'charts_error', 'error': ev.get('error', '')}
+                try:
+                    cd = json.loads(ev['response'])
+                    return {'type': 'charts_ready', 'charts': cd if isinstance(cd, list) else []}
+                except Exception as e:
+                    return {'type': 'charts_error', 'error': str(e)}
+            return None
+
+        # ── Phase 1: wait only for the 3 research perspectives so synthesis can start
+        # immediately. Side tasks (questions, charts) are forwarded as they arrive but
+        # never block synthesis — this keeps the page from stalling on a slow chart call.
+        persp_pending = {'GPT', 'Claude', 'Gemini'}
+        side_pending = {'questions', 'charts'}
+        while persp_pending:
             try:
                 event = event_queue.get(timeout=120)
             except queue.Empty:
                 break
-
-            etype = event['type']
-            model = event.get('model')
-
+            etype, model = event['type'], event.get('model')
             if etype == 'model_start':
-                # Surface loading state only for the three visible research models
                 if model in ('GPT', 'Claude', 'Gemini'):
                     yield f"data: {json.dumps(event)}\n\n"
                 continue
-
-            # model_done or model_error — both count toward completion
-            completed += 1
-
-            if etype == 'model_error':
-                if model in ('GPT', 'Claude', 'Gemini'):
-                    yield f"data: {json.dumps(event)}\n\n"
-                elif model == 'diagram':
-                    yield f"data: {json.dumps({'type': 'diagram_error', 'error': event.get('error', '')})}\n\n"
-                elif model == 'questions':
-                    yield f"data: {json.dumps({'type': 'questions_error', 'error': event.get('error', '')})}\n\n"
-                continue
-
-            # model_done
-            if model in ('GPT', 'Claude', 'Gemini'):
-                yield f"data: {json.dumps(event)}\n\n"
-            elif model == 'diagram':
-                try:
-                    clean = _re.sub(r'```(?:json)?|```', '', event['response']).strip()
-                    diagram_data = json.loads(clean)
-                    yield f"data: {json.dumps({'type': 'diagram_ready', 'diagram': diagram_data})}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({'type': 'diagram_error', 'error': str(e)})}\n\n"
-            elif model == 'questions':
-                try:
-                    clean = _re.sub(r'```(?:json)?|```', '', event['response']).strip()
-                    questions = json.loads(clean)
-                    if not isinstance(questions, list):
-                        questions = []
-                    yield f"data: {json.dumps({'type': 'questions_ready', 'questions': questions})}\n\n"
-                except Exception as e:
-                    yield f"data: {json.dumps({'type': 'questions_error', 'error': str(e)})}\n\n"
-
-        executor.shutdown(wait=False)
+            if model in persp_pending:
+                persp_pending.discard(model)
+                yield f"data: {json.dumps(event)}\n\n"  # model_done or model_error
+            elif model in side_pending:
+                side_pending.discard(model)
+                se = side_event(event)
+                if se:
+                    yield f"data: {json.dumps(se)}\n\n"
 
         synthesis_prompt = f"""You are synthesizing three research perspectives on: {topic}
 
@@ -2278,6 +2630,26 @@ Additional rules:
         except Exception as e:
             yield f"data: {json.dumps({'type': 'synthesis_error', 'error': str(e)})}\n\n"
 
+        # ── Phase 3: drain any side tasks that finished after synthesis (bounded).
+        while side_pending:
+            try:
+                event = event_queue.get(timeout=45)
+            except queue.Empty:
+                break
+            if event['type'] == 'model_start':
+                continue
+            model = event.get('model')
+            if model in side_pending:
+                side_pending.discard(model)
+                se = side_event(event)
+                if se:
+                    yield f"data: {json.dumps(se)}\n\n"
+        # Anything still outstanding (timed out) — tell the client to clear its loaders.
+        for m in side_pending:
+            etype = 'questions_error' if m == 'questions' else 'charts_error'
+            yield f"data: {json.dumps({'type': etype, 'error': 'timed out'})}\n\n"
+
+        executor.shutdown(wait=False)
         yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
     return StreamingResponse(

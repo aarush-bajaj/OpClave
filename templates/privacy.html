@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — OpClave</title>
+  <meta name="description" content="OpClave privacy policy — what we collect, how we use it, and your rights.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050608;
+      --bg-raised: #0b0d12;
+      --bg-glass: rgba(13,15,21,0.55);
+      --line: rgba(255,255,255,0.055);
+      --line-2: rgba(255,255,255,0.09);
+      --text: #edf0f4;
+      --text-dim: #969cab;
+      --text-faint: #5b6271;
+      --accent: #c9a77a;
+      --accent-bright: #e7c79c;
+      --serif: 'Bricolage Grotesque', sans-serif;
+      --sans: 'Hanken Grotesk', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      font-size: 15px;
+      line-height: 1.75;
+      letter-spacing: 0.005em;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: var(--accent); text-decoration: none; transition: color 0.2s var(--ease-out); }
+    a:hover { color: var(--accent-bright); }
+    ::selection { background: rgba(201,167,122,0.22); color: #fff; }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 36px; height: 60px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5,6,8,0.82);
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 9px; }
+    .nav-wordmark { font-family: var(--serif); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; color: var(--text); }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { font-family: var(--mono); font-size: 12px; color: var(--text-faint); transition: color 0.2s var(--ease-out); }
+    .nav-links a:hover { color: var(--text-dim); }
+    .nav-cta {
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+      padding: 7px 16px; border-radius: 8px;
+      background: var(--accent); color: #1a1208;
+      transition: background 0.2s var(--ease-out);
+    }
+    .nav-cta:hover { background: var(--accent-bright); color: #1a1208; }
+
+    /* ── Page layout ── */
+    .page-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 72px 36px 96px;
+    }
+
+    /* ── Header ── */
+    .page-eyebrow {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 20px;
+    }
+    .page-title {
+      font-family: var(--serif); font-weight: 700; font-size: clamp(28px, 5vw, 42px);
+      line-height: 1.15; letter-spacing: -0.025em; color: var(--text);
+      margin-bottom: 16px;
+    }
+    .page-meta {
+      font-family: var(--mono); font-size: 12px; color: var(--text-faint);
+      margin-bottom: 48px; padding-bottom: 48px; border-bottom: 1px solid var(--line);
+    }
+
+    /* ── Lead paragraph ── */
+    .lead {
+      font-size: 16px; font-weight: 400; color: var(--text-dim);
+      line-height: 1.7; margin-bottom: 48px;
+    }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 48px; }
+
+    h2 {
+      font-family: var(--serif); font-weight: 700; font-size: 18px;
+      letter-spacing: -0.015em; color: var(--text);
+      margin-bottom: 16px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    p { color: var(--text-dim); margin-bottom: 14px; }
+    p:last-child { margin-bottom: 0; }
+
+    ul {
+      list-style: none; padding: 0;
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 14px;
+    }
+    ul li {
+      color: var(--text-dim);
+      padding-left: 20px; position: relative;
+    }
+    ul li::before {
+      content: '–';
+      position: absolute; left: 0;
+      color: var(--text-faint);
+    }
+
+    /* ── Provider table ── */
+    .providers {
+      border: 1px solid var(--line-2); border-radius: 12px;
+      overflow: hidden; margin-bottom: 14px;
+    }
+    .provider-row {
+      display: grid; grid-template-columns: 1fr 1fr 1.5fr;
+      gap: 0; border-bottom: 1px solid var(--line);
+    }
+    .provider-row:last-child { border-bottom: none; }
+    .provider-row.header {
+      background: var(--bg-raised);
+    }
+    .provider-cell {
+      padding: 11px 16px; font-size: 13px; color: var(--text-dim);
+      border-right: 1px solid var(--line);
+    }
+    .provider-cell:last-child { border-right: none; }
+    .provider-row.header .provider-cell {
+      font-family: var(--mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint);
+    }
+    .provider-cell a { font-size: 12px; }
+
+    /* ── Callout ── */
+    .callout {
+      background: rgba(201, 167, 122, 0.06);
+      border: 1px solid rgba(201, 167, 122, 0.18);
+      border-radius: 10px; padding: 16px 20px;
+      color: var(--text-dim); font-size: 14px;
+      margin-bottom: 14px;
+    }
+    .callout strong { color: var(--accent); font-weight: 500; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--line); padding: 36px;
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      align-items: center; gap: 24px;
+      max-width: 1180px; margin: 0 auto;
+    }
+    .footer-logo { display: flex; align-items: center; gap: 9px; }
+    .footer-wordmark { font-family: var(--serif); font-weight: 600; font-size: 15px; letter-spacing: -0.02em; color: var(--text-dim); }
+    .footer-links { display: flex; gap: 28px; align-items: center; justify-content: center; }
+    .footer-links a { font-family: var(--mono); font-size: 12px; color: var(--text-faint); transition: color 0.2s var(--ease-out); }
+    .footer-links a:hover { color: var(--text-dim); }
+    .footer-built { font-family: var(--mono); font-size: 11px; color: var(--text-faint); text-align: right; }
+    .footer-built a { color: var(--text-faint); border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 1px; transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out); }
+    .footer-built a:hover { color: var(--text-dim); border-color: rgba(255,255,255,0.28); }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .page-wrap { padding: 48px 20px 72px; }
+      .provider-row { grid-template-columns: 1fr 1fr; }
+      .provider-cell:last-child { grid-column: 1 / -1; border-top: 1px solid var(--line); border-right: none; }
+      .provider-row.header .provider-cell:last-child { display: none; }
+      footer { grid-template-columns: 1fr; gap: 18px; }
+      .footer-links { justify-content: flex-start; }
+      .footer-built { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <img src="/assets/logo.png" alt="OpClave" width="22" height="22" style="object-fit:contain;display:block;flex-shrink:0">
+    <span class="nav-wordmark">OpClave</span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/app" class="nav-cta">Open app</a>
+  </div>
+</nav>
+
+<main class="page-wrap">
+
+  <p class="page-eyebrow">Legal</p>
+  <h1 class="page-title">Privacy Policy</h1>
+  <p class="page-meta">Last updated: May 28, 2025 &nbsp;·&nbsp; Effective: May 28, 2025</p>
+
+  <p class="lead">
+    OpClave ("we", "us", "our") operates the OpClave web application at opclave.com. This policy explains what data we collect, why we collect it, who we share it with, and what rights you have over your data.
+  </p>
+
+  <!-- 1 -->
+  <div class="section">
+    <h2>1. What we collect</h2>
+
+    <p><strong style="color:var(--text);font-weight:500">Queries and prompts.</strong> When you submit a question or prompt, the text is sent to one or more AI model providers (see Section 3) and a short preview (up to 120 characters) is stored in our usage logs so we can monitor service health and cost.</p>
+
+    <p><strong style="color:var(--text);font-weight:500">Uploaded files.</strong> If you attach a file (PDF, image, or text), its content is sent to an AI model for extraction and is not stored on our servers beyond the duration of the request.</p>
+
+    <p><strong style="color:var(--text);font-weight:500">Account information.</strong> If you sign in via GitHub OAuth (powered by Supabase), we receive and store your GitHub user ID, email address, and display name as provided by GitHub.</p>
+
+    <p><strong style="color:var(--text);font-weight:500">Feedback.</strong> If you submit feedback through the app, the message text and sentiment (thumbs up / down) are emailed to us and retained in our inbox.</p>
+
+    <p><strong style="color:var(--text);font-weight:500">Usage metadata.</strong> For rate limiting and abuse prevention, we store a per-IP or per-user request count in Redis. This resets every 24 hours. We do not build long-term behavioural profiles from this data.</p>
+
+    <p><strong style="color:var(--text);font-weight:500">Browser storage.</strong> We use <code style="font-family:var(--mono);font-size:13px;color:var(--accent)">localStorage</code> on your device to save conversation history, thread names, prompt counts, and UI preferences. This data never leaves your browser unless you explicitly share it.</p>
+  </div>
+
+  <!-- 2 -->
+  <div class="section">
+    <h2>2. How we use your data</h2>
+    <ul>
+      <li>To fulfil your queries by forwarding prompts to AI model providers and returning responses.</li>
+      <li>To enforce fair-use rate limits and prevent abuse.</li>
+      <li>To monitor service health, debug errors, and estimate infrastructure costs.</li>
+      <li>To respond to feedback you send us.</li>
+      <li>To authenticate you when you sign in.</li>
+    </ul>
+    <p>We do not sell your data, use it for advertising, or train our own AI models with it.</p>
+  </div>
+
+  <!-- 3 -->
+  <div class="section">
+    <h2>3. Third-party AI providers</h2>
+    <p>Your prompts and any attached file content are forwarded to the following providers to generate responses. Each provider has its own privacy policy and data-handling practices:</p>
+
+    <div class="providers">
+      <div class="provider-row header">
+        <div class="provider-cell">Provider</div>
+        <div class="provider-cell">Used for</div>
+        <div class="provider-cell">Privacy policy</div>
+      </div>
+      <div class="provider-row">
+        <div class="provider-cell">OpenAI</div>
+        <div class="provider-cell">GPT model responses</div>
+        <div class="provider-cell"><a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener">openai.com/policies/privacy-policy</a></div>
+      </div>
+      <div class="provider-row">
+        <div class="provider-cell">Anthropic</div>
+        <div class="provider-cell">Claude responses &amp; synthesis</div>
+        <div class="provider-cell"><a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener">anthropic.com/legal/privacy</a></div>
+      </div>
+      <div class="provider-row">
+        <div class="provider-cell">Google DeepMind</div>
+        <div class="provider-cell">Gemini responses &amp; image generation</div>
+        <div class="provider-cell"><a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a></div>
+      </div>
+      <div class="provider-row">
+        <div class="provider-cell">xAI</div>
+        <div class="provider-cell">Grok responses</div>
+        <div class="provider-cell"><a href="https://x.ai/legal/privacy-policy" target="_blank" rel="noopener">x.ai/legal/privacy-policy</a></div>
+      </div>
+      <div class="provider-row">
+        <div class="provider-cell">Perplexity AI</div>
+        <div class="provider-cell">Web-search synthesis</div>
+        <div class="provider-cell"><a href="https://www.perplexity.ai/privacy" target="_blank" rel="noopener">perplexity.ai/privacy</a></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>Important:</strong> When web search is enabled, your query is sent to Perplexity's Sonar API which performs live web searches. Do not include sensitive personal information in queries when web search is active.
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="section">
+    <h2>4. Infrastructure providers</h2>
+    <ul>
+      <li><strong style="color:var(--text);font-weight:500">Supabase</strong> — user authentication and database. <a href="https://supabase.com/privacy" target="_blank" rel="noopener">supabase.com/privacy</a></li>
+      <li><strong style="color:var(--text);font-weight:500">Upstash Redis</strong> — ephemeral rate-limit counters (no prompt content stored). <a href="https://upstash.com/trust/privacy.pdf" target="_blank" rel="noopener">upstash.com/trust/privacy.pdf</a></li>
+      <li><strong style="color:var(--text);font-weight:500">Vercel</strong> — application hosting. <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">vercel.com/legal/privacy-policy</a></li>
+    </ul>
+  </div>
+
+  <!-- 5 -->
+  <div class="section">
+    <h2>5. Data retention</h2>
+    <ul>
+      <li><strong style="color:var(--text);font-weight:500">Usage logs</strong> — we retain a rolling window of the most recent 1,000 log entries in Redis. Older entries are automatically deleted.</li>
+      <li><strong style="color:var(--text);font-weight:500">Rate-limit counters</strong> — deleted automatically after 24 hours (general) or 1 hour (file uploads).</li>
+      <li><strong style="color:var(--text);font-weight:500">Account data</strong> — retained for as long as your account exists. You can request deletion at any time.</li>
+      <li><strong style="color:var(--text);font-weight:500">Conversation history</strong> — stored in your browser's <code style="font-family:var(--mono);font-size:13px;color:var(--accent)">localStorage</code> only. We have no copy of it.</li>
+      <li><strong style="color:var(--text);font-weight:500">Feedback messages</strong> — retained in our email inbox until manually deleted.</li>
+    </ul>
+  </div>
+
+  <!-- 6 -->
+  <div class="section">
+    <h2>6. Cookies and local storage</h2>
+    <p>We do not use tracking cookies or advertising cookies. Supabase sets a session cookie (<code style="font-family:var(--mono);font-size:13px;color:var(--accent)">sb-*</code>) for authentication when you sign in. We use <code style="font-family:var(--mono);font-size:13px;color:var(--accent)">localStorage</code> to persist conversation threads, settings, and prompt counts entirely within your browser.</p>
+  </div>
+
+  <!-- 7 -->
+  <div class="section">
+    <h2>7. Your rights</h2>
+    <p>Depending on where you live, you may have the right to:</p>
+    <ul>
+      <li>Access the personal data we hold about you.</li>
+      <li>Request correction of inaccurate data.</li>
+      <li>Request deletion of your account and associated data.</li>
+      <li>Object to or restrict certain processing.</li>
+      <li>Data portability (receive your data in a machine-readable format).</li>
+    </ul>
+    <p>To exercise any of these rights, email us at <a href="mailto:councilaiclb@gmail.com">councilaiclb@gmail.com</a>. We will respond within 30 days. Note that conversation history stored in your browser is yours to delete directly — clear your browser's <code style="font-family:var(--mono);font-size:13px;color:var(--accent)">localStorage</code> at any time.</p>
+  </div>
+
+  <!-- 8 -->
+  <div class="section">
+    <h2>8. Children</h2>
+    <p>OpClave is not directed at children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us with personal data, please contact us and we will delete it.</p>
+  </div>
+
+  <!-- 9 -->
+  <div class="section">
+    <h2>9. Changes to this policy</h2>
+    <p>We may update this policy from time to time. When we do, we will update the "Last updated" date at the top. Continued use of OpClave after a change constitutes acceptance of the updated policy.</p>
+  </div>
+
+  <!-- 10 -->
+  <div class="section">
+    <h2>10. Contact</h2>
+    <p>Questions about this policy? Reach us at <a href="mailto:councilaiclb@gmail.com">councilaiclb@gmail.com</a>.</p>
+  </div>
+
+</main>
+
+<footer>
+  <a href="/" class="footer-logo">
+    <img src="/assets/logo.png" alt="OpClave" width="24" height="24" style="object-fit:contain;display:block;flex-shrink:0">
+    <span class="footer-wordmark">OpClave</span>
+  </a>
+  <div class="footer-links">
+    <a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">GitHub</a>
+    <a href="/privacy">Privacy</a>
+  </div>
+  <div class="footer-built">built by&nbsp;<a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener">aarush bajaj</a>&nbsp;&amp;&nbsp;<a href="https://www.linkedin.com/in/adityamishra-fintech/" target="_blank" rel="noopener">aditya mishra</a></div>
+</footer>
+
+</body>
+</html>
