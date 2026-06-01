@@ -2448,59 +2448,61 @@
   <!-- Context limit modal -->
   <!-- Chat area -->
   <div id="chat-area" class="flex-1 overflow-y-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2 scroll-smooth relative">
-    <div id="empty-state" class="max-w-[700px] w-full text-center px-6">
+    <div id="empty-state">
+      <!-- Inner wrapper: centered, max 700px, not the full-bleed container -->
+      <div class="max-w-[700px] w-full text-center px-6">
 
+        <!-- Editorial serif headline -->
+        <h2 class="display-serif dark:text-white text-gray-900 mb-4"
+            style="font-size: clamp(42px, 7vw, 68px);">
+          Ask <em>Voyance.</em>
+        </h2>
 
-      <!-- Editorial serif headline -->
-      <h2 class="display-serif dark:text-white text-gray-900 mb-4"
-          style="font-size: clamp(42px, 7vw, 68px);">
-        Ask <em>Voyance.</em>
-      </h2>
+        <!-- Subtitle -->
+        <p class="dark:text-gray-500 text-gray-500 text-sm max-w-[340px] mx-auto leading-relaxed mb-8">
+          Ask once. Get independent answers from four AI models, synthesized into one.
+        </p>
 
-      <!-- Subtitle -->
-      <p class="dark:text-gray-500 text-gray-500 text-sm max-w-[340px] mx-auto leading-relaxed mb-8">
-        Ask once. Get independent answers from four AI models, synthesized into one.
-      </p>
+        <!-- Prompt chips -->
+        <div class="flex flex-wrap gap-2 justify-center">
+          <span onclick="fillInput(this)"
+            class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
+            Explain quantum entanglement simply
+          </span>
+          <span onclick="fillInput(this)"
+            class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
+            Best practices for REST API design?
+          </span>
+          <span onclick="fillInput(this)"
+            class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
+            Compare Python and Go for backends
+          </span>
+          <span onclick="fillInput(this)"
+            class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
+            RAG vs. fine-tuning for production LLM apps?
+          </span>
+          <span onclick="fillInput(this)"
+            class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
+            Which LLM should I use for my app?
+          </span>
+        </div>
 
-      <!-- Prompt chips -->
-      <div class="flex flex-wrap gap-2 justify-center">
-        <span onclick="fillInput(this)"
-          class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
-          Explain quantum entanglement simply
-        </span>
-        <span onclick="fillInput(this)"
-          class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
-          Best practices for REST API design?
-        </span>
-        <span onclick="fillInput(this)"
-          class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
-          Compare Python and Go for backends
-        </span>
-        <span onclick="fillInput(this)"
-          class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
-          RAG vs. fine-tuning for production LLM apps?
-        </span>
-        <span onclick="fillInput(this)"
-          class="prompt-chip cursor-pointer dark:bg-transparent bg-white border dark:border-[#1e1e1e] border-gray-200 rounded-full px-4 py-2 text-[13px] dark:text-gray-500 text-gray-500 transition-colors">
-          Which LLM should I use for my app?
-        </span>
+        <!-- Attribution -->
+        <p style="margin-top:40px;font-family:'Hanken Grotesk',sans-serif;font-size:11px;color:#78787e;letter-spacing:0.02em">
+          Built by
+          <a href="https://www.linkedin.com/in/aarush-bajaj-82a8592b1/" target="_blank" rel="noopener noreferrer"
+            style="color:#78787e;text-decoration:underline;text-underline-offset:3px;transition:color 0.15s"
+            onmouseover="this.style.color='#c9a77a'" onmouseout="this.style.color='#55555a'">Aarush Bajaj</a>
+          &amp;
+          <a href="https://www.linkedin.com/in/adityamishra-fintech/" target="_blank" rel="noopener noreferrer"
+            style="color:#78787e;text-decoration:underline;text-underline-offset:3px;transition:color 0.15s"
+            onmouseover="this.style.color='#c9a77a'" onmouseout="this.style.color='#55555a'">Aditya Mishra</a>
+          &nbsp;·&nbsp;
+          <a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener noreferrer"
+            style="color:#78787e;text-decoration:underline;text-underline-offset:3px;transition:color 0.15s"
+            onmouseover="this.style.color='#c9a77a'" onmouseout="this.style.color='#55555a'">GitHub</a>
+        </p>
       </div>
-
-      <!-- Attribution -->
-      <p style="margin-top:40px;font-family:'Hanken Grotesk',sans-serif;font-size:11px;color:#78787e;letter-spacing:0.02em">
-        Built by
-        <a href="https://www.linkedin.com/in/aarush-bajaj-82a8592b1/" target="_blank" rel="noopener noreferrer"
-          style="color:#78787e;text-decoration:underline;text-underline-offset:3px;transition:color 0.15s"
-          onmouseover="this.style.color='#c9a77a'" onmouseout="this.style.color='#55555a'">Aarush Bajaj</a>
-        &amp;
-        <a href="https://www.linkedin.com/in/adityamishra-fintech/" target="_blank" rel="noopener noreferrer"
-          style="color:#78787e;text-decoration:underline;text-underline-offset:3px;transition:color 0.15s"
-          onmouseover="this.style.color='#c9a77a'" onmouseout="this.style.color='#55555a'">Aditya Mishra</a>
-        &nbsp;·&nbsp;
-        <a href="https://github.com/p6oo/OpClave" target="_blank" rel="noopener noreferrer"
-          style="color:#78787e;text-decoration:underline;text-underline-offset:3px;transition:color 0.15s"
-          onmouseover="this.style.color='#c9a77a'" onmouseout="this.style.color='#55555a'">GitHub</a>
-      </p>
     </div>
     <div class="max-w-[760px] mx-auto flex flex-col" id="messages"></div>
   </div>
