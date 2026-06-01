@@ -941,9 +941,7 @@
     }
 
     #user-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
+      position: fixed;
       background: #111115;
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 10px;
@@ -2300,33 +2298,7 @@
 
     <!-- Auth: sign-in button or user avatar -->
     <button id="auth-btn" class="auth-header-btn" onclick="AuthModal.show()" style="display:none">Sign in</button>
-    <div style="position:relative;display:inline-flex;align-items:center;flex-shrink:0">
-      <img id="user-avatar" class="user-avatar" style="display:none" onclick="showUserMenu()" alt="Profile"/>
-      <div id="user-dropdown" style="display:none">
-        <div class="user-dropdown-profile">
-          <img id="user-menu-avatar" src="" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0"/>
-          <div class="user-dropdown-info">
-            <div id="user-menu-name" class="user-dropdown-name"></div>
-            <div id="user-menu-email" class="user-dropdown-email"></div>
-          </div>
-        </div>
-        <button class="user-dropdown-item" onclick="switchAppMode('studio');toggleArtifactsPanel();hideUserMenu()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          My artifacts
-        </button>
-        <button class="user-dropdown-item danger" onclick="AuthManager.signOut()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Sign out
-        </button>
-        <div class="user-dropdown-danger-divider">
-          <span class="user-dropdown-danger-label">Danger Zone</span>
-        </div>
-        <button class="user-dropdown-item danger" onclick="DeleteAccountModal.show(); hideUserMenu()">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-          Delete account
-        </button>
-      </div>
-    </div>
+    <img id="user-avatar" class="user-avatar" style="display:none" onclick="showUserMenu()" alt="Profile"/>
 
 
 <!-- Sidebar toggle -->
@@ -6433,8 +6405,16 @@
 
   // ── User dropdown helpers ─────────────────────────
   function showUserMenu() {
-    const menu = document.getElementById('user-dropdown');
-    if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    const menu   = document.getElementById('user-dropdown');
+    const avatar = document.getElementById('user-avatar');
+    if (!menu || !avatar) return;
+    if (menu.style.display !== 'none') { menu.style.display = 'none'; return; }
+    // Position fixed dropdown below the avatar, aligned to its right edge
+    const r = avatar.getBoundingClientRect();
+    menu.style.top   = (r.bottom + 8) + 'px';
+    menu.style.right = (window.innerWidth - r.right) + 'px';
+    menu.style.left  = 'auto';
+    menu.style.display = 'block';
   }
   function hideUserMenu() {
     const menu = document.getElementById('user-dropdown');
@@ -7972,6 +7952,32 @@
     }
   })();
 </script>
+
+<!-- ── User dropdown (body-level to escape overflow:hidden on #main) ── -->
+<div id="user-dropdown" style="display:none">
+  <div class="user-dropdown-profile">
+    <img id="user-menu-avatar" src="" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0"/>
+    <div class="user-dropdown-info">
+      <div id="user-menu-name" class="user-dropdown-name"></div>
+      <div id="user-menu-email" class="user-dropdown-email"></div>
+    </div>
+  </div>
+  <button class="user-dropdown-item" onclick="switchAppMode('studio');toggleArtifactsPanel();hideUserMenu()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    My artifacts
+  </button>
+  <button class="user-dropdown-item danger" onclick="AuthManager.signOut()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    Sign out
+  </button>
+  <div class="user-dropdown-danger-divider">
+    <span class="user-dropdown-danger-label">Danger Zone</span>
+  </div>
+  <button class="user-dropdown-item danger" onclick="DeleteAccountModal.show(); hideUserMenu()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    Delete account
+  </button>
+</div>
 
 <!-- ── Delete Account modal ───────────────────────────────────── -->
 <div id="delete-account-modal" onclick="if(event.target===this)DeleteAccountModal.hide()">
