@@ -991,31 +991,32 @@
     }
 
     /* ── Delete account modal ────────────────────────── */
-    #delete-account-modal .delete-modal-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(4px);
-      z-index: 1000;
+    #delete-account-modal {
       display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.78);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 9000;
+      align-items: center; justify-content: center;
+      padding: 16px;
     }
-    #delete-account-modal.visible .delete-modal-backdrop { display: block; }
+    #delete-account-modal.visible { display: flex; }
     .delete-modal-card {
-      position: fixed;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.95);
       background: #111115;
       border: 1px solid rgba(239,68,68,0.22);
       border-radius: 16px;
       padding: 32px;
       width: 380px;
-      max-width: calc(100vw - 32px);
-      z-index: 1001;
-      opacity: 0; pointer-events: none;
-      transition: all 0.22s ease;
+      max-width: 100%;
+      position: relative;
+      transform: scale(0.95);
+      opacity: 0;
+      transition: transform 0.22s ease, opacity 0.22s ease;
     }
     #delete-account-modal.visible .delete-modal-card {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1; pointer-events: auto;
+      transform: scale(1);
+      opacity: 1;
     }
     .delete-modal-icon {
       width: 44px; height: 44px; border-radius: 50%;
@@ -7973,8 +7974,7 @@
 </script>
 
 <!-- ── Delete Account modal ───────────────────────────────────── -->
-<div id="delete-account-modal">
-  <div class="delete-modal-backdrop" onclick="DeleteAccountModal.hide()"></div>
+<div id="delete-account-modal" onclick="if(event.target===this)DeleteAccountModal.hide()">
   <div class="delete-modal-card">
     <div class="delete-modal-icon">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
