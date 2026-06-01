@@ -977,6 +977,104 @@
     .user-dropdown-item:hover { background: rgba(255,255,255,0.05); color: #ededed; }
     .user-dropdown-item.danger:hover { background: rgba(239,68,68,0.08); color: #f87171; }
 
+    .user-dropdown-danger-divider {
+      margin: 6px 0 4px;
+      padding: 6px 8px 0;
+      border-top: 1px solid rgba(239,68,68,0.15);
+      display: flex; align-items: center;
+    }
+    .user-dropdown-danger-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(239,68,68,0.45);
+    }
+
+    /* ── Delete account modal ────────────────────────── */
+    #delete-account-modal .delete-modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+    }
+    #delete-account-modal.visible .delete-modal-backdrop { display: block; }
+    .delete-modal-card {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.95);
+      background: #111115;
+      border: 1px solid rgba(239,68,68,0.22);
+      border-radius: 16px;
+      padding: 32px;
+      width: 380px;
+      max-width: calc(100vw - 32px);
+      z-index: 1001;
+      opacity: 0; pointer-events: none;
+      transition: all 0.22s ease;
+    }
+    #delete-account-modal.visible .delete-modal-card {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1; pointer-events: auto;
+    }
+    .delete-modal-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.22);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px; color: #ef4444;
+    }
+    .delete-modal-title {
+      font-family: 'Bricolage Grotesque', serif;
+      font-size: 20px; font-weight: 600; letter-spacing: -0.02em;
+      color: #ededed; text-align: center; margin-bottom: 10px;
+    }
+    .delete-modal-body {
+      font-size: 13px; color: #b8b8c0; line-height: 1.65;
+      text-align: center; margin-bottom: 22px;
+    }
+    .delete-modal-confirm-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: #78787e; letter-spacing: 0.04em;
+      margin-bottom: 8px; display: block;
+    }
+    .delete-modal-confirm-label span { color: #ef4444; font-weight: 600; }
+    .delete-modal-input {
+      width: 100%;
+      background: rgba(239,68,68,0.04);
+      border: 1px solid rgba(239,68,68,0.18);
+      border-radius: 8px; padding: 9px 13px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; color: #ededed; letter-spacing: 0.08em;
+      outline: none; margin-bottom: 16px;
+      transition: border-color 0.15s;
+    }
+    .delete-modal-input:focus { border-color: rgba(239,68,68,0.45); }
+    .delete-modal-input::placeholder { color: #3a3a40; }
+    .delete-modal-actions { display: flex; gap: 10px; }
+    .delete-modal-cancel {
+      flex: 1; padding: 9px 16px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: transparent; color: #b8b8c0;
+      font-size: 13px; font-family: 'Hanken Grotesk', sans-serif;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .delete-modal-cancel:hover { background: rgba(255,255,255,0.05); color: #ededed; }
+    .delete-modal-confirm-btn {
+      flex: 1; padding: 9px 16px; border-radius: 8px;
+      border: 1px solid #ef4444; background: transparent; color: #ef4444;
+      font-size: 13px; font-family: 'Hanken Grotesk', sans-serif;
+      cursor: pointer; opacity: 0.35; pointer-events: none;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .delete-modal-confirm-btn.enabled { opacity: 1; pointer-events: auto; }
+    .delete-modal-confirm-btn.enabled:hover { background: rgba(239,68,68,0.1); }
+    .delete-modal-confirm-btn.loading { opacity: 0.5; pointer-events: none; }
+    .delete-modal-error {
+      font-size: 12px; color: #f87171; text-align: center;
+      margin-top: 12px; display: none;
+    }
+
     .auth-modal-backdrop {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.7);
@@ -2218,6 +2316,13 @@
         <button class="user-dropdown-item danger" onclick="AuthManager.signOut()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Sign out
+        </button>
+        <div class="user-dropdown-danger-divider">
+          <span class="user-dropdown-danger-label">Danger Zone</span>
+        </div>
+        <button class="user-dropdown-item danger" onclick="DeleteAccountModal.show(); hideUserMenu()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Delete account
         </button>
       </div>
     </div>
@@ -6069,6 +6174,15 @@
       // onAuthStateChange SIGNED_OUT handler clears all state
     },
 
+    async deleteAccount() {
+      const sb = getSupabase();
+      if (!sb) throw new Error('Not connected to auth service.');
+      const { error } = await sb.rpc('delete_user');
+      if (error) throw new Error(error.message || 'Account deletion failed.');
+      await sb.auth.signOut();
+      window.location.href = '/';
+    },
+
     isLoggedIn() { return this.user !== null; },
 
     updateUI() {
@@ -7856,6 +7970,88 @@
       initLineCount();
     }
   })();
+</script>
+
+<!-- ── Delete Account modal ───────────────────────────────────── -->
+<div id="delete-account-modal">
+  <div class="delete-modal-backdrop" onclick="DeleteAccountModal.hide()"></div>
+  <div class="delete-modal-card">
+    <div class="delete-modal-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+      </svg>
+    </div>
+    <div class="delete-modal-title">Delete account</div>
+    <p class="delete-modal-body">
+      This will permanently delete your account, all your artifacts, and all your threads.
+      <strong style="color:#ededed">This cannot be undone.</strong>
+    </p>
+    <label class="delete-modal-confirm-label">Type <span>DELETE</span> to confirm</label>
+    <input id="delete-confirm-input" class="delete-modal-input" type="text"
+      placeholder="DELETE" autocomplete="off" spellcheck="false"
+      oninput="DeleteAccountModal.onInput(this.value)" />
+    <div class="delete-modal-actions">
+      <button class="delete-modal-cancel" onclick="DeleteAccountModal.hide()">Cancel</button>
+      <button id="delete-confirm-btn" class="delete-modal-confirm-btn" onclick="DeleteAccountModal.confirm()">Delete account</button>
+    </div>
+    <p id="delete-modal-error" class="delete-modal-error"></p>
+  </div>
+</div>
+
+<script>
+  // ── Delete Account modal logic ────────────────────────────────
+  const DeleteAccountModal = {
+    show() {
+      const modal = document.getElementById('delete-account-modal');
+      const input = document.getElementById('delete-confirm-input');
+      const errEl = document.getElementById('delete-modal-error');
+      const btn   = document.getElementById('delete-confirm-btn');
+      if (!modal) return;
+      if (input) input.value = '';
+      if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+      if (btn)   { btn.classList.remove('enabled', 'loading'); btn.textContent = 'Delete account'; }
+      modal.classList.add('visible');
+      if (input) setTimeout(() => input.focus(), 120);
+    },
+
+    hide() {
+      const modal = document.getElementById('delete-account-modal');
+      if (modal) modal.classList.remove('visible');
+    },
+
+    onInput(val) {
+      const btn = document.getElementById('delete-confirm-btn');
+      if (!btn) return;
+      btn.classList.toggle('enabled', val === 'DELETE');
+    },
+
+    async confirm() {
+      const btn   = document.getElementById('delete-confirm-btn');
+      const errEl = document.getElementById('delete-modal-error');
+      if (!btn || !btn.classList.contains('enabled')) return;
+      btn.classList.add('loading');
+      btn.textContent = 'Deleting…';
+      if (errEl) errEl.style.display = 'none';
+      try {
+        await AuthManager.deleteAccount();
+        // deleteAccount redirects to /; nothing to do here
+      } catch(e) {
+        btn.classList.remove('loading');
+        btn.textContent = 'Delete account';
+        if (errEl) {
+          errEl.textContent = e.message || 'Deletion failed. Please try again.';
+          errEl.style.display = 'block';
+        }
+      }
+    }
+  };
+  window.DeleteAccountModal = DeleteAccountModal;
+
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') DeleteAccountModal.hide();
+  });
 </script>
 </body>
 </html>
