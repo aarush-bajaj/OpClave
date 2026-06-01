@@ -6416,11 +6416,13 @@
     const avatar = document.getElementById('user-avatar');
     if (!menu || !avatar) return;
     if (menu.style.display !== 'none') { menu.style.display = 'none'; return; }
-    // Position fixed dropdown below the avatar, aligned to its right edge
     const r = avatar.getBoundingClientRect();
+    const menuW = 260; // matches min-width in CSS
+    // Align dropdown's right edge with avatar's right edge, clamped to viewport
+    const left = Math.max(8, Math.min(r.right - menuW, window.innerWidth - menuW - 8));
     menu.style.top   = (r.bottom + 8) + 'px';
-    menu.style.right = (window.innerWidth - r.right) + 'px';
-    menu.style.left  = 'auto';
+    menu.style.left  = left + 'px';
+    menu.style.right = 'auto';
     menu.style.display = 'block';
   }
   function hideUserMenu() {
