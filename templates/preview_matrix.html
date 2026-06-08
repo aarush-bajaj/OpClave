@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consensus Matrix Explorer — Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #07080b;
+      --bg-raised: #0e1016;
+      --line: rgba(255,255,255,0.07);
+      --line-hover: rgba(255,255,255,0.14);
+      --text: #e4e7ed;
+      --text-dim: #8e96a4;
+      --text-faint: #545b69;
+      --accent: #c9a77a;
+      --accent-soft: rgba(201,167,122,0.12);
+      --cyan: #46e0d4;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Hanken Grotesk', sans-serif;
+
+      /* Stance color tokens — distinct from every model identity color */
+      --stance-agree:   45,212,191;
+      --stance-partial: 252,211,77;
+      --stance-dissent: 248,113,113;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .preview-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 520px;
+      margin: 0 auto;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+
+    /* Preview header bar */
+    .preview-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(201,167,122,0.15);
+      background: #0a0a0a;
+      flex-shrink: 0;
+    }
+    .preview-bar-label {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .preview-badge {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(70,224,212,0.1);
+      color: #46e0d4;
+      border: 1px solid rgba(70,224,212,0.28);
+      border-radius: 4px;
+      padding: 2px 7px;
+    }
+    .preview-scenario {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .scenario-btn {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 3px 9px;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .scenario-btn:hover, .scenario-btn.active { color: var(--accent); border-color: rgba(201,167,122,0.4); }
+
+    /* Fake question pill */
+    .preview-question {
+      padding: 9px 16px 8px;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--text-faint);
+      line-height: 1.5;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    /* Body area — scrollable, hosts the matrix explorer */
+    .preview-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── Consensus Matrix Explorer styles (copied from index.html) ── */
+    .cmx-pulse {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .cmx-pulse-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 6px 8px;
+      border-right: 1px solid var(--line);
+      gap: 2px;
+    }
+    .cmx-pulse-item:last-child { border-right: none; }
+    .cmx-pulse-num { font-family: var(--mono); font-size: 17px; font-weight: 700; line-height: 1; color: var(--text); }
+    .cmx-pulse-num.score { color: rgb(var(--stance-agree)); }
+    .cmx-pulse-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-faint); }
+
+    .cmx-filters { display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
+    .cmx-chip {
+      background: none; border: 1px solid var(--line); border-radius: 5px;
+      padding: 3px 9px; font-family: var(--mono); font-size: 9px;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint);
+      cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; white-space: nowrap;
+    }
+    .cmx-chip:hover { color: var(--text-dim); border-color: var(--line-hover); }
+    .cmx-chip.active { color: var(--accent); border-color: rgba(201,167,122,0.45); background: rgba(201,167,122,0.07); }
+    .cmx-chip-count { display: inline-block; margin-left: 4px; opacity: 0.65; }
+
+    .cmx-sort-row { display: flex; justify-content: flex-end; flex-shrink: 0; }
+    .cmx-sort-btn {
+      background: none; border: none; cursor: pointer; display: flex; align-items: center;
+      gap: 4px; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-faint); padding: 2px 0; transition: color 0.15s;
+    }
+    .cmx-sort-btn:hover { color: var(--text-dim); }
+    .cmx-sort-btn.active { color: var(--accent); }
+
+    .cmx-matrix {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid var(--line); border-radius: 8px;
+    }
+    .cmx-hdr {
+      display: grid;
+      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 44px);
+      border-bottom: 1px solid var(--line); flex-shrink: 0;
+    }
+    .cmx-hdr-blank { padding: 7px 10px; border-right: 1px solid var(--line); }
+    .cmx-hdr-model {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; padding: 6px 2px; border-right: 1px solid var(--line);
+    }
+    .cmx-hdr-model:last-child { border-right: none; }
+    .cmx-hdr-dot { width: 6px; height: 6px; border-radius: 50%; background: rgb(var(--pmc)); flex-shrink: 0; }
+    .cmx-hdr-name { font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--pmc)); line-height: 1; }
+
+    .cmx-rows { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .cmx-row {
+      display: grid;
+      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 44px);
+      border-bottom: 1px solid var(--line); cursor: pointer; transition: background 0.12s;
+    }
+    .cmx-row:last-child { border-bottom: none; }
+    .cmx-row:hover { background: rgba(255,255,255,0.025); }
+    .cmx-row:focus { outline: none; background: rgba(201,167,122,0.06); }
+    .cmx-row.expanded { background: rgba(201,167,122,0.04); }
+
+    .cmx-cat-cell {
+      display: flex; flex-direction: column; gap: 4px; padding: 8px 10px;
+      border-right: 1px solid var(--line); min-width: 0;
+    }
+    .cmx-cat-name {
+      font-size: 11.5px; color: var(--text-dim); line-height: 1.35;
+      overflow: hidden; text-overflow: ellipsis;
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    .cmx-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+    .cmx-tag {
+      font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.07em;
+      text-transform: uppercase; border-radius: 3px; padding: 1px 5px; line-height: 1.4;
+    }
+    .cmx-tag.consensus { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.10);   border: 1px solid rgba(var(--stance-agree),0.28); }
+    .cmx-tag.split     { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.10); border: 1px solid rgba(var(--stance-partial),0.28); }
+    .cmx-tag.contested { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.10); border: 1px solid rgba(var(--stance-dissent),0.28); }
+    .cmx-tag.gap       { color: var(--text-faint);          background: rgba(255,255,255,0.04);           border: 1px dashed rgba(255,255,255,0.18); }
+
+    .cmx-cell {
+      display: flex; align-items: center; justify-content: center;
+      border-right: 1px solid var(--line); min-height: 42px;
+    }
+    .cmx-cell:last-child { border-right: none; }
+    .cmx-cell-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .cmx-cell-icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 4px;
+    }
+    .cmx-cell-micro { font-family: var(--mono); font-size: 7px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
+
+    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.14);   color: rgb(var(--stance-agree)); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.14); color: rgb(var(--stance-partial)); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.14); color: rgb(var(--stance-dissent)); }
+    .cmx-cell[data-stance="absent"]  .cmx-cell-icon { background: transparent; border: 1px dashed rgba(255,255,255,0.16); color: var(--text-faint); }
+
+    .cmx-cell[data-stance="agree"]   .cmx-cell-micro { color: rgba(var(--stance-agree),0.7); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-micro { color: rgba(var(--stance-partial),0.7); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-micro { color: rgba(var(--stance-dissent),0.7); }
+    .cmx-cell[data-stance="absent"]  .cmx-cell-micro { color: var(--text-faint); }
+
+    .cmx-drill {
+      border-top: 1px solid rgba(201,167,122,0.15); background: rgba(201,167,122,0.03);
+      padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 10px;
+      animation: cmxDrillIn 0.18s ease;
+    }
+    @keyframes cmxDrillIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .cmx-drill-consensus-label {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 4px; display: block;
+    }
+    .cmx-drill-consensus-text { font-size: 11.5px; line-height: 1.55; color: var(--text-dim); }
+    .cmx-drill-stances { display: flex; flex-direction: column; gap: 6px; }
+    .cmx-drill-stance { border-radius: 6px; overflow: hidden; border: 1px solid rgba(var(--smc),0.18); }
+    .cmx-drill-stance-inner { padding: 7px 10px; border-left: 3px solid rgba(var(--smc),0.7); background: rgba(var(--smc),0.05); }
+    .cmx-drill-stance-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+    .cmx-drill-model { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--smc)); font-weight: 600; }
+    .cmx-drill-stance-badge {
+      display: inline-flex; align-items: center; gap: 3px; font-family: var(--mono);
+      font-size: 8px; letter-spacing: 0.06em; border-radius: 3px; padding: 1px 6px;
+    }
+    .cmx-drill-stance-badge.agree   { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.12);   border: 1px solid rgba(var(--stance-agree),0.3); }
+    .cmx-drill-stance-badge.partial { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.12); border: 1px solid rgba(var(--stance-partial),0.3); }
+    .cmx-drill-stance-badge.dissent { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.12); border: 1px solid rgba(var(--stance-dissent),0.3); }
+    .cmx-drill-stance-badge.absent  { color: var(--text-faint); background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.18); }
+    .cmx-drill-summary { font-size: 11px; line-height: 1.55; color: var(--text-dim); }
+    .cmx-drill-absent-note { font-size: 11px; font-style: italic; color: var(--text-faint); }
+    .cmx-drill-quote { margin-top: 5px; padding: 5px 8px; border-left: 2px solid rgba(var(--smc),0.35); font-size: 10.5px; font-style: italic; line-height: 1.5; color: var(--text-faint); }
+    .cmx-empty { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-faint); font-style: italic; padding: 20px; text-align: center; }
+
+    /* Screen-reader only utility */
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    /* Legend panel at bottom */
+    .preview-legend {
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      background: var(--bg-raised);
+      flex-shrink: 0;
+    }
+    .legend-title {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px;
+    }
+    .legend-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px 12px;
+    }
+    .legend-row { display: flex; align-items: center; gap: 7px; }
+    .legend-swatch {
+      width: 18px; height: 18px; border-radius: 4px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .legend-swatch.agree   { background: rgba(var(--stance-agree),0.14);   color: rgb(var(--stance-agree)); }
+    .legend-swatch.partial { background: rgba(var(--stance-partial),0.14); color: rgb(var(--stance-partial)); }
+    .legend-swatch.dissent { background: rgba(var(--stance-dissent),0.14); color: rgb(var(--stance-dissent)); }
+    .legend-swatch.absent  { background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-faint); }
+    .legend-text { font-family: var(--mono); font-size: 9px; letter-spacing: 0.05em; color: var(--text-faint); }
+    .legend-text strong { color: var(--text-dim); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<div class="preview-shell">
+  <!-- Header -->
+  <div class="preview-bar">
+    <span class="preview-bar-label">Consensus Matrix</span>
+    <span class="preview-badge">preview</span>
+    <div class="preview-scenario">
+      <button class="scenario-btn active" onclick="loadScenario('normal')" id="btn-normal">Normal</button>
+      <button class="scenario-btn" onclick="loadScenario('gaps')" id="btn-gaps">Many gaps</button>
+    </div>
+  </div>
+
+  <!-- Fake question -->
+  <div class="preview-question" id="preview-question">
+    How should SaaS companies approach multi-tenant data isolation?
+  </div>
+
+  <!-- Explorer body -->
+  <div class="preview-body" id="preview-body">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- Legend -->
+  <div class="preview-legend">
+    <div class="legend-title">Stance legend — color + icon, never color alone</div>
+    <div class="legend-grid">
+      <div class="legend-row">
+        <div class="legend-swatch agree"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <span class="legend-text"><strong>Agree</strong> — endorses consensus</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch partial"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <span class="legend-text"><strong>Partial</strong> — agrees with caveats</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch dissent"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
+        <span class="legend-text"><strong>Dissent</strong> — opposing view</span>
+      </div>
+      <div class="legend-row">
+        <div class="legend-swatch absent"><span style="font-size:11px;line-height:1">—</span></div>
+        <span class="legend-text"><strong>Absent</strong> — did not address</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Mock data scenarios ────────────────────────────────────────────────────
+  const MOCK_NORMAL = {
+    question: "How should SaaS companies approach multi-tenant data isolation?",
+    models: ["gpt", "claude", "gemini", "grok"],
+    consensusScore: 58,
+    categories: [
+      {
+        id: "isolation-strategy",
+        label: "Isolation strategy",
+        consensusPosition: "Schema-per-tenant or database-per-tenant provides the strongest isolation, with row-level security as a cost-effective middle ground for smaller tenants.",
+        agreementTags: ["consensus"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Strongly endorsed schema-per-tenant as the default, noting that RLS is viable only when properly audited and tested." },
+          { model: "claude", stance: "agree",   summary: "Agreed on schema isolation as the baseline, emphasizing formal threat modelling before choosing a strategy." },
+          { model: "gemini", stance: "agree",   summary: "Supported schema-per-tenant and highlighted Postgres row-level security as a pragmatic option for cost-sensitive cases." },
+          { model: "grok",   stance: "partial", summary: "Agreed with the direction but argued that most early-stage SaaS companies over-engineer isolation, leading to unnecessary infra costs.", quote: "Premature database-per-tenant is the SaaS equivalent of premature optimization." }
+        ]
+      },
+      {
+        id: "encryption-at-rest",
+        label: "Encryption at rest",
+        consensusPosition: "All tenant data should be encrypted at rest using AES-256, preferably with per-tenant key management to limit blast radius.",
+        agreementTags: ["contested", "gap"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Endorsed AES-256 with per-tenant KMS keys as the standard. Highlighted AWS KMS and Azure Key Vault as production-ready options." },
+          { model: "claude", stance: "partial", summary: "Agreed on encryption but cautioned that per-tenant key management adds operational overhead that smaller teams often underestimate." },
+          { model: "gemini", stance: "dissent", summary: "Argued that provider-managed encryption (at the cloud level) is sufficient for most threat models and that per-tenant keys introduce key rotation complexity.", quote: "The marginal security benefit of per-tenant KMS rarely justifies the operational cost for companies under 500 enterprise customers." },
+          { model: "grok",   stance: "absent",  summary: "" }
+        ]
+      },
+      {
+        id: "query-isolation",
+        label: "Query-level isolation",
+        consensusPosition: "Application-layer guards (middleware, ORM hooks) are necessary but insufficient alone — database-level constraints must be the last line of defence.",
+        agreementTags: ["consensus"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Recommended combining ORM-level tenant scoping with database RLS as defence in depth. Emphasized automated tests that deliberately attempt cross-tenant reads." },
+          { model: "claude", stance: "agree",   summary: "Strongly agreed, noting that application-layer isolation bugs are the most common cause of multi-tenant data leaks in production." },
+          { model: "gemini", stance: "agree",   summary: "Concurred and added that database connection pooling must be configured to prevent connection reuse across tenants in some architectures." },
+          { model: "grok",   stance: "agree",   summary: "Agreed and flagged that many developers overlook background jobs and async queues as a cross-tenant leak vector, not just HTTP request handlers." }
+        ]
+      },
+      {
+        id: "compliance-controls",
+        label: "Compliance & audit",
+        consensusPosition: "SOC 2 Type II and ISO 27001 are the baseline requirements for enterprise SaaS; GDPR data residency requirements may force per-region isolation.",
+        agreementTags: ["split"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Endorsed SOC 2 Type II as the practical minimum for enterprise sales and noted that GDPR often forces companies to re-architect earlier than expected." },
+          { model: "claude", stance: "agree",   summary: "Agreed and emphasised building audit log infrastructure before compliance deadlines, not as a retrofit project." },
+          { model: "gemini", stance: "dissent", summary: "Argued that certification timelines (12–18 months for SOC 2 Type II) lead companies to delay real security work in favour of checkbox compliance.", quote: "Compliance is a lagging indicator of security posture, not a leading one." },
+          { model: "grok",   stance: "dissent", summary: "Contended that small SaaS companies should defer formal compliance until they have enterprise deal flow that requires it, focusing engineering effort on actual controls instead." }
+        ]
+      },
+      {
+        id: "observability",
+        label: "Tenant-scoped observability",
+        consensusPosition: "Logs, metrics, and traces should be tagged with a tenant ID at the point of ingestion, and access to tenant-specific logs must be role-gated.",
+        agreementTags: ["consensus"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Recommended structured logging with tenant_id as a mandatory field and centralised access control on the observability platform." },
+          { model: "claude", stance: "agree",   summary: "Agreed and noted that tenant-scoped observability also surfaces performance anomalies that can indicate security issues, such as unusual query volumes." },
+          { model: "gemini", stance: "partial", summary: "Agreed on the need but argued that most teams underinvest in tenant-scoped alerting, not just logging — passive logs are rarely acted on without proactive anomaly detection." },
+          { model: "grok",   stance: "absent",  summary: "" }
+        ]
+      },
+      {
+        id: "migration-strategy",
+        label: "Tenant migration",
+        consensusPosition: "Zero-downtime tenant migration tooling is essential for shared-schema architectures as customers grow and require stronger isolation guarantees.",
+        agreementTags: ["contested", "gap"],
+        stances: [
+          { model: "gpt",    stance: "partial", summary: "Agreed migration tooling is important but noted it is often deferred until customer demand forces it, which causes painful rewrites." },
+          { model: "claude", stance: "absent",  summary: "" },
+          { model: "gemini", stance: "absent",  summary: "" },
+          { model: "grok",   stance: "dissent", summary: "Argued that designing for migration from day one is over-engineering for most startups, and the best migration strategy is to choose the right isolation model upfront." }
+        ]
+      }
+    ]
+  };
+
+  // Edge-case scenario: multiple absent models per category
+  const MOCK_GAPS = {
+    question: "What are the security implications of using LLMs in production systems?",
+    models: ["gpt", "claude", "gemini", "grok"],
+    consensusScore: 31,
+    categories: [
+      {
+        id: "prompt-injection",
+        label: "Prompt injection",
+        consensusPosition: "Prompt injection is the most critical LLM-specific attack surface; defence requires input sanitisation, output validation, and privilege separation.",
+        agreementTags: ["consensus"],
+        stances: [
+          { model: "gpt",    stance: "agree",  summary: "Identified prompt injection as a class-1 risk and recommended treating all user-supplied input as untrusted, even when passed indirectly through tools." },
+          { model: "claude", stance: "agree",  summary: "Strongly agreed and highlighted indirect prompt injection via retrieved documents as especially underestimated in RAG architectures." },
+          { model: "gemini", stance: "agree",  summary: "Concurred, noting that sandboxing LLM tool calls is critical to prevent injected instructions from reaching privileged system actions." },
+          { model: "grok",   stance: "agree",  summary: "Agreed and noted that most real-world injections exploit the gap between developer intent and model interpretation rather than technical vulnerabilities." }
+        ]
+      },
+      {
+        id: "data-exfiltration",
+        label: "Data exfiltration risk",
+        consensusPosition: "LLMs with access to databases or file systems can be manipulated to exfiltrate sensitive data; access must be scoped by least privilege.",
+        agreementTags: ["contested", "gap"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Emphasised strict scope limiting for all tool use and database access granted to LLM agents, with explicit allow-lists over deny-lists." },
+          { model: "claude", stance: "dissent", summary: "Argued that the framing of LLMs as data exfiltration vectors overestimates current capabilities; the more realistic risk is data leakage through verbose model outputs.", quote: "Most LLM data leaks are accidental verbosity, not adversarial exfiltration." },
+          { model: "gemini", stance: "absent",  summary: "" },
+          { model: "grok",   stance: "absent",  summary: "" }
+        ]
+      },
+      {
+        id: "model-supply-chain",
+        label: "Model supply chain",
+        consensusPosition: "Using third-party models introduces supply-chain risk; organizations should audit model cards, test for backdoors, and prefer models with published safety evaluations.",
+        agreementTags: ["gap"],
+        stances: [
+          { model: "gpt",    stance: "absent", summary: "" },
+          { model: "claude", stance: "partial", summary: "Agreed on auditing model cards but noted that truly verifying a closed-weight model's safety properties is largely infeasible for most organisations." },
+          { model: "gemini", stance: "absent", summary: "" },
+          { model: "grok",   stance: "absent", summary: "" }
+        ]
+      },
+      {
+        id: "hallucination-security",
+        label: "Hallucination as a risk",
+        consensusPosition: "LLM hallucination in security-sensitive contexts (code generation, access decisions) requires mandatory human review and automated output validation before acting.",
+        agreementTags: ["split"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Recommended treating any LLM output that feeds into security logic as untrusted until validated by deterministic checks or human review." },
+          { model: "claude", stance: "agree",   summary: "Agreed and specifically warned against using LLMs to generate security policies or access-control rules without expert review." },
+          { model: "gemini", stance: "dissent", summary: "Argued that hallucination risk is overstated for code generation when models are given strong context and outputs are tested via automated test suites." },
+          { model: "grok",   stance: "dissent", summary: "Contended that hallucinaton is a known failure mode that can be mitigated with retrieval augmentation, reducing it to a manageable engineering problem rather than a security concern." }
+        ]
+      },
+      {
+        id: "pii-handling",
+        label: "PII in context windows",
+        consensusPosition: "Sending personally identifiable information to third-party LLM APIs creates GDPR/CCPA compliance obligations that most teams do not adequately address.",
+        agreementTags: ["gap", "contested"],
+        stances: [
+          { model: "gpt",    stance: "agree",   summary: "Highlighted data processing agreements (DPAs) with LLM providers and PII scrubbing as minimum requirements before sending any customer data to external APIs." },
+          { model: "claude", stance: "absent",  summary: "" },
+          { model: "gemini", stance: "partial", summary: "Agreed on DPAs but noted that tokenisation and pseudonymisation can reduce compliance scope without requiring full scrubbing." },
+          { model: "grok",   stance: "absent",  summary: "" }
+        ]
+      }
+    ]
+  };
+
+  // ── Model identity (colors used in column headers only) ──
+  const MODEL_META = {
+    gpt:    { label: 'GPT',    rgb: '34,197,94'   },
+    claude: { label: 'Claude', rgb: '167,139,250' },
+    gemini: { label: 'Gemini', rgb: '96,165,250'  },
+    grok:   { label: 'Grok',   rgb: '245,158,11'  },
+  };
+
+  // ── State ──
+  let _cmxFilter = 'all';
+  let _cmxSortContention = false;
+  let _cmxExpandedCat = null;
+  let _currentData = null;
+
+  const _cmxStanceIcons = {
+    agree:   `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`,
+    partial: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    dissent: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    absent:  `<span aria-hidden="true" style="font-size:11px;line-height:1;color:inherit">—</span>`,
+  };
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function _cmxContention(cat) {
+    return (cat.stances || []).filter(s => s.stance === 'dissent' || s.stance === 'partial').length;
+  }
+
+  function renderExplorer(data) {
+    _currentData = data;
+    _cmxFilter = 'all';
+    _cmxSortContention = false;
+    _cmxExpandedCat = null;
+
+    const models = data.models || ['gpt','claude','gemini','grok'];
+    const categories = data.categories || [];
+    const score = Math.round(Math.min(100, Math.max(0, data.consensusScore || 0)));
+
+    const contested = categories.filter(c => (c.agreementTags||[]).includes('contested')).length;
+    const gaps      = categories.filter(c => (c.agreementTags||[]).includes('gap')).length;
+    const filterCounts = {
+      all: categories.length,
+      consensus: categories.filter(c => (c.agreementTags||[]).includes('consensus')).length,
+      split:     categories.filter(c => (c.agreementTags||[]).includes('split')).length,
+      contested,
+      gap: gaps,
+    };
+
+    const pulse = `<div class="cmx-pulse" aria-label="Consensus summary">
+      <div class="cmx-pulse-item"><span class="cmx-pulse-num score">${score}%</span><span class="cmx-pulse-label">consensus</span></div>
+      <div class="cmx-pulse-item"><span class="cmx-pulse-num">${categories.length}</span><span class="cmx-pulse-label">categories</span></div>
+      <div class="cmx-pulse-item"><span class="cmx-pulse-num">${contested}</span><span class="cmx-pulse-label">contested</span></div>
+      <div class="cmx-pulse-item"><span class="cmx-pulse-num">${gaps}</span><span class="cmx-pulse-label">gaps</span></div>
+    </div>`;
+
+    const filters = `<div class="cmx-filters" role="group" aria-label="Filter categories" id="cmx-filters">
+      ${[{k:'all',l:'All'},{k:'consensus',l:'Consensus'},{k:'split',l:'Split'},{k:'contested',l:'Contested'},{k:'gap',l:'Gaps'}].map(f =>
+        `<button class="cmx-chip${f.k === 'all' ? ' active' : ''}" onclick="_cmxSetFilter('${f.k}')" aria-pressed="${f.k === 'all'}">${esc(f.l)}<span class="cmx-chip-count">${filterCounts[f.k]||0}</span></button>`
+      ).join('')}
+    </div>`;
+
+    const sort = `<div class="cmx-sort-row">
+      <button class="cmx-sort-btn" id="cmx-sort-btn" onclick="_cmxToggleSort()" aria-pressed="false">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+        Sort by contention
+      </button>
+    </div>`;
+
+    const hdrCols = models.map(m => {
+      const meta = MODEL_META[m] || { label: m, rgb: '200,200,200' };
+      return `<div class="cmx-hdr-model" style="--pmc:${meta.rgb}">
+        <div class="cmx-hdr-dot" aria-hidden="true"></div>
+        <span class="cmx-hdr-name">${esc(meta.label)}</span>
+      </div>`;
+    }).join('');
+
+    const matrix = `<div class="cmx-matrix" style="--cmx-cols:${models.length}" id="cmx-matrix" role="table" aria-label="Model stance coverage matrix">
+      <div class="cmx-hdr" role="row">
+        <div class="cmx-hdr-blank" role="columnheader"><span class="sr-only">Category</span></div>
+        ${hdrCols}
+      </div>
+      <div class="cmx-rows" id="cmx-rows" role="rowgroup">
+        ${buildRows(categories, models, 'all', false)}
+      </div>
+    </div>`;
+
+    document.getElementById('preview-body').innerHTML = pulse + filters + sort + matrix;
+  }
+
+  function buildRows(cats, models, filter, sortContention) {
+    let list = cats.slice();
+    if (filter !== 'all') list = list.filter(c => (c.agreementTags||[]).includes(filter));
+    if (sortContention) list = list.slice().sort((a, b) => _cmxContention(b) - _cmxContention(a));
+    if (!list.length) return '<div class="cmx-empty">No categories match this filter.</div>';
+    return list.map(cat => buildRow(cat, models)).join('');
+  }
+
+  function buildRow(cat, models) {
+    const isExpanded = _cmxExpandedCat === cat.id;
+    const stanceMap = {};
+    (cat.stances || []).forEach(s => { stanceMap[s.model] = s; });
+
+    const tags = (cat.agreementTags || []).map(t =>
+      `<span class="cmx-tag ${esc(t)}">${esc(t)}</span>`
+    ).join('');
+
+    const cells = models.map(m => {
+      const s = stanceMap[m] || { model: m, stance: 'absent', summary: '' };
+      const stance = ['agree','partial','dissent','absent'].includes(s.stance) ? s.stance : 'absent';
+      const meta = MODEL_META[m] || { label: m };
+      const ariaLabel = stance === 'absent' ? `${meta.label}: did not address` : `${meta.label}: ${stance}`;
+      return `<div class="cmx-cell" data-stance="${stance}" role="cell" aria-label="${esc(ariaLabel)}">
+        <div class="cmx-cell-inner">
+          <div class="cmx-cell-icon">${_cmxStanceIcons[stance]||_cmxStanceIcons.absent}</div>
+          <span class="cmx-cell-micro">${stance === 'absent' ? '' : esc(stance)}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    const catId = esc(cat.id || '');
+    const drill = isExpanded ? buildDrill(cat, models) : '';
+
+    return `<div class="cmx-row${isExpanded ? ' expanded' : ''}"
+      role="row" tabindex="0" data-cat-id="${catId}" aria-expanded="${isExpanded}"
+      onclick="_cmxToggleRow('${catId}')"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_cmxToggleRow('${catId}')}"
+      style="--cmx-cols:${models.length}">
+      <div class="cmx-cat-cell" role="rowheader">
+        <span class="cmx-cat-name">${esc(cat.label || cat.id)}</span>
+        ${tags ? `<div class="cmx-tags" aria-label="Agreement tags">${tags}</div>` : ''}
+      </div>
+      ${cells}
+    </div>${drill}`;
+  }
+
+  function buildDrill(cat, models) {
+    const stanceMap = {};
+    (cat.stances || []).forEach(s => { stanceMap[s.model] = s; });
+    const badgeLabel = { agree: '✓ agree', partial: '− partial', dissent: '✗ dissent', absent: '— absent' };
+
+    const stancesHtml = models.map(m => {
+      const s = stanceMap[m] || { model: m, stance: 'absent', summary: '' };
+      const stance = ['agree','partial','dissent','absent'].includes(s.stance) ? s.stance : 'absent';
+      const meta = MODEL_META[m] || { label: m, rgb: '200,200,200' };
+      let body = '';
+      if (stance === 'absent') {
+        body = `<p class="cmx-drill-absent-note">Did not address this dimension.</p>`;
+      } else {
+        if (s.summary) body += `<p class="cmx-drill-summary">${esc(s.summary)}</p>`;
+        if (s.quote)   body += `<blockquote class="cmx-drill-quote">${esc(s.quote)}</blockquote>`;
+      }
+      return `<div class="cmx-drill-stance" style="--smc:${meta.rgb}">
+        <div class="cmx-drill-stance-inner">
+          <div class="cmx-drill-stance-head">
+            <span class="cmx-drill-model">${esc(meta.label)}</span>
+            <span class="cmx-drill-stance-badge ${stance}" aria-label="Stance: ${stance}">${esc(badgeLabel[stance]||stance)}</span>
+          </div>
+          ${body}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="cmx-drill" role="region" aria-label="Detail: ${esc(cat.label||cat.id)}">
+      <div>
+        <span class="cmx-drill-consensus-label">Consensus position</span>
+        <p class="cmx-drill-consensus-text">${esc(cat.consensusPosition || '')}</p>
+      </div>
+      <div class="cmx-drill-stances">${stancesHtml}</div>
+    </div>`;
+  }
+
+  function _cmxSetFilter(filter) {
+    _cmxFilter = filter;
+    _cmxExpandedCat = null;
+    document.querySelectorAll('.cmx-chip').forEach(chip => {
+      const active = (chip.getAttribute('onclick') || '').includes(`'${filter}'`);
+      chip.classList.toggle('active', active);
+      chip.setAttribute('aria-pressed', active);
+    });
+    reRenderRows();
+  }
+
+  function _cmxToggleSort() {
+    _cmxSortContention = !_cmxSortContention;
+    _cmxExpandedCat = null;
+    const btn = document.getElementById('cmx-sort-btn');
+    if (btn) { btn.classList.toggle('active', _cmxSortContention); btn.setAttribute('aria-pressed', _cmxSortContention); }
+    reRenderRows();
+  }
+
+  function _cmxToggleRow(catId) {
+    _cmxExpandedCat = (_cmxExpandedCat === catId) ? null : catId;
+    reRenderRows();
+    requestAnimationFrame(() => {
+      const row = document.querySelector(`.cmx-row[data-cat-id="${CSS.escape(catId)}"]`);
+      if (row) row.focus({ preventScroll: false });
+    });
+  }
+
+  function reRenderRows() {
+    const el = document.getElementById('cmx-rows');
+    if (!el || !_currentData) return;
+    const models = _currentData.models || ['gpt','claude','gemini','grok'];
+    el.innerHTML = buildRows(_currentData.categories || [], models, _cmxFilter, _cmxSortContention)
+                || '<div class="cmx-empty">No categories match this filter.</div>';
+  }
+
+  function loadScenario(name) {
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(`btn-${name}`);
+    if (btn) btn.classList.add('active');
+
+    const data = name === 'gaps' ? MOCK_GAPS : MOCK_NORMAL;
+    document.getElementById('preview-question').textContent = data.question;
+    renderExplorer(data);
+  }
+
+  // Boot with normal scenario
+  loadScenario('normal');
+</script>
+</body>
+</html>

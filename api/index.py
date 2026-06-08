@@ -192,6 +192,7 @@ def _load_prompt(name: str) -> str:
 SYNTHESIS_SYSTEM_TEXT  = _load_prompt("synthesis_text.txt")
 SYNTHESIS_SYSTEM_IMAGE = _load_prompt("synthesis_image.txt")
 
+
 # ── Cost table (USD per 1M tokens) ───────────────────────────────────────────
 # Update input/output prices here when provider pricing changes.
 _PRICING = {
@@ -280,9 +281,12 @@ def estimate_max_tokens(question):
 
 # ── Council model functions ───────────────────────────────────────────────────
 
-def ask_gpt(question, max_tokens, history=None, model=None):
+def ask_gpt(question, max_tokens, history=None, model=None, system=None):
     model = model or MODELS_GENERAL["gpt"]
-    messages = list(history or []) + [{"role": "user", "content": question}]
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages += list(history or []) + [{"role": "user", "content": question}]
     try:
         response = openai_client.chat.completions.create(
             model=model,
@@ -311,15 +315,16 @@ def ask_gpt(question, max_tokens, history=None, model=None):
     return content, usage
 
 
-def ask_claude(question, max_tokens, history=None, model=None):
+def ask_claude(question, max_tokens, history=None, model=None, system=None):
     model = model or MODELS_GENERAL["claude"]
     messages = list(history or []) + [{"role": "user", "content": question}]
+    kwargs = {"model": model, "max_tokens": max_tokens, "messages": messages}
+    if system:
+        kwargs["system"] = system
     for attempt in range(4):
         try:
             with anthropic_client.messages.stream(
-                model=model,
-                max_tokens=max_tokens,
-                messages=messages,
+                **kwargs,
             ) as stream:
                 text = stream.get_final_text()
                 u = stream.get_final_message().usage
@@ -334,7 +339,7 @@ def ask_claude(question, max_tokens, history=None, model=None):
                 raise RuntimeError("Claude is currently overloaded — please try again in a moment.") from e
 
 
-def ask_gemini(question, max_tokens, history=None, model=None):
+def ask_gemini(question, max_tokens, history=None, model=None, system=None):
     model = model or MODELS_GENERAL["gemini"]
     contents = []
     for msg in (history or []):
@@ -345,9 +350,12 @@ def ask_gemini(question, max_tokens, history=None, model=None):
         contents.append({"role": "user", "parts": question})
     else:
         contents.append({"role": "user", "parts": [{"text": question}]})
+    config = {"maxOutputTokens": max_tokens}
+    if system:
+        config["system_instruction"] = system
     response = gemini_client.models.generate_content(
         model=model,
-        config={"maxOutputTokens": max_tokens},
+        config=config,
         contents=contents,
     )
     meta = response.usage_metadata
@@ -364,9 +372,12 @@ def ask_gemini(question, max_tokens, history=None, model=None):
     return text, usage
 
 
-def ask_grok(question, max_tokens, history=None, model=None):
+def ask_grok(question, max_tokens, history=None, model=None, system=None):
     model = model or MODELS_GENERAL["grok"]
-    messages = list(history or []) + [{"role": "user", "content": question}]
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages += list(history or []) + [{"role": "user", "content": question}]
     response = grok_client.chat.completions.create(
         model=model,
         max_tokens=max_tokens,
@@ -1546,6 +1557,12 @@ def studio_route():
         return HTMLResponse(f.read())
 
 
+@app.get("/preview/matrix")
+def preview_matrix():
+    with open(os.path.join(_root, "templates", "preview_matrix.html"), encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+
 @app.get("/app")
 def app_route():
     with open(os.path.join(_root, "templates", "index.html"), encoding="utf-8") as f:
@@ -1894,9 +1911,11 @@ def stream(req: StreamRequest, request: Request):
                 if artifact_mode:
                     q = build_artifact_model_prompt(name, augmented_question, web_ctx, artifact_type, papers,
                                                     prior_code if is_studio_followup else "")
+                    lens = None
                 else:
                     q = model_question
-                result, usage = func(q, model_tokens, history)
+                    lens = None
+                result, usage = func(q, model_tokens, history, system=lens)
                 print(f"[DEBUG] {name} response length: {len(result) if result else 0} chars", flush=True)
                 with lock:
                     results[name] = result
@@ -1911,7 +1930,7 @@ def stream(req: StreamRequest, request: Request):
 
         model_map = MODELS_INTENSIVE if is_intensive else MODELS_GENERAL
 
-        def _mk(fn, m): return lambda q, t, h, _m=m, _fn=fn: _fn(q, t, h, model=_m)
+        def _mk(fn, m): return lambda q, t, h, system=None, _m=m, _fn=fn: _fn(q, t, h, model=_m, system=system)
         all_models = [
             ('GPT',    _mk(ask_gpt,    model_map["gpt"]),    'gpt'),
             ('Claude', _mk(ask_claude, model_map["claude"]), 'claude'),

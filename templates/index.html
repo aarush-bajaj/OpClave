@@ -326,7 +326,7 @@
     /* Sources panel */
     /* ── Turn metadata (contributing models + lead synthesizer) ── */
     .turn-meta {
-      display: flex; align-items: center; gap: 7px;
+      display: flex; align-items: center; gap: 7px 9px; flex-wrap: wrap;
       margin-bottom: 9px;
       font-family: var(--mono, 'JetBrains Mono', monospace);
       font-size: 10.5px; letter-spacing: 0.02em;
@@ -338,6 +338,7 @@
       border: 1px solid rgba(201,167,122,0.2);
       border-radius: 4px; padding: 1px 6px;
     }
+
     /* ── Analysis toggle ─────────────────────────────── */
     .analysis-toggle-row {
       margin-top: 14px;
@@ -364,6 +365,700 @@
     .analysis-panel p { margin: 6px 0 10px; }
     .analysis-panel ul, .analysis-panel ol { margin: 6px 0 10px 18px; }
     .analysis-panel strong { color: #ededed; font-weight: 500; }
+
+    /* ── Voyance deep dive ─────────────────────────────── */
+    /* Toggle lives in the meta row, pushed to the right of the model → synthesis chart. */
+    .dd-slot { margin-left: auto; display: inline-flex; }
+    .dd-slot:empty { display: none; }
+    .dd-toggle-row--inline { margin-bottom: 14px; }
+    .dd-btn {
+      background: transparent; border: 1px solid rgba(201,167,122,0.38); cursor: pointer;
+      color: var(--accent); font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 7px;
+      display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); line-height: 1.1;
+      letter-spacing: 0.04em; text-transform: none; transition: all .16s;
+    }
+    .dd-btn:hover { background: rgba(201,167,122,0.08); border-color: rgba(201,167,122,0.6); }
+    .dd-btn.open { color: var(--accent-bright); border-color: rgba(201,167,122,0.6); background: rgba(201,167,122,0.08); }
+    .dd-icon { transition: transform .24s cubic-bezier(.4,0,.2,1); flex-shrink: 0; }
+    .dd-btn.open .dd-icon { transform: rotate(180deg); }
+
+    .dd-body { max-height: 0; overflow: hidden; transition: max-height .42s cubic-bezier(.4,0,.2,1); }
+    .dd-inner {
+      margin-top: 24px;
+      border: 1px solid rgba(201,167,122,0.18);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.025);
+      overflow: hidden;
+    }
+    .dd-inner-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 11px 16px 10px;
+      border-bottom: 1px solid rgba(201,167,122,0.14);
+      background: rgba(201,167,122,0.06);
+    }
+    .dd-inner-header-label {
+      font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--accent); font-weight: 500;
+    }
+    .dd-inner-body { padding: 0 16px 4px; }
+
+    /* claim block */
+    .dd-claim { padding: 13px 0; border-bottom: 1px solid var(--line); }
+    .dd-claim:first-child { padding-top: 14px; }
+    .dd-claim:last-child { border-bottom: none; }
+    .dd-claim-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+    .dd-claim-text { font-size: 13.5px; line-height: 1.6; color: var(--text); font-weight: 400; flex: 1; }
+    .dd-badges { display: inline-flex; gap: 5px; flex-shrink: 0; padding-top: 1px; }
+
+    /* model badge — 18px circle in the model's colour */
+    .dd-badge {
+      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: rgb(var(--mc)); background: rgba(var(--mc), 0.16);
+      border: 1px solid rgba(var(--mc), 0.5); cursor: default;
+    }
+    .dd-badge--dis { animation: rx-pulse 1.4s ease-in-out infinite; }
+
+    /* divergence breakdown */
+    .dd-breakdown { margin-top: 10px; display: flex; flex-direction: column; gap: 7px; }
+    .dd-diverge {
+      border-left: 2px solid rgb(var(--mc)); padding: 6px 0 6px 12px;
+      background: linear-gradient(90deg, rgba(var(--mc),0.07), transparent 62%);
+    }
+    .dd-diverge-model { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgb(var(--mc)); margin-bottom: 3px; }
+    .dd-diverge-text { font-size: 12.5px; line-height: 1.55; color: var(--text-dim); }
+
+    /* consensus bar */
+    .dd-consensus { margin-top: 22px; }
+    .dd-consensus-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 9px; }
+    .dd-bar { display: flex; height: 7px; border-radius: 4px; overflow: hidden; background: rgba(255,255,255,0.04); }
+    .dd-bar-seg { height: 100%; transition: width .5s ease; }
+    .dd-seg-full { background: #22c55e; }
+    .dd-seg-partial { background: #f59e0b; }
+    .dd-seg-contested { background: #ef4444; }
+    .dd-legend { display: flex; gap: 16px; margin-top: 9px; flex-wrap: wrap; }
+    .dd-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); font-family: var(--mono); letter-spacing: 0.02em; }
+    .dd-dot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; }
+    .dd-dot-full { background: #22c55e; }
+    .dd-dot-partial { background: #f59e0b; }
+    .dd-dot-contested { background: #ef4444; }
+
+    /* key divergence callout — gold accent */
+    .dd-outlier {
+      margin-top: 20px; padding: 14px 16px; border-radius: 11px;
+      border: 1px solid rgba(201,167,122,0.3); background: var(--accent-soft);
+    }
+    .dd-outlier-head { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+    .dd-outlier-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-bright); }
+    .dd-outlier-text { font-size: 13px; line-height: 1.6; color: var(--text-dim); }
+
+    /* ── Voyance split layout ─────────────────────────────── */
+    #voyance-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      flex-direction: row;
+    }
+    #dd-panel-divider {
+      width: 0;
+      flex: 0 0 0;
+      background: var(--line);
+      transition: width 0.3s ease, flex-basis 0.3s ease;
+      flex-shrink: 0;
+    }
+    #voyance-layout.dd-open #dd-panel-divider {
+      width: 1px;
+      flex: 0 0 1px;
+    }
+    #chat-area { transition: flex 0.3s ease, max-width 0.3s ease; }
+    #voyance-layout.dd-open #chat-area {
+      flex: 0 0 55% !important;
+      max-width: 55%;
+    }
+
+    /* ── Deep dive side panel ─────────────────────────────── */
+    #dd-side-panel {
+      flex: 0 0 0;
+      width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: #0a0a0a;
+      border-left: none;
+      transition: flex-basis 0.3s ease, width 0.3s ease;
+    }
+    #voyance-layout.dd-open #dd-side-panel {
+      flex: 0 0 42%;
+      width: 42%;
+      min-width: 0;
+    }
+
+    .ddp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 11px;
+      border-bottom: 1px solid rgba(201,167,122,0.15);
+      flex-shrink: 0;
+    }
+    .ddp-header-label {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .ddp-close-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-faint);
+      padding: 3px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .ddp-close-btn:hover { color: var(--text); }
+    .ddp-question {
+      padding: 9px 16px 8px;
+      font-size: 11px;
+      font-style: italic;
+      color: var(--text-faint);
+      line-height: 1.5;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .ddp-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .ddp-section-label {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      margin-bottom: 10px;
+    }
+    .ddp-perspectives { display: flex; flex-direction: column; gap: 8px; }
+    .ddp-perspective {
+      border-radius: 7px;
+      overflow: hidden;
+      border: 1px solid rgba(var(--pmc), 0.18);
+    }
+    .ddp-perspective-inner {
+      padding: 9px 12px 9px 12px;
+      border-left: 3px solid rgb(var(--pmc));
+      background: rgba(var(--pmc), 0.04);
+    }
+    .ddp-persp-head {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 5px;
+      flex-wrap: wrap;
+    }
+    .ddp-persp-model {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgb(var(--pmc));
+      font-weight: 600;
+    }
+    .ddp-persp-tag {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 0.07em;
+      color: rgb(var(--pmc));
+      background: rgba(var(--pmc), 0.12);
+      border: 1px solid rgba(var(--pmc), 0.28);
+      border-radius: 4px;
+      padding: 1px 6px;
+    }
+    .ddp-persp-desc {
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: var(--text-dim);
+    }
+
+    .ddp-divergence { display: flex; flex-direction: column; gap: 11px; }
+    .ddp-diverge-label {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      margin-bottom: 5px;
+      line-height: 1.4;
+    }
+    .ddp-diverge-track {
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.05);
+      overflow: hidden;
+    }
+    .ddp-diverge-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: rgb(var(--dmc));
+      transition: width 0.5s ease;
+    }
+
+    .ddp-insight {
+      border: 1px solid rgba(201,167,122,0.35);
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: rgba(201,167,122,0.05);
+    }
+    .ddp-insight-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 7px;
+      font-weight: 500;
+      display: block;
+    }
+    .ddp-insight-text {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-dim);
+    }
+
+    /* Screen-reader-only utility */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0;
+      margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+
+    /* ── Consensus Matrix Explorer ────────────────────────────────────────
+       TWO SEPARATE COLOR AXES:
+         • Model identity  → --pmc CSS var, set on column headers only
+         • Stance          → hardcoded teal/amber/rose/muted
+       They must never share the same palette; see stance vars below.
+    ─────────────────────────────────────────────────────────────────── */
+
+    /* Stance color tokens — distinct from every model identity color */
+    :root {
+      --stance-agree:   45,212,191;   /* teal   — not green/blue/purple/amber */
+      --stance-partial: 252,211,77;   /* yellow — lighter/cooler than Grok amber */
+      --stance-dissent: 248,113,113;  /* rose   — pink-red, colorblind-safe w/ icon */
+    }
+
+    /* ─ Pulse strip ─ */
+    .cmx-pulse {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .cmx-pulse-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 6px 8px;
+      border-right: 1px solid var(--line);
+      gap: 2px;
+    }
+    .cmx-pulse-item:last-child { border-right: none; }
+    .cmx-pulse-num {
+      font-family: var(--mono);
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text);
+    }
+    .cmx-pulse-num.score {
+      color: rgb(var(--stance-agree));
+    }
+    .cmx-pulse-label {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+
+    /* ─ Filter chips ─ */
+    .cmx-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .cmx-chip {
+      background: none;
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 3px 9px;
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+    .cmx-chip:hover { color: var(--text-dim); border-color: var(--line-hover); }
+    .cmx-chip.active {
+      color: var(--accent);
+      border-color: rgba(201,167,122,0.45);
+      background: rgba(201,167,122,0.07);
+    }
+    .cmx-chip-count {
+      display: inline-block;
+      margin-left: 4px;
+      opacity: 0.65;
+    }
+
+    /* ─ Sort toggle ─ */
+    .cmx-sort-row {
+      display: flex;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+    .cmx-sort-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      padding: 2px 0;
+      transition: color 0.15s;
+    }
+    .cmx-sort-btn:hover { color: var(--text-dim); }
+    .cmx-sort-btn.active { color: var(--accent); }
+
+    /* ─ Matrix wrapper ─ */
+    .cmx-matrix {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    /* Header row: label col + model cols */
+    .cmx-hdr {
+      display: grid;
+      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 44px);
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .cmx-hdr-blank {
+      padding: 7px 10px;
+      border-right: 1px solid var(--line);
+    }
+    .cmx-hdr-model {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 2px;
+      border-right: 1px solid var(--line);
+    }
+    .cmx-hdr-model:last-child { border-right: none; }
+    .cmx-hdr-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgb(var(--pmc));
+      flex-shrink: 0;
+    }
+    .cmx-hdr-name {
+      font-family: var(--mono);
+      font-size: 7.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgb(var(--pmc));
+      line-height: 1;
+    }
+
+    /* Matrix body: scrollable rows */
+    .cmx-rows {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Individual row */
+    .cmx-row {
+      display: grid;
+      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 44px);
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .cmx-row:last-child { border-bottom: none; }
+    .cmx-row:hover { background: rgba(255,255,255,0.025); }
+    .cmx-row:focus { outline: none; background: rgba(201,167,122,0.06); }
+    .cmx-row.expanded { background: rgba(201,167,122,0.04); }
+
+    /* Category label cell */
+    .cmx-cat-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 10px;
+      border-right: 1px solid var(--line);
+      min-width: 0;
+    }
+    .cmx-cat-name {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .cmx-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+    }
+    .cmx-tag {
+      font-family: var(--mono);
+      font-size: 7.5px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      border-radius: 3px;
+      padding: 1px 5px;
+      line-height: 1.4;
+    }
+    .cmx-tag.consensus { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.10);   border: 1px solid rgba(var(--stance-agree),0.28); }
+    .cmx-tag.split     { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.10); border: 1px solid rgba(var(--stance-partial),0.28); }
+    .cmx-tag.contested { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.10); border: 1px solid rgba(var(--stance-dissent),0.28); }
+    .cmx-tag.gap       { color: var(--text-faint);          background: rgba(255,255,255,0.04);           border: 1px dashed rgba(255,255,255,0.18); }
+
+    /* Stance cells */
+    .cmx-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--line);
+      min-height: 42px;
+    }
+    .cmx-cell:last-child { border-right: none; }
+
+    .cmx-cell-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .cmx-cell-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+    }
+    .cmx-cell-micro {
+      font-family: var(--mono);
+      font-size: 7px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* Stance color application — ONLY on cells, never on model headers */
+    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.14);   color: rgb(var(--stance-agree)); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.14); color: rgb(var(--stance-partial)); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.14); color: rgb(var(--stance-dissent)); }
+    .cmx-cell[data-stance="absent"]  .cmx-cell-icon {
+      background: transparent;
+      border: 1px dashed rgba(255,255,255,0.16);
+      color: var(--text-faint);
+    }
+
+    .cmx-cell[data-stance="agree"]   .cmx-cell-micro { color: rgba(var(--stance-agree),0.7); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-micro { color: rgba(var(--stance-partial),0.7); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-micro { color: rgba(var(--stance-dissent),0.7); }
+    .cmx-cell[data-stance="absent"]  .cmx-cell-micro { color: var(--text-faint); }
+
+    /* ─ Drill-down panel (inline expand below a row) ─ */
+    .cmx-drill {
+      border-top: 1px solid rgba(201,167,122,0.15);
+      background: rgba(201,167,122,0.03);
+      padding: 12px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: cmxDrillIn 0.18s ease;
+    }
+    @keyframes cmxDrillIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .cmx-drill-consensus-label {
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+      display: block;
+    }
+    .cmx-drill-consensus-text {
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: var(--text-dim);
+    }
+    .cmx-drill-stances {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .cmx-drill-stance {
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(var(--smc),0.18);
+    }
+    .cmx-drill-stance-inner {
+      padding: 7px 10px;
+      border-left: 3px solid rgba(var(--smc),0.7);
+      background: rgba(var(--smc),0.05);
+    }
+    .cmx-drill-stance-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .cmx-drill-model {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgb(var(--smc));
+      font-weight: 600;
+    }
+    .cmx-drill-stance-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.06em;
+      border-radius: 3px;
+      padding: 1px 6px;
+    }
+    .cmx-drill-stance-badge.agree   { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.12);   border: 1px solid rgba(var(--stance-agree),0.3); }
+    .cmx-drill-stance-badge.partial { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.12); border: 1px solid rgba(var(--stance-partial),0.3); }
+    .cmx-drill-stance-badge.dissent { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.12); border: 1px solid rgba(var(--stance-dissent),0.3); }
+    .cmx-drill-stance-badge.absent  {
+      color: var(--text-faint);
+      background: rgba(255,255,255,0.04);
+      border: 1px dashed rgba(255,255,255,0.18);
+    }
+    .cmx-drill-summary {
+      font-size: 11px;
+      line-height: 1.55;
+      color: var(--text-dim);
+    }
+    .cmx-drill-absent-note {
+      font-size: 11px;
+      font-style: italic;
+      color: var(--text-faint);
+    }
+    .cmx-drill-quote {
+      margin-top: 5px;
+      padding: 5px 8px;
+      border-left: 2px solid rgba(var(--smc),0.35);
+      font-size: 10.5px;
+      font-style: italic;
+      line-height: 1.5;
+      color: var(--text-faint);
+    }
+
+    /* ─ Empty/fallback state ─ */
+    .cmx-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--text-faint);
+      font-style: italic;
+      padding: 20px;
+      text-align: center;
+    }
+
+    /* ─ Mobile: card-stack fallback ─ */
+    @media (max-width: 600px) {
+      .cmx-hdr { display: none; }
+      .cmx-row {
+        display: block;
+        padding: 10px;
+      }
+      .cmx-cat-cell {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+        padding: 0 0 8px;
+      }
+      .cmx-cells-mobile {
+        display: flex;
+        gap: 6px;
+        padding-top: 8px;
+        flex-wrap: wrap;
+      }
+      .cmx-cell {
+        flex: none;
+        width: auto;
+        border: none;
+        gap: 4px;
+        flex-direction: row;
+        min-height: unset;
+        padding: 4px 0;
+      }
+      .cmx-cell-inner { flex-direction: row; gap: 5px; }
+    }
+
+    @media (max-width: 767px) {
+      #voyance-layout.dd-open #chat-area {
+        flex: 1 1 100% !important;
+        max-width: 100%;
+      }
+      #voyance-layout.dd-open #dd-panel-divider { display: none; }
+      #dd-side-panel {
+        position: fixed;
+        top: 0; right: 0; bottom: 0;
+        z-index: 150;
+        width: 0 !important;
+        flex: none !important;
+        transition: width 0.3s ease;
+        border-left: 1px solid var(--line);
+      }
+      #voyance-layout.dd-open #dd-side-panel { width: 100% !important; }
+    }
 
     .sources-panel {
       margin-top: 12px; padding-top: 12px;
@@ -2447,6 +3142,7 @@
 
   <!-- Context limit modal -->
   <!-- Chat area -->
+  <div id="voyance-layout">
   <div id="chat-area" class="flex-1 overflow-y-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2 scroll-smooth relative">
     <div id="empty-state">
       <!-- Inner wrapper: centered, max 700px, not the full-bleed container -->
@@ -2506,6 +3202,9 @@
     </div>
     <div class="max-w-[760px] mx-auto flex flex-col" id="messages"></div>
   </div>
+  <div id="dd-panel-divider"></div>
+  <div id="dd-side-panel"><!-- populated by JS --></div>
+  </div><!-- /#voyance-layout -->
 
   <!-- Studio workspace -->
   <div id="studio-workspace">
@@ -3171,6 +3870,8 @@
   let conversationHistory = []; // [{role:'user'|'assistant', content:'...'}]
   let artifactBuffers = {}; // turn-id -> { question, type, name, modelResponses, synthesis, sources }
   let pendingArtifactSave = null; // { id, question, type, name, modelResponses, synthesis, sources, turnId }
+  let deepDiveStore = {};   // msgId → parsed deep dive JSON data
+  let ddActiveMsgId = null; // id of the message whose deep dive is currently open
   let savedArtifacts = {}; // id -> artifact object
   let savedArtifactOrder = [];
   let viewingArtifactId = null;
@@ -3206,6 +3907,20 @@
 
   const ALL_MODELS = ['gpt', 'claude', 'gemini', 'grok'];
   const MODEL_TAB = { gpt: 'GPT', claude: 'Claude', gemini: 'Gemini', grok: 'Grok' };
+  // Deep-dive identity: label, 2-char badge glyph, and RGB triplet for the model colour
+  // (GPT green · Claude purple · Gemini blue · Grok amber).
+  const MODEL_META = {
+    gpt:    { label: 'GPT',    short: 'GP', rgb: '34,197,94'   },
+    claude: { label: 'Claude', short: 'CL', rgb: '167,139,250' },
+    gemini: { label: 'Gemini', short: 'GM', rgb: '96,165,250'  },
+    grok:   { label: 'Grok',   short: 'GK', rgb: '245,158,11'  },
+  };
+  const MODEL_LOGOS = {
+    gpt:    `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>`,
+    claude: `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>`,
+    gemini: `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>`,
+    grok:   `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"/></svg>`,
+  };
 
   const IMAGE_MODELS = ['gemini'];
   let enabledImageModels = new Set(['gemini']);
@@ -3594,6 +4309,8 @@
     conversationHistory = [];
     messagesEl.innerHTML = '';
     document.getElementById('chat-area').style.display = 'none';
+    document.getElementById('voyance-layout').style.display = 'none';
+    closeDeepDivePanel();
     document.getElementById('studio-workspace').classList.add('active');
     document.getElementById('input-area').style.display = 'none';
     inputEl.value = ''; inputEl.style.height = 'auto';
@@ -3665,6 +4382,8 @@
     if (mode === 'studio') {
       // ── ENTER STUDIO ──
       chatArea.style.display = 'none';
+      document.getElementById('voyance-layout').style.display = 'none';
+      closeDeepDivePanel();
       studioWs.classList.add('active');
       newThreadBtnEl.style.display = 'none';
       if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'inline-flex';
@@ -3699,6 +4418,7 @@
       hideReviewPanel();
       studioWs.classList.remove('active');
       chatArea.style.display = '';
+      document.getElementById('voyance-layout').style.display = '';
       newThreadBtnEl.style.display = '';
       if (artifactHeaderBtn) artifactHeaderBtn.style.display = 'none';
       closeArtifactsModal();
@@ -3860,6 +4580,7 @@
     if (appMode === 'studio') {
       document.getElementById('studio-workspace').classList.remove('active');
       document.getElementById('chat-area').style.display = '';
+      document.getElementById('voyance-layout').style.display = '';
     }
     emptyState.style.display = 'none';
     inputEl.value = '';
@@ -4035,6 +4756,8 @@
   }
 
   function createAssistantMessage(id, container, turnModels, imageModeOn, webSearchOn, intensiveOn, turnSynthesizer) {
+    // Voyance synthesis tab first, then one tab per contributing model so the user can
+    // read each model's raw answer. The deep dive is an additional tool, not a replacement.
     const tabModels = imageModeOn ? turnModels.filter(m => !enabledImageModels.has(m)) : turnModels;
     const tabs = ['Voyance', ...tabModels.map(m => MODEL_TAB[m])];
 
@@ -4049,8 +4772,11 @@
     if (modelList) {
       const metaRow = document.createElement('div');
       metaRow.className = 'turn-meta';
+      metaRow.id = `turn-meta-${id}`;
       metaRow.innerHTML = `<span class="turn-meta-models">${modelList}</span>`
-        + (synthLabel ? `<span class="turn-meta-sep">→</span><span class="turn-meta-synth">${synthLabel}</span>` : '');
+        + (synthLabel ? `<span class="turn-meta-sep">→</span><span class="turn-meta-synth">${synthLabel}</span>` : '')
+        // Slot for the deep-dive toggle — filled once the synthesis + divergence data arrives.
+        + `<span class="dd-slot" id="dd-slot-${id}"></span>`;
       div.appendChild(metaRow);
     }
 
@@ -4076,7 +4802,9 @@
         labelSpan.style.cssText = 'display:inline-flex;align-items:center;gap:4px;';
         labelSpan.innerHTML = `OpClave<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.55;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
       } else {
-        labelSpan.textContent = (imageModeOn && [...enabledImageModels].map(m => MODEL_TAB[m]).includes(tab)) ? `✦ ${tab}` : (TAB_LABELS[tab] || tab);
+        const mainLabel = (imageModeOn && [...enabledImageModels].map(m => MODEL_TAB[m]).includes(tab))
+          ? `✦ ${tab}` : (TAB_LABELS[tab] || tab);
+        labelSpan.textContent = mainLabel;
       }
       btn.appendChild(labelSpan);
       tabBar.appendChild(btn);
@@ -4440,12 +5168,31 @@
       content.style.display = 'block';
       content.dataset.raw = markdown || '';
 
-      // Split Voyance synthesis into answer + hidden analysis panel
-      const SPLIT = '%%ANALYSIS%%';
-      if (model === 'Voyance' && markdown && markdown.includes(SPLIT)) {
-        const idx = markdown.indexOf(SPLIT);
+      // Voyance synthesis: clean answer on top (Layer 1) + collapsible deep dive (Layer 2).
+      const DD_SPLIT = '%%DEEPDIVE%%';
+      const AN_SPLIT = '%%ANALYSIS%%';
+      if (model === 'Voyance' && markdown && markdown.includes(DD_SPLIT)) {
+        const idx = markdown.indexOf(DD_SPLIT);
         const answerMd = markdown.slice(0, idx).trim();
-        const analysisMd = markdown.slice(idx + SPLIT.length).trim();
+        content.dataset.raw = answerMd;
+        const deepData = parseDeepDiveJSON(markdown.slice(idx + DD_SPLIT.length));
+        content.innerHTML = renderMarkdownWithMath(answerMd);
+        if (deepData) {
+          deepDiveStore[id] = deepData;
+          const slot = document.getElementById(`dd-slot-${id}`);
+          if (slot) {
+            slot.innerHTML = buildDeepDiveButton(id);
+          } else {
+            content.insertAdjacentHTML('afterbegin',
+              `<div class="dd-toggle-row dd-toggle-row--inline">${buildDeepDiveButton(id)}</div>`);
+          }
+          if (ddActiveMsgId === id) renderDeepDivePanel(id);
+        }
+      } else if (model === 'Voyance' && markdown && markdown.includes(AN_SPLIT)) {
+        // Backward-compatible fallback for the old answer / analysis format.
+        const idx = markdown.indexOf(AN_SPLIT);
+        const answerMd = markdown.slice(0, idx).trim();
+        const analysisMd = markdown.slice(idx + AN_SPLIT.length).trim();
         content.innerHTML = `
           ${renderMarkdownWithMath(answerMd)}
           <div class="analysis-toggle-row">
@@ -4472,6 +5219,491 @@
     btn.innerHTML = `${_chevDown} ${open ? 'Hide' : 'Show'} model analysis`;
   }
 
+  // ── Voyance deep dive ─────────────────────────────
+  const _ddSearchIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+  const _ddChevIcon = `<svg class="dd-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+  // Parse the JSON the synthesizer emits after %%DEEPDIVE%%.
+  // Accepts both new format (perspectives/divergence/keyInsight) and
+  // old format (claims/outlier) for backward compatibility.
+  function parseDeepDiveJSON(raw) {
+    let s = (raw || '').trim();
+    if (s.startsWith('```')) s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+    const i = s.indexOf('{'), j = s.lastIndexOf('}');
+    if (i !== -1 && j !== -1 && j > i) s = s.slice(i, j + 1);
+    try {
+      const data = JSON.parse(s);
+      if (!data) return null;
+      // v3: ComparisonResult — categories + consensusScore
+      if (Array.isArray(data.categories) && data.categories.length && typeof data.consensusScore === 'number') {
+        // Defensive fill: ensure each category has a stances array entry per model
+        const models = Array.isArray(data.models) && data.models.length ? data.models : ['gpt','claude','gemini','grok'];
+        data.categories = data.categories.map(cat => {
+          const stances = Array.isArray(cat.stances) ? cat.stances : [];
+          const stanceMap = {};
+          stances.forEach(s => { stanceMap[s.model] = s; });
+          cat.stances = models.map(m => stanceMap[m] || { model: m, stance: 'absent', summary: '' });
+          if (!Array.isArray(cat.agreementTags)) cat.agreementTags = [];
+          return cat;
+        });
+        return { format: 'v3', ...data };
+      }
+      // v2: perspectives/divergence/keyInsight (current format before this PR)
+      if (Array.isArray(data.perspectives) && data.perspectives.length) return { format: 'v2', ...data };
+      // v1: claims/outlier — backward compat for threads saved before v2
+      if (Array.isArray(data.claims) && data.claims.length) return { format: 'v1', ...data };
+    } catch (e) {}
+    return null;
+  }
+
+  // ── Button ────────────────────────────────────────────
+  function buildDeepDiveButton(id) {
+    return `<button class="dd-btn" id="dd-btn-${id}" onclick="toggleDeepDive('${id}')">${_ddSearchIcon}<span class="dd-btn-label">Deep dive</span>${_ddChevIcon}</button>`;
+  }
+
+  // ── Side panel open / close / switch ─────────────────
+  function toggleDeepDive(id) {
+    const data = deepDiveStore[id];
+    const layout = document.getElementById('voyance-layout');
+    if (!layout) return;
+
+    // Old-format fallback: if no stored data (old saved thread), use inline collapse
+    if (!data) {
+      _toggleDeepDiveLegacy(id);
+      return;
+    }
+
+    if (ddActiveMsgId === id) {
+      // Same message — close the panel
+      closeDeepDivePanel();
+      return;
+    }
+
+    // Open or switch to a different message
+    ddActiveMsgId = id;
+    renderDeepDivePanel(id);
+    layout.classList.add('dd-open');
+    _updateDeepDiveButtons(id);
+
+    // Ensure the Voyance tab is active so the button is visible
+    const vBtn = document.getElementById(`tab-btn-${id}-Voyance`);
+    if (vBtn && !vBtn.classList.contains('active')) switchTabByEl(vBtn);
+  }
+
+  function closeDeepDivePanel() {
+    const layout = document.getElementById('voyance-layout');
+    if (layout) layout.classList.remove('dd-open');
+    ddActiveMsgId = null;
+    _updateDeepDiveButtons(null);
+  }
+
+  function _updateDeepDiveButtons(openId) {
+    // Update all dd-btn elements across all messages
+    document.querySelectorAll('.dd-btn[id^="dd-btn-"]').forEach(btn => {
+      const msgId = btn.id.replace('dd-btn-', '');
+      const isOpen = msgId === openId;
+      btn.classList.toggle('open', isOpen);
+      const label = btn.querySelector('.dd-btn-label');
+      if (label) label.textContent = 'Deep dive';
+      const icon = btn.querySelector('.dd-icon');
+      // chevron rotates via .open class on the button
+    });
+  }
+
+  // ── Side panel HTML builder ───────────────────────────
+  function renderDeepDivePanel(id) {
+    const panel = document.getElementById('dd-side-panel');
+    if (!panel) return;
+    const data = deepDiveStore[id];
+    if (!data) return;
+
+    // Find the question that produced this response
+    const msgEl = document.getElementById(`msg-${id}`);
+    let questionText = '';
+    if (msgEl) {
+      const prev = msgEl.previousElementSibling;
+      if (prev) {
+        const bubble = prev.querySelector('.bubble');
+        if (bubble) questionText = bubble.textContent || '';
+      }
+    }
+
+    const closeBtn = `<button class="ddp-close-btn" onclick="closeDeepDivePanel()" title="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+
+    const headerLabel = data.format === 'v3' ? 'Consensus matrix' : 'Deep dive';
+    const header = `<div class="ddp-header">
+      <span class="ddp-header-label">${headerLabel}</span>
+      ${closeBtn}
+    </div>`;
+
+    const questionHtml = questionText
+      ? `<div class="ddp-question">${escapeHtml(questionText.slice(0, 120))}${questionText.length > 120 ? '…' : ''}</div>`
+      : '';
+
+    let bodyHtml = '';
+    if (data.format === 'v3') {
+      bodyHtml = _buildDdPanelV3(data);
+    } else if (data.format === 'v2') {
+      bodyHtml = _buildDdPanelV2(data);
+    } else {
+      bodyHtml = _buildDdPanelV1(data);
+    }
+
+    panel.innerHTML = header + questionHtml + `<div class="ddp-body">${bodyHtml}</div>`;
+  }
+
+  // ── Consensus Matrix Explorer (v3 format) ────────────────────────────────────
+  // State: reset each time _buildDdPanelV3 is called (new panel open)
+  let _cmxFilter = 'all';
+  let _cmxSortContention = false;
+  let _cmxExpandedCat = null;
+
+  const _cmxStanceIcons = {
+    agree:   `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`,
+    partial: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+    dissent: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+    absent:  `<span aria-hidden="true" style="font-size:11px;line-height:1;color:inherit">—</span>`,
+  };
+
+  function _cmxContention(cat) {
+    return (cat.stances || []).filter(s => s.stance === 'dissent' || s.stance === 'partial').length;
+  }
+
+  function _buildDdPanelV3(data) {
+    _cmxFilter = 'all';
+    _cmxSortContention = false;
+    _cmxExpandedCat = null;
+
+    const models = Array.isArray(data.models) && data.models.length ? data.models : ['gpt','claude','gemini','grok'];
+    const categories = Array.isArray(data.categories) ? data.categories : [];
+    const score = Math.round(Math.min(100, Math.max(0, data.consensusScore || 0)));
+
+    const contested = categories.filter(c => (c.agreementTags||[]).includes('contested')).length;
+    const gaps      = categories.filter(c => (c.agreementTags||[]).includes('gap')).length;
+
+    const filterCounts = {
+      all:       categories.length,
+      consensus: categories.filter(c => (c.agreementTags||[]).includes('consensus')).length,
+      split:     categories.filter(c => (c.agreementTags||[]).includes('split')).length,
+      contested,
+      gap:       gaps,
+    };
+
+    const pulseHtml = `<div class="cmx-pulse" aria-label="Consensus summary">
+      <div class="cmx-pulse-item">
+        <span class="cmx-pulse-num score" aria-label="${score} percent consensus">${score}%</span>
+        <span class="cmx-pulse-label">consensus</span>
+      </div>
+      <div class="cmx-pulse-item">
+        <span class="cmx-pulse-num">${categories.length}</span>
+        <span class="cmx-pulse-label">categories</span>
+      </div>
+      <div class="cmx-pulse-item">
+        <span class="cmx-pulse-num">${contested}</span>
+        <span class="cmx-pulse-label">contested</span>
+      </div>
+      <div class="cmx-pulse-item">
+        <span class="cmx-pulse-num">${gaps}</span>
+        <span class="cmx-pulse-label">gaps</span>
+      </div>
+    </div>`;
+
+    const filterDefs = [
+      { key: 'all', label: 'All' },
+      { key: 'consensus', label: 'Consensus' },
+      { key: 'split', label: 'Split' },
+      { key: 'contested', label: 'Contested' },
+      { key: 'gap', label: 'Gaps' },
+    ];
+    const filtersHtml = `<div class="cmx-filters" role="group" aria-label="Filter categories">
+      ${filterDefs.map(f => `<button class="cmx-chip${f.key === 'all' ? ' active' : ''}"
+        onclick="_cmxSetFilter('${f.key}')"
+        aria-pressed="${f.key === 'all'}">${escapeHtml(f.label)}<span class="cmx-chip-count">${filterCounts[f.key]||0}</span></button>`).join('')}
+    </div>`;
+
+    const sortHtml = `<div class="cmx-sort-row">
+      <button class="cmx-sort-btn" onclick="_cmxToggleSort()" aria-pressed="false">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+        Sort by contention
+      </button>
+    </div>`;
+
+    const hdrCols = models.map(m => {
+      const meta = MODEL_META[m] || { label: m, rgb: '200,200,200' };
+      return `<div class="cmx-hdr-model" style="--pmc:${meta.rgb}">
+        <div class="cmx-hdr-dot" aria-hidden="true"></div>
+        <span class="cmx-hdr-name">${escapeHtml(meta.label)}</span>
+      </div>`;
+    }).join('');
+
+    const matrixHtml = `<div class="cmx-matrix" style="--cmx-cols:${models.length}" id="cmx-matrix" role="table" aria-label="Model stance coverage matrix">
+      <div class="cmx-hdr" role="row">
+        <div class="cmx-hdr-blank" role="columnheader"><span class="sr-only">Category</span></div>
+        ${hdrCols}
+      </div>
+      <div class="cmx-rows" id="cmx-rows" role="rowgroup">
+        ${_cmxBuildRows(categories, models, 'all', false)}
+      </div>
+    </div>`;
+
+    return `${pulseHtml}${filtersHtml}${sortHtml}${matrixHtml}`;
+  }
+
+  function _cmxBuildRows(categories, models, filter, sortContention) {
+    let cats = categories.slice();
+    if (filter !== 'all') cats = cats.filter(c => (c.agreementTags||[]).includes(filter));
+    if (sortContention) cats = cats.slice().sort((a, b) => _cmxContention(b) - _cmxContention(a));
+    if (!cats.length) return '<div class="cmx-empty">No categories match this filter.</div>';
+    return cats.map(cat => _cmxBuildRow(cat, models)).join('');
+  }
+
+  function _cmxBuildRow(cat, models) {
+    const isExpanded = _cmxExpandedCat === cat.id;
+    const stanceMap = {};
+    (cat.stances || []).forEach(s => { stanceMap[s.model] = s; });
+
+    const tags = (cat.agreementTags || []).map(t =>
+      `<span class="cmx-tag ${escapeHtml(t)}">${escapeHtml(t)}</span>`
+    ).join('');
+
+    const cells = models.map(m => {
+      const s = stanceMap[m] || { model: m, stance: 'absent', summary: '' };
+      const stance = (['agree','partial','dissent','absent'].includes(s.stance)) ? s.stance : 'absent';
+      const meta = MODEL_META[m] || { label: m };
+      const ariaLabel = stance === 'absent'
+        ? `${meta.label}: did not address`
+        : `${meta.label}: ${stance}`;
+      return `<div class="cmx-cell" data-stance="${stance}" role="cell" aria-label="${escapeHtml(ariaLabel)}">
+        <div class="cmx-cell-inner">
+          <div class="cmx-cell-icon">${_cmxStanceIcons[stance]||_cmxStanceIcons.absent}</div>
+          <span class="cmx-cell-micro">${stance === 'absent' ? '' : escapeHtml(stance)}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    const catId = escapeHtml(cat.id || '');
+    const drillHtml = isExpanded ? _cmxBuildDrill(cat, models) : '';
+    return `<div class="cmx-row${isExpanded ? ' expanded' : ''}"
+      role="row"
+      tabindex="0"
+      data-cat-id="${catId}"
+      aria-expanded="${isExpanded}"
+      onclick="_cmxToggleRow('${catId}')"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_cmxToggleRow('${catId}')}"
+      style="--cmx-cols:${models.length}">
+      <div class="cmx-cat-cell" role="rowheader">
+        <span class="cmx-cat-name">${escapeHtml(cat.label || cat.id)}</span>
+        ${tags ? `<div class="cmx-tags" aria-label="Agreement tags">${tags}</div>` : ''}
+      </div>
+      ${cells}
+    </div>${drillHtml}`;
+  }
+
+  function _cmxBuildDrill(cat, models) {
+    const stanceMap = {};
+    (cat.stances || []).forEach(s => { stanceMap[s.model] = s; });
+    const badgeLabel = { agree: '✓ agree', partial: '− partial', dissent: '✗ dissent', absent: '— absent' };
+
+    const stancesHtml = models.map(m => {
+      const s = stanceMap[m] || { model: m, stance: 'absent', summary: '' };
+      const stance = (['agree','partial','dissent','absent'].includes(s.stance)) ? s.stance : 'absent';
+      const meta = MODEL_META[m] || { label: m, rgb: '200,200,200' };
+      let body = '';
+      if (stance === 'absent') {
+        body = `<p class="cmx-drill-absent-note">Did not address this dimension.</p>`;
+      } else {
+        if (s.summary) body += `<p class="cmx-drill-summary">${escapeHtml(s.summary)}</p>`;
+        if (s.quote)   body += `<blockquote class="cmx-drill-quote">${escapeHtml(s.quote)}</blockquote>`;
+      }
+      return `<div class="cmx-drill-stance" style="--smc:${meta.rgb}">
+        <div class="cmx-drill-stance-inner">
+          <div class="cmx-drill-stance-head">
+            <span class="cmx-drill-model">${escapeHtml(meta.label)}</span>
+            <span class="cmx-drill-stance-badge ${stance}" aria-label="Stance: ${stance}">${escapeHtml(badgeLabel[stance]||stance)}</span>
+          </div>
+          ${body}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="cmx-drill" role="region" aria-label="Detail: ${escapeHtml(cat.label||cat.id)}">
+      <div>
+        <span class="cmx-drill-consensus-label">Consensus position</span>
+        <p class="cmx-drill-consensus-text">${escapeHtml(cat.consensusPosition || '')}</p>
+      </div>
+      <div class="cmx-drill-stances">${stancesHtml}</div>
+    </div>`;
+  }
+
+  // ── CMX interaction handlers (called from inline onclick) ──
+  function _cmxSetFilter(filter) {
+    _cmxFilter = filter;
+    _cmxExpandedCat = null;
+    document.querySelectorAll('.cmx-chip').forEach(chip => {
+      const isActive = chip.textContent.trim().toLowerCase().startsWith(filter === 'gap' ? 'gaps' : filter);
+      // More reliable: compare via onclick attribute
+    });
+    // Re-render filter chip states
+    document.querySelectorAll('.cmx-chip').forEach(chip => {
+      const onclk = chip.getAttribute('onclick') || '';
+      const active = onclk.includes(`'${filter}'`);
+      chip.classList.toggle('active', active);
+      chip.setAttribute('aria-pressed', active);
+    });
+    _cmxReRenderRows();
+  }
+
+  function _cmxToggleSort() {
+    _cmxSortContention = !_cmxSortContention;
+    _cmxExpandedCat = null;
+    const btn = document.querySelector('.cmx-sort-btn');
+    if (btn) { btn.classList.toggle('active', _cmxSortContention); btn.setAttribute('aria-pressed', _cmxSortContention); }
+    _cmxReRenderRows();
+  }
+
+  function _cmxToggleRow(catId) {
+    _cmxExpandedCat = (_cmxExpandedCat === catId) ? null : catId;
+    _cmxReRenderRows();
+    requestAnimationFrame(() => {
+      const row = document.querySelector(`.cmx-row[data-cat-id="${CSS.escape(catId)}"]`);
+      if (row) row.focus({ preventScroll: false });
+    });
+  }
+
+  function _cmxReRenderRows() {
+    const rowsEl = document.getElementById('cmx-rows');
+    if (!rowsEl || !ddActiveMsgId) return;
+    const data = deepDiveStore[ddActiveMsgId];
+    if (!data || data.format !== 'v3') return;
+    const models = Array.isArray(data.models) && data.models.length ? data.models : ['gpt','claude','gemini','grok'];
+    const html = _cmxBuildRows(data.categories || [], models, _cmxFilter, _cmxSortContention);
+    rowsEl.innerHTML = html || '<div class="cmx-empty">No categories match this filter.</div>';
+  }
+
+  // ── Legacy v2 format ──────────────────────────────────────────────────────────
+  function _buildDdPanelV2(data) {
+    // Section 1 — Model perspectives
+    const perspectives = Array.isArray(data.perspectives) ? data.perspectives : [];
+    const perspHtml = perspectives.map(p => {
+      const m = MODEL_META[p.model];
+      if (!m) return '';
+      return `<div class="ddp-perspective" style="--pmc:${m.rgb}">
+        <div class="ddp-perspective-inner">
+          <div class="ddp-persp-head">
+            <span class="ddp-persp-model">${escapeHtml(m.label)}</span>
+            ${p.tag ? `<span class="ddp-persp-tag">${escapeHtml(p.tag)}</span>` : ''}
+          </div>
+          <div class="ddp-persp-desc">${escapeHtml(p.description || '')}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Section 2 — Divergence bars
+    const divergence = Array.isArray(data.divergence) ? data.divergence : [];
+    const divHtml = divergence.map(d => {
+      const m = MODEL_META[d.modelColor] || { rgb: '201,167,122' };
+      const pct = Math.min(100, Math.max(0, d.strength || 0));
+      return `<div>
+        <div class="ddp-diverge-label">${escapeHtml(d.label || '')}</div>
+        <div class="ddp-diverge-track">
+          <div class="ddp-diverge-fill" style="--dmc:${m.rgb};width:${pct}%"></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Section 3 — Key insight
+    const insightHtml = (data.keyInsight || '').trim()
+      ? `<div class="ddp-insight">
+          <span class="ddp-insight-label">Key insight</span>
+          <div class="ddp-insight-text">${escapeHtml(data.keyInsight)}</div>
+        </div>`
+      : '';
+
+    return `
+      <div>
+        <div class="ddp-section-label">Model perspectives</div>
+        <div class="ddp-perspectives">${perspHtml || '<span style="color:var(--text-faint);font-size:12px">No perspective data.</span>'}</div>
+      </div>
+      ${divHtml ? `<div>
+        <div class="ddp-section-label">Where they diverged</div>
+        <div class="ddp-divergence">${divHtml}</div>
+      </div>` : ''}
+      ${insightHtml ? `<div>${insightHtml}</div>` : ''}`;
+  }
+
+  // Legacy v1 format (claims/outlier) rendered in the side panel
+  function _buildDdPanelV1(data) {
+    const claims = Array.isArray(data.claims) ? data.claims : [];
+    const claimsHtml = claims.map(c => {
+      const disagreed = Array.isArray(c.disagreed) ? c.disagreed : [];
+      const agreed    = Array.isArray(c.agreed)    ? c.agreed    : [];
+      const badgeHtml = ['gpt','claude','gemini','grok']
+        .filter(k => agreed.includes(k) || disagreed.includes(k))
+        .map(k => {
+          const m = MODEL_META[k];
+          if (!m) return '';
+          const dis = disagreed.includes(k);
+          return `<span class="dd-badge${dis?' dd-badge--dis':''}" style="--mc:${m.rgb}" title="${m.label}">${MODEL_LOGOS[k]||m.short}</span>`;
+        }).join('');
+      const breakdownHtml = disagreed.map(k => {
+        const m = MODEL_META[k];
+        if (!m) return '';
+        const txt = (c.breakdown && c.breakdown[k]) || 'Diverged.';
+        return `<div class="dd-diverge" style="--mc:${m.rgb}"><span class="dd-diverge-model">${escapeHtml(m.label)}</span><span class="dd-diverge-text">${escapeHtml(txt)}</span></div>`;
+      }).join('');
+      return `<div class="dd-claim">
+        <div class="dd-claim-head"><span class="dd-claim-text">${escapeHtml(c.claim||'')}</span><span class="dd-badges">${badgeHtml}</span></div>
+        ${breakdownHtml ? `<div class="dd-breakdown">${breakdownHtml}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    let outlierHtml = '';
+    const o = data.outlier;
+    if (o && o.model && MODEL_META[o.model] && (o.summary||'').trim()) {
+      const m = MODEL_META[o.model];
+      outlierHtml = `<div class="dd-outlier">
+        <div class="dd-outlier-head"><span class="dd-outlier-title">Key divergence — ${escapeHtml(m.label)}</span></div>
+        <div class="dd-outlier-text">${escapeHtml(o.summary)}</div>
+      </div>`;
+    }
+
+    return `<div>
+      <div class="ddp-section-label">Model agreement</div>
+      <div class="dd-inner-body">${claimsHtml}${outlierHtml}</div>
+    </div>`;
+  }
+
+  // Legacy fallback for old saved threads that still have inline dd-body HTML
+  function _toggleDeepDiveLegacy(id) {
+    const body = document.getElementById(`dd-body-${id}`);
+    const btn  = document.getElementById(`dd-btn-${id}`);
+    if (!body || !btn) return;
+    const open = !body.classList.contains('open');
+    if (open) {
+      const vBtn = document.getElementById(`tab-btn-${id}-Voyance`);
+      if (vBtn && !vBtn.classList.contains('active')) switchTabByEl(vBtn);
+    }
+    const inner = body.querySelector('.dd-inner');
+    btn.classList.toggle('open', open);
+    const label = btn.querySelector('.dd-btn-label');
+    if (label) label.textContent = open ? 'Close deep dive' : 'Deep dive';
+    if (open) {
+      body.classList.add('open');
+      body.style.maxHeight = (inner ? inner.scrollHeight : 2000) + 'px';
+      body.addEventListener('transitionend', function te() {
+        if (body.classList.contains('open')) body.style.maxHeight = 'none';
+        body.removeEventListener('transitionend', te);
+      });
+    } else {
+      body.style.maxHeight = (inner ? inner.scrollHeight : 2000) + 'px';
+      void body.offsetHeight;
+      body.classList.remove('open');
+      body.style.maxHeight = '0px';
+    }
+  }
+
   const _streamRenderTimers = {};
 
   function setStreamingContent(id, model, chunk) {
@@ -4486,8 +5718,10 @@
     // (fast, no parse overhead) and schedule a full markdown re-render at most
     // once every 250ms. setContent() does the final full render when streaming ends.
     const fullRaw = activeStreams[id] || '';
-    // Strip everything from the analysis marker onward so it never appears while streaming
-    const splitIdx = fullRaw.indexOf('%%ANALYSIS%%');
+    // Strip everything from the deep-dive (or legacy analysis) marker onward so the
+    // JSON / analysis payload never flashes on screen while the synthesis is streaming.
+    let splitIdx = fullRaw.indexOf('%%DEEPDIVE%%');
+    if (splitIdx === -1) splitIdx = fullRaw.indexOf('%%ANALYSIS%%');
     const raw = splitIdx !== -1 ? fullRaw.slice(0, splitIdx) : fullRaw;
     const isCodeHeavy = raw.includes('```');
 
@@ -4753,19 +5987,24 @@
 
     const studioWs = document.getElementById('studio-workspace');
     const chatArea = document.getElementById('chat-area');
+    const voyanceLayout = document.getElementById('voyance-layout');
     if (threadMode === 'studio') {
       // Studio thread with messages → show chat; empty → show workspace
       if (conversationHistory.length > 0) {
         chatArea.style.display = '';
+        if (voyanceLayout) voyanceLayout.style.display = '';
         studioWs.classList.remove('active');
         emptyState.style.display = 'none';
       } else {
         chatArea.style.display = 'none';
+        if (voyanceLayout) voyanceLayout.style.display = 'none';
+        closeDeepDivePanel();
         studioWs.classList.add('active');
         emptyState.style.display = 'none';
       }
     } else {
       chatArea.style.display = '';
+      if (voyanceLayout) voyanceLayout.style.display = '';
       studioWs.classList.remove('active');
       emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
     }
@@ -5607,6 +6846,8 @@
     viewingArtifactId = aid;
     if (activeSSE) { activeSSE.abort(); activeSSE = null; isLoading = false; updateSendBtn(); }
     document.getElementById('chat-area').style.display = 'none';
+    document.getElementById('voyance-layout').style.display = 'none';
+    closeDeepDivePanel();
     document.getElementById('studio-workspace').classList.remove('active');
     document.getElementById('input-area').style.display = 'none';
 
@@ -5808,6 +7049,7 @@
     document.getElementById('input-area').style.display = 'none';
     document.getElementById('studio-workspace').classList.add('active');
     document.getElementById('chat-area').style.display = 'none';
+    document.getElementById('voyance-layout').style.display = 'none';
     renderArtifactList();
   }
 
