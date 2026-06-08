@@ -477,21 +477,47 @@
       max-width: 55%;
     }
 
-    /* ── Deep dive side panel ─────────────────────────────── */
-    #dd-side-panel {
-      flex: 0 0 0;
-      width: 0;
-      overflow: hidden;
+    /* ── Deep dive side panel (legacy stub — now replaced by modal) ─── */
+    #dd-side-panel { display: none; }
+    #dd-panel-divider { display: none; }
+
+    /* ── Consensus matrix modal ────────────────────────────────────── */
+    #dd-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.62);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    #dd-modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    #dd-modal {
+      background: #0e0e0e;
+      border: 1px solid rgba(201,167,122,0.12);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 900px;
+      height: 88vh;
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
-      background: #0a0a0a;
-      border-left: none;
-      transition: flex-basis 0.3s ease, width 0.3s ease;
+      overflow: hidden;
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.26s cubic-bezier(0.33, 1, 0.68, 1);
+      box-shadow: 0 32px 96px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
     }
-    #voyance-layout.dd-open #dd-side-panel {
-      flex: 0 0 42%;
-      width: 42%;
-      min-width: 0;
+    #dd-modal-backdrop.open #dd-modal {
+      transform: translateY(0) scale(1);
     }
 
     .ddp-header {
@@ -536,7 +562,7 @@
     .ddp-body {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -3199,8 +3225,15 @@
     <div class="max-w-[760px] mx-auto flex flex-col" id="messages"></div>
   </div>
   <div id="dd-panel-divider"></div>
-  <div id="dd-side-panel"><!-- populated by JS --></div>
+  <div id="dd-side-panel"><!-- legacy stub --></div>
   </div><!-- /#voyance-layout -->
+
+  <!-- Consensus matrix modal (populated by renderDeepDivePanel) -->
+  <div id="dd-modal-backdrop" onclick="handleDdBackdropClick(event)" role="presentation">
+    <div id="dd-modal" role="dialog" aria-modal="true" aria-label="Consensus matrix">
+      <!-- content injected by JS -->
+    </div>
+  </div>
 
   <!-- Studio workspace -->
   <div id="studio-workspace">
@@ -5278,7 +5311,7 @@
     // Open or switch to a different message
     ddActiveMsgId = id;
     renderDeepDivePanel(id);
-    layout.classList.add('dd-open');
+    document.getElementById('dd-modal-backdrop').classList.add('open');
     _updateDeepDiveButtons(id);
 
     // Ensure the Voyance tab is active so the button is visible
@@ -5287,10 +5320,15 @@
   }
 
   function closeDeepDivePanel() {
-    const layout = document.getElementById('voyance-layout');
-    if (layout) layout.classList.remove('dd-open');
+    document.getElementById('dd-modal-backdrop')?.classList.remove('open');
     ddActiveMsgId = null;
     _updateDeepDiveButtons(null);
+  }
+
+  function handleDdBackdropClick(e) {
+    if (e.target === document.getElementById('dd-modal-backdrop')) {
+      closeDeepDivePanel();
+    }
   }
 
   function _updateDeepDiveButtons(openId) {
@@ -5306,9 +5344,9 @@
     });
   }
 
-  // ── Side panel HTML builder ───────────────────────────
+  // ── Consensus matrix modal builder ───────────────────────────
   function renderDeepDivePanel(id) {
-    const panel = document.getElementById('dd-side-panel');
+    const panel = document.getElementById('dd-modal');
     if (!panel) return;
     const data = deepDiveStore[id];
     if (!data) return;
@@ -9300,9 +9338,12 @@
   };
   window.DeleteAccountModal = DeleteAccountModal;
 
-  // Close on Escape
+  // Close modals on Escape
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') DeleteAccountModal.hide();
+    if (e.key === 'Escape') {
+      DeleteAccountModal.hide();
+      closeDeepDivePanel();
+    }
   });
 </script>
 </body>
