@@ -24,10 +24,10 @@
       --mono: 'JetBrains Mono', monospace;
       --sans: 'Hanken Grotesk', sans-serif;
 
-      /* Stance color tokens — distinct from every model identity color */
-      --stance-agree:   45,212,191;
-      --stance-partial: 252,211,77;
-      --stance-dissent: 248,113,113;
+      /* Stance color tokens — warm editorial, not neon */
+      --stance-agree:   161,207,156;  /* soft sage   */
+      --stance-partial: 215,179,120;  /* warm sand   */
+      --stance-dissent: 215,130,122;  /* muted coral */
     }
 
     html, body {
@@ -146,20 +146,20 @@
 
     .cmx-filters { display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
     .cmx-chip {
-      background: none; border: 1px solid var(--line); border-radius: 5px;
-      padding: 3px 9px; font-family: var(--mono); font-size: 9px;
-      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint);
+      background: none; border: 1px solid var(--line); border-radius: 99px;
+      padding: 3px 10px; font-family: var(--sans); font-size: 11px; font-weight: 500;
+      letter-spacing: 0em; color: var(--text-faint);
       cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s; white-space: nowrap;
     }
     .cmx-chip:hover { color: var(--text-dim); border-color: var(--line-hover); }
     .cmx-chip.active { color: var(--accent); border-color: rgba(201,167,122,0.45); background: rgba(201,167,122,0.07); }
-    .cmx-chip-count { display: inline-block; margin-left: 4px; opacity: 0.65; }
+    .cmx-chip-count { display: inline-block; margin-left: 4px; font-size: 10px; opacity: 0.55; }
 
     .cmx-sort-row { display: flex; justify-content: flex-end; flex-shrink: 0; }
     .cmx-sort-btn {
       background: none; border: none; cursor: pointer; display: flex; align-items: center;
-      gap: 4px; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--text-faint); padding: 2px 0; transition: color 0.15s;
+      gap: 4px; font-family: var(--sans); font-size: 10px; font-weight: 500;
+      letter-spacing: 0em; color: var(--text-faint); padding: 2px 0; transition: color 0.15s;
     }
     .cmx-sort-btn:hover { color: var(--text-dim); }
     .cmx-sort-btn.active { color: var(--accent); }
@@ -204,13 +204,14 @@
     }
     .cmx-tags { display: flex; flex-wrap: wrap; gap: 3px; }
     .cmx-tag {
-      font-family: var(--mono); font-size: 7.5px; letter-spacing: 0.07em;
-      text-transform: uppercase; border-radius: 3px; padding: 1px 5px; line-height: 1.4;
+      font-family: var(--sans); font-size: 8px; font-weight: 500;
+      letter-spacing: 0em; text-transform: lowercase;
+      border-radius: 99px; padding: 1px 7px; line-height: 1.5;
     }
-    .cmx-tag.consensus { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.10);   border: 1px solid rgba(var(--stance-agree),0.28); }
-    .cmx-tag.split     { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.10); border: 1px solid rgba(var(--stance-partial),0.28); }
-    .cmx-tag.contested { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.10); border: 1px solid rgba(var(--stance-dissent),0.28); }
-    .cmx-tag.gap       { color: var(--text-faint);          background: rgba(255,255,255,0.04);           border: 1px dashed rgba(255,255,255,0.18); }
+    .cmx-tag.consensus { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.10);   border: 1px solid rgba(var(--stance-agree),0.22); }
+    .cmx-tag.split     { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.10); border: 1px solid rgba(var(--stance-partial),0.22); }
+    .cmx-tag.contested { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.10); border: 1px solid rgba(var(--stance-dissent),0.22); }
+    .cmx-tag.gap       { color: var(--text-dim);            background: rgba(255,255,255,0.05);           border: 1px solid rgba(255,255,255,0.12); }
 
     .cmx-cell {
       display: flex; align-items: center; justify-content: center;
@@ -220,18 +221,25 @@
     .cmx-cell-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .cmx-cell-icon {
       display: flex; align-items: center; justify-content: center;
-      width: 20px; height: 20px; border-radius: 4px;
+      width: 22px; height: 22px; border-radius: 6px;
     }
-    .cmx-cell-micro { font-family: var(--mono); font-size: 7px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
+    .cmx-cell-micro {
+      font-family: var(--sans); font-size: 7.5px; letter-spacing: 0.01em;
+      text-transform: lowercase; line-height: 1; opacity: 0.7;
+    }
 
-    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.14);   color: rgb(var(--stance-agree)); }
-    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.14); color: rgb(var(--stance-partial)); }
-    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.14); color: rgb(var(--stance-dissent)); }
-    .cmx-cell[data-stance="absent"]  .cmx-cell-icon { background: transparent; border: 1px dashed rgba(255,255,255,0.16); color: var(--text-faint); }
+    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.16);   color: rgb(var(--stance-agree)); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.16); color: rgb(var(--stance-partial)); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.16); color: rgb(var(--stance-dissent)); }
+    .cmx-cell[data-stance="absent"]  .cmx-cell-icon {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.09);
+      color: var(--text-faint);
+    }
 
-    .cmx-cell[data-stance="agree"]   .cmx-cell-micro { color: rgba(var(--stance-agree),0.7); }
-    .cmx-cell[data-stance="partial"] .cmx-cell-micro { color: rgba(var(--stance-partial),0.7); }
-    .cmx-cell[data-stance="dissent"] .cmx-cell-micro { color: rgba(var(--stance-dissent),0.7); }
+    .cmx-cell[data-stance="agree"]   .cmx-cell-micro { color: rgb(var(--stance-agree)); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-micro { color: rgb(var(--stance-partial)); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-micro { color: rgb(var(--stance-dissent)); }
     .cmx-cell[data-stance="absent"]  .cmx-cell-micro { color: var(--text-faint); }
 
     .cmx-drill {
@@ -254,13 +262,13 @@
     .cmx-drill-stance-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
     .cmx-drill-model { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--smc)); font-weight: 600; }
     .cmx-drill-stance-badge {
-      display: inline-flex; align-items: center; gap: 3px; font-family: var(--mono);
-      font-size: 8px; letter-spacing: 0.06em; border-radius: 3px; padding: 1px 6px;
+      display: inline-flex; align-items: center; gap: 3px; font-family: var(--sans);
+      font-size: 9px; font-weight: 500; letter-spacing: 0em; border-radius: 99px; padding: 2px 8px;
     }
-    .cmx-drill-stance-badge.agree   { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.12);   border: 1px solid rgba(var(--stance-agree),0.3); }
-    .cmx-drill-stance-badge.partial { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.12); border: 1px solid rgba(var(--stance-partial),0.3); }
-    .cmx-drill-stance-badge.dissent { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.12); border: 1px solid rgba(var(--stance-dissent),0.3); }
-    .cmx-drill-stance-badge.absent  { color: var(--text-faint); background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.18); }
+    .cmx-drill-stance-badge.agree   { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.12);   border: 1px solid rgba(var(--stance-agree),0.25); }
+    .cmx-drill-stance-badge.partial { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.12); border: 1px solid rgba(var(--stance-partial),0.25); }
+    .cmx-drill-stance-badge.dissent { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.12); border: 1px solid rgba(var(--stance-dissent),0.25); }
+    .cmx-drill-stance-badge.absent  { color: var(--text-faint); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); }
     .cmx-drill-summary { font-size: 11px; line-height: 1.55; color: var(--text-dim); }
     .cmx-drill-absent-note { font-size: 11px; font-style: italic; color: var(--text-faint); }
     .cmx-drill-quote { margin-top: 5px; padding: 5px 8px; border-left: 2px solid rgba(var(--smc),0.35); font-size: 10.5px; font-style: italic; line-height: 1.5; color: var(--text-faint); }
@@ -277,8 +285,8 @@
       flex-shrink: 0;
     }
     .legend-title {
-      font-family: var(--mono); font-size: 8px; letter-spacing: 0.16em;
-      text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px;
+      font-family: var(--sans); font-size: 10px; font-weight: 500;
+      color: var(--text-faint); margin-bottom: 8px; letter-spacing: 0;
     }
     .legend-grid {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px 12px;
@@ -288,11 +296,11 @@
       width: 18px; height: 18px; border-radius: 4px;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .legend-swatch.agree   { background: rgba(var(--stance-agree),0.14);   color: rgb(var(--stance-agree)); }
-    .legend-swatch.partial { background: rgba(var(--stance-partial),0.14); color: rgb(var(--stance-partial)); }
-    .legend-swatch.dissent { background: rgba(var(--stance-dissent),0.14); color: rgb(var(--stance-dissent)); }
-    .legend-swatch.absent  { background: transparent; border: 1px dashed rgba(255,255,255,0.2); color: var(--text-faint); }
-    .legend-text { font-family: var(--mono); font-size: 9px; letter-spacing: 0.05em; color: var(--text-faint); }
+    .legend-swatch.agree   { background: rgba(var(--stance-agree),0.16);   color: rgb(var(--stance-agree)); border-radius: 6px; }
+    .legend-swatch.partial { background: rgba(var(--stance-partial),0.16); color: rgb(var(--stance-partial)); border-radius: 6px; }
+    .legend-swatch.dissent { background: rgba(var(--stance-dissent),0.16); color: rgb(var(--stance-dissent)); border-radius: 6px; }
+    .legend-swatch.absent  { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.09); color: var(--text-faint); border-radius: 6px; }
+    .legend-text { font-family: var(--sans); font-size: 11px; color: var(--text-faint); }
     .legend-text strong { color: var(--text-dim); font-weight: 600; }
   </style>
 </head>

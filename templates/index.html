@@ -643,15 +643,15 @@
     /* ── Consensus Matrix Explorer ────────────────────────────────────────
        TWO SEPARATE COLOR AXES:
          • Model identity  → --pmc CSS var, set on column headers only
-         • Stance          → hardcoded teal/amber/rose/muted
+         • Stance          → warm editorial palette, muted/desaturated
        They must never share the same palette; see stance vars below.
     ─────────────────────────────────────────────────────────────────── */
 
-    /* Stance color tokens — distinct from every model identity color */
+    /* Stance color tokens — warm editorial, not neon. Distinct from model colors. */
     :root {
-      --stance-agree:   45,212,191;   /* teal   — not green/blue/purple/amber */
-      --stance-partial: 252,211,77;   /* yellow — lighter/cooler than Grok amber */
-      --stance-dissent: 248,113,113;  /* rose   — pink-red, colorblind-safe w/ icon */
+      --stance-agree:   161,207,156;  /* soft sage green  — desaturated, not neon teal */
+      --stance-partial: 215,179,120;  /* warm sand        — close to gold family, lighter */
+      --stance-dissent: 215,130,122;  /* muted coral      — not neon rose/red */
     }
 
     /* ─ Pulse strip ─ */
@@ -702,12 +702,12 @@
     .cmx-chip {
       background: none;
       border: 1px solid var(--line);
-      border-radius: 5px;
-      padding: 3px 9px;
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      border-radius: 99px;
+      padding: 3px 10px;
+      font-family: var(--sans);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0em;
       color: var(--text-faint);
       cursor: pointer;
       transition: border-color 0.15s, color 0.15s, background 0.15s;
@@ -722,7 +722,8 @@
     .cmx-chip-count {
       display: inline-block;
       margin-left: 4px;
-      opacity: 0.65;
+      font-size: 10px;
+      opacity: 0.55;
     }
 
     /* ─ Sort toggle ─ */
@@ -738,10 +739,10 @@
       display: flex;
       align-items: center;
       gap: 4px;
-      font-family: var(--mono);
-      font-size: 8.5px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-family: var(--sans);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0em;
       color: var(--text-faint);
       padding: 2px 0;
       transition: color 0.15s;
@@ -843,18 +844,19 @@
       gap: 3px;
     }
     .cmx-tag {
-      font-family: var(--mono);
-      font-size: 7.5px;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      border-radius: 3px;
-      padding: 1px 5px;
-      line-height: 1.4;
+      font-family: var(--sans);
+      font-size: 8px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      text-transform: lowercase;
+      border-radius: 99px;
+      padding: 1px 7px;
+      line-height: 1.5;
     }
-    .cmx-tag.consensus { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.10);   border: 1px solid rgba(var(--stance-agree),0.28); }
-    .cmx-tag.split     { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.10); border: 1px solid rgba(var(--stance-partial),0.28); }
-    .cmx-tag.contested { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.10); border: 1px solid rgba(var(--stance-dissent),0.28); }
-    .cmx-tag.gap       { color: var(--text-faint);          background: rgba(255,255,255,0.04);           border: 1px dashed rgba(255,255,255,0.18); }
+    .cmx-tag.consensus { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.10);   border: 1px solid rgba(var(--stance-agree),0.22); }
+    .cmx-tag.split     { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.10); border: 1px solid rgba(var(--stance-partial),0.22); }
+    .cmx-tag.contested { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.10); border: 1px solid rgba(var(--stance-dissent),0.22); }
+    .cmx-tag.gap       { color: var(--text-dim);            background: rgba(255,255,255,0.05);           border: 1px solid rgba(255,255,255,0.12); }
 
     /* Stance cells */
     .cmx-cell {
@@ -876,31 +878,32 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
     }
     .cmx-cell-micro {
-      font-family: var(--mono);
-      font-size: 7px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+      font-family: var(--sans);
+      font-size: 7.5px;
+      letter-spacing: 0.01em;
+      text-transform: lowercase;
       line-height: 1;
+      opacity: 0.7;
     }
 
     /* Stance color application — ONLY on cells, never on model headers */
-    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.14);   color: rgb(var(--stance-agree)); }
-    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.14); color: rgb(var(--stance-partial)); }
-    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.14); color: rgb(var(--stance-dissent)); }
+    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.16);   color: rgb(var(--stance-agree)); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.16); color: rgb(var(--stance-partial)); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.16); color: rgb(var(--stance-dissent)); }
     .cmx-cell[data-stance="absent"]  .cmx-cell-icon {
-      background: transparent;
-      border: 1px dashed rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.09);
       color: var(--text-faint);
     }
 
-    .cmx-cell[data-stance="agree"]   .cmx-cell-micro { color: rgba(var(--stance-agree),0.7); }
-    .cmx-cell[data-stance="partial"] .cmx-cell-micro { color: rgba(var(--stance-partial),0.7); }
-    .cmx-cell[data-stance="dissent"] .cmx-cell-micro { color: rgba(var(--stance-dissent),0.7); }
+    .cmx-cell[data-stance="agree"]   .cmx-cell-micro { color: rgb(var(--stance-agree)); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-micro { color: rgb(var(--stance-partial)); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-micro { color: rgb(var(--stance-dissent)); }
     .cmx-cell[data-stance="absent"]  .cmx-cell-micro { color: var(--text-faint); }
 
     /* ─ Drill-down panel (inline expand below a row) ─ */
@@ -965,19 +968,20 @@
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      font-family: var(--mono);
-      font-size: 8px;
-      letter-spacing: 0.06em;
-      border-radius: 3px;
-      padding: 1px 6px;
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0em;
+      border-radius: 99px;
+      padding: 2px 8px;
     }
-    .cmx-drill-stance-badge.agree   { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.12);   border: 1px solid rgba(var(--stance-agree),0.3); }
-    .cmx-drill-stance-badge.partial { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.12); border: 1px solid rgba(var(--stance-partial),0.3); }
-    .cmx-drill-stance-badge.dissent { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.12); border: 1px solid rgba(var(--stance-dissent),0.3); }
+    .cmx-drill-stance-badge.agree   { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.12);   border: 1px solid rgba(var(--stance-agree),0.25); }
+    .cmx-drill-stance-badge.partial { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.12); border: 1px solid rgba(var(--stance-partial),0.25); }
+    .cmx-drill-stance-badge.dissent { color: rgb(var(--stance-dissent)); background: rgba(var(--stance-dissent),0.12); border: 1px solid rgba(var(--stance-dissent),0.25); }
     .cmx-drill-stance-badge.absent  {
       color: var(--text-faint);
       background: rgba(255,255,255,0.04);
-      border: 1px dashed rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.10);
     }
     .cmx-drill-summary {
       font-size: 11px;
