@@ -539,7 +539,7 @@
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 12px;
     }
     .ddp-section-label {
       font-family: var(--mono);
@@ -657,26 +657,20 @@
     /* ─ Pulse strip ─ */
     .cmx-pulse {
       display: flex;
-      gap: 0;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      overflow: hidden;
+      gap: 22px;
       flex-shrink: 0;
+      padding: 2px 0 4px;
     }
     .cmx-pulse-item {
-      flex: 1;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 9px 6px 8px;
-      border-right: 1px solid var(--line);
+      align-items: flex-start;
       gap: 2px;
     }
     .cmx-pulse-item:last-child { border-right: none; }
     .cmx-pulse-num {
       font-family: var(--mono);
-      font-size: 17px;
+      font-size: 21px;
       font-weight: 700;
       line-height: 1;
       color: var(--text);
@@ -685,10 +679,9 @@
       color: rgb(var(--stance-agree));
     }
     .cmx-pulse-label {
-      font-family: var(--mono);
-      font-size: 8px;
-      letter-spacing: 0.13em;
-      text-transform: uppercase;
+      font-family: var(--sans);
+      font-size: 10px;
+      letter-spacing: 0;
       color: var(--text-faint);
     }
 
@@ -696,14 +689,15 @@
     .cmx-filters {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
+      gap: 6px;
       flex-shrink: 0;
+      align-items: center;
     }
     .cmx-chip {
       background: none;
       border: 1px solid var(--line);
       border-radius: 99px;
-      padding: 3px 10px;
+      padding: 3px 11px;
       font-family: var(--sans);
       font-size: 11px;
       font-weight: 500;
@@ -726,15 +720,11 @@
       opacity: 0.55;
     }
 
-    /* ─ Sort toggle ─ */
-    .cmx-sort-row {
-      display: flex;
-      justify-content: flex-end;
-      flex-shrink: 0;
-    }
+    /* ─ Sort toggle (lives inside .cmx-filters, pushed right via margin-left:auto) ─ */
     .cmx-sort-btn {
       background: none;
-      border: none;
+      border: 1px solid transparent;
+      border-radius: 99px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -744,11 +734,13 @@
       font-weight: 500;
       letter-spacing: 0em;
       color: var(--text-faint);
-      padding: 2px 0;
-      transition: color 0.15s;
+      padding: 3px 10px;
+      transition: color 0.15s, border-color 0.15s;
+      margin-left: auto;
+      white-space: nowrap;
     }
-    .cmx-sort-btn:hover { color: var(--text-dim); }
-    .cmx-sort-btn.active { color: var(--accent); }
+    .cmx-sort-btn:hover { color: var(--text-dim); border-color: var(--line); }
+    .cmx-sort-btn.active { color: var(--accent); border-color: rgba(201,167,122,0.35); }
 
     /* ─ Matrix wrapper ─ */
     .cmx-matrix {
@@ -763,7 +755,7 @@
     /* Header row: label col + model cols */
     .cmx-hdr {
       display: grid;
-      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 44px);
+      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 52px);
       border-bottom: 1px solid var(--line);
       flex-shrink: 0;
     }
@@ -776,22 +768,22 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      padding: 6px 2px;
+      gap: 4px;
+      padding: 8px 2px;
       border-right: 1px solid var(--line);
     }
     .cmx-hdr-model:last-child { border-right: none; }
     .cmx-hdr-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: rgb(var(--pmc));
       flex-shrink: 0;
     }
     .cmx-hdr-name {
       font-family: var(--mono);
-      font-size: 7.5px;
-      letter-spacing: 0.1em;
+      font-size: 8.5px;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
       color: rgb(var(--pmc));
       line-height: 1;
@@ -808,13 +800,13 @@
     /* Individual row */
     .cmx-row {
       display: grid;
-      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 44px);
+      grid-template-columns: 1fr repeat(var(--cmx-cols, 4), 52px);
       border-bottom: 1px solid var(--line);
       cursor: pointer;
       transition: background 0.12s;
     }
     .cmx-row:last-child { border-bottom: none; }
-    .cmx-row:hover { background: rgba(255,255,255,0.025); }
+    .cmx-row:hover { background: rgba(255,255,255,0.035); }
     .cmx-row:focus { outline: none; background: rgba(201,167,122,0.06); }
     .cmx-row.expanded { background: rgba(201,167,122,0.04); }
 
@@ -822,13 +814,13 @@
     .cmx-cat-cell {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 8px 10px;
+      gap: 5px;
+      padding: 10px 12px;
       border-right: 1px solid var(--line);
       min-width: 0;
     }
     .cmx-cat-name {
-      font-size: 11.5px;
+      font-size: 12.5px;
       color: var(--text-dim);
       line-height: 1.35;
       overflow: hidden;
@@ -845,12 +837,12 @@
     }
     .cmx-tag {
       font-family: var(--sans);
-      font-size: 8px;
+      font-size: 9px;
       font-weight: 500;
       letter-spacing: 0.01em;
       text-transform: lowercase;
       border-radius: 99px;
-      padding: 1px 7px;
+      padding: 2px 8px;
       line-height: 1.5;
     }
     .cmx-tag.consensus { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.10);   border: 1px solid rgba(var(--stance-agree),0.22); }
@@ -864,7 +856,7 @@
       align-items: center;
       justify-content: center;
       border-right: 1px solid var(--line);
-      min-height: 42px;
+      min-height: 48px;
     }
     .cmx-cell:last-child { border-right: none; }
 
@@ -872,31 +864,31 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 3px;
     }
     .cmx-cell-icon {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 22px;
-      height: 22px;
-      border-radius: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
     }
     .cmx-cell-micro {
       font-family: var(--sans);
-      font-size: 7.5px;
+      font-size: 8.5px;
       letter-spacing: 0.01em;
       text-transform: lowercase;
       line-height: 1;
-      opacity: 0.7;
+      opacity: 0.75;
     }
 
     /* Stance color application — ONLY on cells, never on model headers */
-    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.16);   color: rgb(var(--stance-agree)); }
-    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.16); color: rgb(var(--stance-partial)); }
-    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.16); color: rgb(var(--stance-dissent)); }
+    .cmx-cell[data-stance="agree"]   .cmx-cell-icon { background: rgba(var(--stance-agree),0.12);   color: rgb(var(--stance-agree)); }
+    .cmx-cell[data-stance="partial"] .cmx-cell-icon { background: rgba(var(--stance-partial),0.12); color: rgb(var(--stance-partial)); }
+    .cmx-cell[data-stance="dissent"] .cmx-cell-icon { background: rgba(var(--stance-dissent),0.12); color: rgb(var(--stance-dissent)); }
     .cmx-cell[data-stance="absent"]  .cmx-cell-icon {
-      background: rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.09);
       color: var(--text-faint);
     }
@@ -910,10 +902,10 @@
     .cmx-drill {
       border-top: 1px solid rgba(201,167,122,0.15);
       background: rgba(201,167,122,0.03);
-      padding: 12px 12px 14px;
+      padding: 14px 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       animation: cmxDrillIn 0.18s ease;
     }
     @keyframes cmxDrillIn {
@@ -921,23 +913,23 @@
       to   { opacity: 1; transform: translateY(0); }
     }
     .cmx-drill-consensus-label {
-      font-family: var(--mono);
-      font-size: 8px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
+      font-family: var(--sans);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
       color: var(--accent);
       margin-bottom: 4px;
       display: block;
     }
     .cmx-drill-consensus-text {
-      font-size: 11.5px;
+      font-size: 12.5px;
       line-height: 1.55;
       color: var(--text-dim);
     }
     .cmx-drill-stances {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
     .cmx-drill-stance {
       border-radius: 6px;
@@ -945,7 +937,7 @@
       border: 1px solid rgba(var(--smc),0.18);
     }
     .cmx-drill-stance-inner {
-      padding: 7px 10px;
+      padding: 9px 12px;
       border-left: 3px solid rgba(var(--smc),0.7);
       background: rgba(var(--smc),0.05);
     }
@@ -953,12 +945,12 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
       flex-wrap: wrap;
     }
     .cmx-drill-model {
       font-family: var(--mono);
-      font-size: 9px;
+      font-size: 10px;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: rgb(var(--smc));
@@ -969,11 +961,11 @@
       align-items: center;
       gap: 3px;
       font-family: var(--sans);
-      font-size: 9px;
+      font-size: 9.5px;
       font-weight: 500;
       letter-spacing: 0em;
       border-radius: 99px;
-      padding: 2px 8px;
+      padding: 2px 9px;
     }
     .cmx-drill-stance-badge.agree   { color: rgb(var(--stance-agree));   background: rgba(var(--stance-agree),0.12);   border: 1px solid rgba(var(--stance-agree),0.25); }
     .cmx-drill-stance-badge.partial { color: rgb(var(--stance-partial)); background: rgba(var(--stance-partial),0.12); border: 1px solid rgba(var(--stance-partial),0.25); }
@@ -984,22 +976,22 @@
       border: 1px solid rgba(255,255,255,0.10);
     }
     .cmx-drill-summary {
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.55;
       color: var(--text-dim);
     }
     .cmx-drill-absent-note {
-      font-size: 11px;
+      font-size: 11.5px;
       font-style: italic;
       color: var(--text-faint);
     }
     .cmx-drill-quote {
       margin-top: 5px;
-      padding: 5px 8px;
+      padding: 6px 10px;
       border-left: 2px solid rgba(var(--smc),0.35);
-      font-size: 10.5px;
+      font-size: 11px;
       font-style: italic;
-      line-height: 1.5;
+      line-height: 1.55;
       color: var(--text-faint);
     }
 
@@ -5421,13 +5413,10 @@
       { key: 'contested', label: 'Contested' },
       { key: 'gap', label: 'Gaps' },
     ];
-    const filtersHtml = `<div class="cmx-filters" role="group" aria-label="Filter categories">
+    const filtersHtml = `<div class="cmx-filters" role="group" aria-label="Filter and sort categories">
       ${filterDefs.map(f => `<button class="cmx-chip${f.key === 'all' ? ' active' : ''}"
         onclick="_cmxSetFilter('${f.key}')"
         aria-pressed="${f.key === 'all'}">${escapeHtml(f.label)}<span class="cmx-chip-count">${filterCounts[f.key]||0}</span></button>`).join('')}
-    </div>`;
-
-    const sortHtml = `<div class="cmx-sort-row">
       <button class="cmx-sort-btn" onclick="_cmxToggleSort()" aria-pressed="false">
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
         Sort by contention
@@ -5452,7 +5441,7 @@
       </div>
     </div>`;
 
-    return `${pulseHtml}${filtersHtml}${sortHtml}${matrixHtml}`;
+    return `${pulseHtml}${filtersHtml}${matrixHtml}`;
   }
 
   function _cmxBuildRows(categories, models, filter, sortContention) {
