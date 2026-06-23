@@ -382,6 +382,78 @@
     .dd-icon { transition: transform .24s cubic-bezier(.4,0,.2,1); flex-shrink: 0; }
     .dd-btn.open .dd-icon { transform: rotate(180deg); }
 
+    /* ── Consensus Matrix CTA block (featured entry point below synthesis) ── */
+    .dd-cta {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border: 1px solid rgba(201,167,122,0.18);
+      border-radius: 10px;
+      background: rgba(201,167,122,0.035);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: border-color .2s;
+    }
+    .dd-cta:hover { border-color: rgba(201,167,122,0.32); }
+    .dd-cta-info { flex: 1; min-width: 0; }
+    .dd-cta-eyebrow {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .dd-cta-score-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+    .dd-cta-score {
+      font-family: var(--mono);
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+      color: rgb(var(--stance-agree));
+    }
+    .dd-cta-score-label {
+      font-size: 12px;
+      color: var(--text-faint);
+      font-family: var(--sans);
+    }
+    .dd-cta-bar {
+      height: 3px;
+      border-radius: 99px;
+      overflow: hidden;
+      display: flex;
+      background: rgba(255,255,255,0.05);
+      margin-bottom: 6px;
+    }
+    .dd-cta-desc { font-size: 11px; color: var(--text-faint); line-height: 1.4; }
+    .dd-cta-btn {
+      flex-shrink: 0;
+      background: rgba(201,167,122,0.09);
+      border: 1px solid rgba(201,167,122,0.4);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .18s;
+      white-space: nowrap;
+    }
+    .dd-cta-btn:hover {
+      background: rgba(201,167,122,0.15);
+      border-color: rgba(201,167,122,0.62);
+      color: var(--accent-bright);
+    }
+    .dd-cta-btn.open {
+      background: rgba(201,167,122,0.13);
+      border-color: rgba(201,167,122,0.58);
+      color: var(--accent-bright);
+    }
+
     .dd-body { max-height: 0; overflow: hidden; transition: max-height .42s cubic-bezier(.4,0,.2,1); }
     .dd-inner {
       margin-top: 24px;
@@ -680,36 +752,63 @@
       --stance-dissent: 215,130,122;  /* muted coral      — not neon rose/red */
     }
 
-    /* ─ Pulse strip ─ */
+    /* ─ Pulse header (matrix summary row) ─ */
     .cmx-pulse {
       display: flex;
-      gap: 22px;
+      align-items: center;
+      gap: 20px;
       flex-shrink: 0;
-      padding: 2px 0 4px;
+      padding: 4px 0 14px;
+      border-bottom: 1px solid var(--line);
     }
-    .cmx-pulse-item {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 2px;
-    }
-    .cmx-pulse-item:last-child { border-right: none; }
+    .cmx-pulse-score-block { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
     .cmx-pulse-num {
       font-family: var(--mono);
-      font-size: 21px;
+      font-size: 34px;
       font-weight: 700;
       line-height: 1;
       color: var(--text);
     }
-    .cmx-pulse-num.score {
-      color: rgb(var(--stance-agree));
-    }
+    .cmx-pulse-num.score { color: rgb(var(--stance-agree)); }
     .cmx-pulse-label {
-      font-family: var(--sans);
-      font-size: 10px;
-      letter-spacing: 0;
+      font-family: var(--mono);
+      font-size: 8.5px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
       color: var(--text-faint);
     }
+    .cmx-pulse-divider { width: 1px; height: 36px; background: var(--line); flex-shrink: 0; }
+    .cmx-pulse-stats { display: flex; gap: 18px; flex-shrink: 0; }
+    .cmx-pulse-stat { display: flex; flex-direction: column; gap: 2px; }
+    .cmx-pulse-stat-n {
+      font-family: var(--mono);
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text-dim);
+    }
+    .cmx-pulse-stat-n.contested { color: rgb(var(--stance-dissent)); }
+    .cmx-pulse-stat-l { font-family: var(--sans); font-size: 9.5px; color: var(--text-faint); }
+    .cmx-pulse-bar-block { flex: 1; display: flex; flex-direction: column; gap: 6px; margin-left: auto; }
+    .cmx-pulse-bar {
+      height: 4px;
+      border-radius: 99px;
+      overflow: hidden;
+      display: flex;
+      background: rgba(255,255,255,0.04);
+    }
+    .cmx-pulse-bar-seg { height: 100%; }
+    .cmx-pulse-legend { display: flex; gap: 12px; }
+    .cmx-pulse-leg {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--mono);
+      font-size: 8px;
+      letter-spacing: 0.04em;
+      color: var(--text-faint);
+    }
+    .cmx-pulse-leg-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
     /* ─ Filter chips ─ */
     .cmx-filters {
@@ -4720,6 +4819,12 @@
       }),
       signal: controller.signal,
     }).then(async (res) => {
+      if (!res.ok) {
+        isLoading = false;
+        updateSendBtn();
+        newThreadBtn.disabled = false;
+        return;
+      }
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
@@ -4744,7 +4849,12 @@
           if (event.type === 'council_chunk') councilAnswer += event.chunk;
           if (event.type === 'complete') {
             if (councilAnswer) {
-              conversationHistory.push({ role: 'assistant', content: councilAnswer });
+              // Strip %%DEEPDIVE%% payload before storing in history — the JSON can
+              // be several KB and would breach the server's per-message length limit,
+              // causing silent 422 errors on every subsequent question.
+              const ddIdx = councilAnswer.indexOf('%%DEEPDIVE%%');
+              const historyAnswer = ddIdx !== -1 ? councilAnswer.slice(0, ddIdx).trim() : councilAnswer;
+              conversationHistory.push({ role: 'assistant', content: historyAnswer });
             }
             isLoading = false;
             updateSendBtn();
@@ -5208,13 +5318,8 @@
         content.innerHTML = renderMarkdownWithMath(answerMd);
         if (deepData) {
           deepDiveStore[id] = deepData;
-          const slot = document.getElementById(`dd-slot-${id}`);
-          if (slot) {
-            slot.innerHTML = buildDeepDiveButton(id);
-          } else {
-            content.insertAdjacentHTML('afterbegin',
-              `<div class="dd-toggle-row dd-toggle-row--inline">${buildDeepDiveButton(id)}</div>`);
-          }
+          // CTA block below synthesis is the sole entry point — no meta-row button
+          content.insertAdjacentHTML('beforeend', buildDeepDiveCtaBlock(id, deepData));
           if (ddActiveMsgId === id) renderDeepDivePanel(id);
         }
       } else if (model === 'Voyance' && markdown && markdown.includes(AN_SPLIT)) {
@@ -5285,9 +5390,62 @@
     return null;
   }
 
-  // ── Button ────────────────────────────────────────────
+  // ── Button (small toggle in the meta row) ──────────────
   function buildDeepDiveButton(id) {
     return `<button class="dd-btn" id="dd-btn-${id}" onclick="toggleDeepDive('${id}')">${_ddSearchIcon}<span class="dd-btn-label">Deep dive</span>${_ddChevIcon}</button>`;
+  }
+
+  // ── Featured CTA block appended below synthesis text ──
+  function buildDeepDiveCtaBlock(id, data) {
+    const cats = Array.isArray(data.categories) ? data.categories : [];
+    const contested = cats.filter(c => (c.agreementTags||[]).includes('contested')).length;
+    const splits    = cats.filter(c => (c.agreementTags||[]).includes('split')).length;
+
+    // Derive all numbers from actual per-model stances so score and bar always match
+    let agreeCount = 0, partialCount = 0, dissentCount = 0, absentCount = 0;
+    cats.forEach(cat => {
+      (cat.stances || []).forEach(s => {
+        const st = s.stance;
+        if (st === 'agree') agreeCount++;
+        else if (st === 'partial') partialCount++;
+        else if (st === 'dissent') dissentCount++;
+        else absentCount++;
+      });
+    });
+    const totalStances = Math.max(1, agreeCount + partialCount + dissentCount + absentCount);
+    // agree=full weight, partial=half, dissent/absent=0
+    const score = Math.round((agreeCount * 100 + partialCount * 50) / totalStances);
+    const agrPct = Math.round((agreeCount  / totalStances) * 100);
+    const sptPct = Math.round((partialCount / totalStances) * 100);
+    const cntPct = Math.round((dissentCount / totalStances) * 100);
+    const gapPct = Math.max(0, 100 - agrPct - sptPct - cntPct);
+
+    const descParts = [];
+    if (contested > 0) descParts.push(`${contested} contested`);
+    if (splits > 0) descParts.push(`${splits} split`);
+    const desc = descParts.length
+      ? descParts.join(' · ') + ` across ${cats.length} dimensions`
+      : `${cats.length} dimension${cats.length !== 1 ? 's' : ''} analyzed`;
+
+    const arrowIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>`;
+
+    return `<div class="dd-cta" id="dd-cta-${id}">
+      <div class="dd-cta-info">
+        <div class="dd-cta-eyebrow">Consensus Matrix</div>
+        <div class="dd-cta-score-row">
+          <span class="dd-cta-score">${score}%</span>
+          <span class="dd-cta-score-label">model alignment</span>
+        </div>
+        <div class="dd-cta-bar">
+          <div style="width:${agrPct}%;height:100%;background:rgb(var(--stance-agree));opacity:0.75"></div>
+          <div style="width:${sptPct}%;height:100%;background:rgb(var(--stance-partial));opacity:0.75"></div>
+          <div style="width:${cntPct}%;height:100%;background:rgb(var(--stance-dissent));opacity:0.75"></div>
+          <div style="width:${gapPct}%;height:100%;background:rgba(255,255,255,0.06)"></div>
+        </div>
+        <div class="dd-cta-desc">${escapeHtml(desc)}</div>
+      </div>
+      <button class="dd-cta-btn" id="dd-cta-btn-${id}" onclick="toggleDeepDive('${id}')">${arrowIcon} Explore</button>
+    </div>`;
   }
 
   // ── Side panel open / close / switch ─────────────────
@@ -5339,8 +5497,10 @@
       btn.classList.toggle('open', isOpen);
       const label = btn.querySelector('.dd-btn-label');
       if (label) label.textContent = 'Deep dive';
-      const icon = btn.querySelector('.dd-icon');
-      // chevron rotates via .open class on the button
+    });
+    // Also sync the featured CTA buttons
+    document.querySelectorAll('.dd-cta-btn[id^="dd-cta-btn-"]').forEach(btn => {
+      btn.classList.toggle('open', btn.id.replace('dd-cta-btn-', '') === openId);
     });
   }
 
@@ -5412,7 +5572,6 @@
 
     const models = Array.isArray(data.models) && data.models.length ? data.models : ['gpt','claude','gemini','grok'];
     const categories = Array.isArray(data.categories) ? data.categories : [];
-    const score = Math.round(Math.min(100, Math.max(0, data.consensusScore || 0)));
 
     const contested = categories.filter(c => (c.agreementTags||[]).includes('contested')).length;
     const gaps      = categories.filter(c => (c.agreementTags||[]).includes('gap')).length;
@@ -5425,22 +5584,57 @@
       gap:       gaps,
     };
 
+    // Derive score and bar from actual per-model stances so they always match each other
+    let _agreeC = 0, _partialC = 0, _dissentC = 0, _absentC = 0;
+    categories.forEach(cat => {
+      (cat.stances || []).forEach(s => {
+        const st = s.stance;
+        if (st === 'agree') _agreeC++;
+        else if (st === 'partial') _partialC++;
+        else if (st === 'dissent') _dissentC++;
+        else _absentC++;
+      });
+    });
+    const _totalS = Math.max(1, _agreeC + _partialC + _dissentC + _absentC);
+    // agree=full weight, partial=half, dissent/absent=0
+    const score = Math.round((_agreeC * 100 + _partialC * 50) / _totalS);
+    const agrPct = Math.round((_agreeC   / _totalS) * 100);
+    const sptPct = Math.round((_partialC / _totalS) * 100);
+    const cntPct = Math.round((_dissentC / _totalS) * 100);
+    const gapPct = Math.max(0, 100 - agrPct - sptPct - cntPct);
+
     const pulseHtml = `<div class="cmx-pulse" aria-label="Consensus summary">
-      <div class="cmx-pulse-item">
+      <div class="cmx-pulse-score-block">
         <span class="cmx-pulse-num score" aria-label="${score} percent consensus">${score}%</span>
-        <span class="cmx-pulse-label">consensus</span>
+        <span class="cmx-pulse-label">alignment</span>
       </div>
-      <div class="cmx-pulse-item">
-        <span class="cmx-pulse-num">${categories.length}</span>
-        <span class="cmx-pulse-label">categories</span>
+      <div class="cmx-pulse-divider" aria-hidden="true"></div>
+      <div class="cmx-pulse-stats">
+        <div class="cmx-pulse-stat">
+          <span class="cmx-pulse-stat-n">${categories.length}</span>
+          <span class="cmx-pulse-stat-l">dimensions</span>
+        </div>
+        <div class="cmx-pulse-stat">
+          <span class="cmx-pulse-stat-n${contested > 0 ? ' contested' : ''}">${contested}</span>
+          <span class="cmx-pulse-stat-l">contested</span>
+        </div>
+        <div class="cmx-pulse-stat">
+          <span class="cmx-pulse-stat-n">${gaps}</span>
+          <span class="cmx-pulse-stat-l">gaps</span>
+        </div>
       </div>
-      <div class="cmx-pulse-item">
-        <span class="cmx-pulse-num">${contested}</span>
-        <span class="cmx-pulse-label">contested</span>
-      </div>
-      <div class="cmx-pulse-item">
-        <span class="cmx-pulse-num">${gaps}</span>
-        <span class="cmx-pulse-label">gaps</span>
+      <div class="cmx-pulse-bar-block" aria-hidden="true">
+        <div class="cmx-pulse-bar">
+          <div class="cmx-pulse-bar-seg" style="width:${agrPct}%;background:rgb(var(--stance-agree));opacity:0.8"></div>
+          <div class="cmx-pulse-bar-seg" style="width:${sptPct}%;background:rgb(var(--stance-partial));opacity:0.8"></div>
+          <div class="cmx-pulse-bar-seg" style="width:${cntPct}%;background:rgb(var(--stance-dissent));opacity:0.8"></div>
+          <div class="cmx-pulse-bar-seg" style="width:${gapPct}%;background:rgba(255,255,255,0.06)"></div>
+        </div>
+        <div class="cmx-pulse-legend">
+          <span class="cmx-pulse-leg"><span class="cmx-pulse-leg-dot" style="background:rgb(var(--stance-agree))"></span>aligned</span>
+          <span class="cmx-pulse-leg"><span class="cmx-pulse-leg-dot" style="background:rgb(var(--stance-partial))"></span>split</span>
+          <span class="cmx-pulse-leg"><span class="cmx-pulse-leg-dot" style="background:rgb(var(--stance-dissent))"></span>contested</span>
+        </div>
       </div>
     </div>`;
 

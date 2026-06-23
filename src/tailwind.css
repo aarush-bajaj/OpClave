@@ -4,26 +4,30 @@
 
 /* ── Design System ─────────────────────────────────────────────── */
 :root {
-  --bg:          #0a0a0c;
-  --bg-raised:   #111114;
-  --line:        rgba(255,255,255,0.06);
-  --line-hover:  rgba(255,255,255,0.12);
-  --text:        #ededed;
-  --text-dim:    #8a8a90;
-  --text-faint:  #55555a;
+  --bg:          #07080b;
+  --bg-raised:   #0e1016;
+  --line:        rgba(255,255,255,0.07);
+  --line-hover:  rgba(255,255,255,0.14);
+  --text:        #e4e7ed;
+  --text-dim:    #8e96a4;
+  --text-faint:  #545b69;
   --accent:      #c9a77a;
   --accent-soft: rgba(201,167,122,0.12);
-  --serif:       'Fraunces', serif;
+  --cyan:        #46e0d4;
+  --cyan-soft:   rgba(70,224,212,0.12);
+  --serif:       'Bricolage Grotesque', sans-serif;
   --mono:        'JetBrains Mono', monospace;
-  --sans:        'Inter', sans-serif;
+  --sans:        'Hanken Grotesk', sans-serif;
 }
 
 * { font-family: var(--sans); }
 
-/* Centered warm glow on near-black */
+/* Near-black canvas with a faint dual gold/cyan wash (aurora handled in index.html) */
 html.dark body {
   background: var(--bg);
-  background-image: radial-gradient(circle 800px at 50% 35%, rgba(201,167,122,0.045) 0%, transparent 60%);
+  background-image:
+    radial-gradient(circle 720px at 18% 12%, rgba(70,224,212,0.03) 0%, transparent 60%),
+    radial-gradient(circle 760px at 82% 80%, rgba(201,167,122,0.028) 0%, transparent 62%);
 }
 
 /* ── Display serif headline ───────────────────────────────────── */
