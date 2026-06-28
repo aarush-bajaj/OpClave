@@ -615,7 +615,7 @@ def _validate_history(v: list) -> list:
             raise ValueError(f"Invalid history role: {role!r}")
         content = entry.get("content", "")
         if isinstance(content, str) and len(content) > _MAX_HISTORY_MSG_LEN:
-            raise ValueError(f"History message content exceeds {_MAX_HISTORY_MSG_LEN} characters")
+            entry["content"] = content[:_MAX_HISTORY_MSG_LEN]
     return v
 
 
