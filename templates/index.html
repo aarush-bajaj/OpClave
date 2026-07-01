@@ -1957,6 +1957,30 @@
     }
     .auth-modal-skip:hover { color: #b8b8c0; }
 
+    /* ── Sync toast ─── */
+    #sync-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: rgba(30,28,36,0.96);
+      border: 1px solid rgba(215,130,122,0.35);
+      color: rgb(215,130,122);
+      font-family: var(--mono);
+      font-size: 11.5px;
+      padding: 9px 16px;
+      border-radius: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s, transform .2s;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    #sync-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
     /* ── Review full-page overlay ─── */
     #review-fullpage {
       display: none;
@@ -3799,34 +3823,7 @@
         </div>
 
         <div class="rfp-card">
-          <textarea class="smode-textarea" id="research-prompt-input" placeholder="What do you want to explore? Try: how neural networks learn, the causes of the 2008 financial crisis, urban planning…" spellcheck="false" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitResearchPrompt()}"></textarea>
-
-          <div class="smode-options-row">
-            <div class="smode-option-group">
-              <span class="smode-option-label">FORMAT</span>
-              <select class="smode-select" id="research-format-select">
-                <option value="Overview">Overview</option>
-                <option value="Deep dive">Deep dive</option>
-                <option value="Comparison">Comparison</option>
-                <option value="Step-by-step guide">Step-by-step guide</option>
-                <option value="Literature review">Literature review</option>
-              </select>
-            </div>
-            <div class="smode-option-group">
-              <span class="smode-option-label">AUDIENCE</span>
-              <select class="smode-select" id="research-audience-select">
-                <option value="">General</option>
-                <option value="technical">Technical</option>
-                <option value="business">Business</option>
-                <option value="beginner">Beginner-friendly</option>
-                <option value="academic">Academic</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="smode-context-row">
-            <input type="text" class="smode-context-input" id="research-context-input" placeholder="Any specific angle, focus area, or prior knowledge to consider…"/>
-          </div>
+          <textarea class="smode-textarea" id="research-prompt-input" placeholder="What do you want to explore? E.g. 'explain transformer attention simply' or 'deep technical dive into Byzantine fault tolerance'…" spellcheck="false" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitResearchPrompt()}"></textarea>
 
           <div class="rfp-submit-row">
             <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">GPT · Claude · Gemini</span>
@@ -4584,6 +4581,10 @@
         currentThreadId = target;
         conversationHistory = [...(t.history || [])];
         messagesEl.innerHTML = t.messagesHTML || '';
+        messagesEl.querySelectorAll('[data-deepdive]').forEach(el => {
+          const msgId = el.id.replace('dd-cta-', '');
+          try { deepDiveStore[msgId] = JSON.parse(el.dataset.deepdive); } catch(_) {}
+        });
         syncMsgCounter();
         emptyState.style.display = conversationHistory.length === 0 ? '' : 'none';
         renderKatexInElement(messagesEl);
@@ -5429,7 +5430,7 @@
 
     const arrowIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>`;
 
-    return `<div class="dd-cta" id="dd-cta-${id}">
+    return `<div class="dd-cta" id="dd-cta-${id}" data-deepdive="${escapeHtml(JSON.stringify(data))}">
       <div class="dd-cta-info">
         <div class="dd-cta-eyebrow">Consensus Matrix</div>
         <div class="dd-cta-score-row">
@@ -6164,6 +6165,10 @@
     const t = threads[id];
     conversationHistory = [...(t.history || [])];
     messagesEl.innerHTML = t.messagesHTML || '';
+    messagesEl.querySelectorAll('[data-deepdive]').forEach(el => {
+      const msgId = el.id.replace('dd-cta-', '');
+      try { deepDiveStore[msgId] = JSON.parse(el.dataset.deepdive); } catch(_) {}
+    });
     syncMsgCounter();
     updateRing(promptCount);
     isLoading = false;
@@ -6377,8 +6382,6 @@
   }
 
   function saveToLocalStorage() {
-    // Threads are only persisted for signed-in users (stored in Supabase as source of truth)
-    if (!AuthManager.isLoggedIn()) return;
     try {
       threadOrder.forEach(id => {
         try {
@@ -6768,6 +6771,8 @@
       if (savedArtifacts[aid]) {
         savedArtifacts[aid].name = newName;
         persistArtifact(savedArtifacts[aid]);
+        const cloudId = savedArtifacts[aid].cloudId;
+        if (cloudId) ArtifactManager.renameInCloud(cloudId, newName).catch(console.error);
       }
       renderArtifactsModalBody();
       // Update title if artifact view is open
@@ -6798,6 +6803,8 @@
       const newName = inp.value.trim() || oldName;
       savedArtifacts[aid].name = newName;
       persistArtifact(savedArtifacts[aid]);
+      const cloudId = savedArtifacts[aid].cloudId;
+      if (cloudId) ArtifactManager.renameInCloud(cloudId, newName).catch(console.error);
       const newTitle = document.createElement('div');
       newTitle.className = 'artifact-title';
       newTitle.textContent = newName;
@@ -7526,6 +7533,22 @@
 
   // ── Supabase client (lazy init) ──────────────────
   let _supabase = null;
+  let _lastLoadedUserId = null;
+
+  let _syncToastTimer = null;
+  function showSyncToast(msg) {
+    let el = document.getElementById('sync-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'sync-toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('visible');
+    clearTimeout(_syncToastTimer);
+    _syncToastTimer = setTimeout(() => el.classList.remove('visible'), 4000);
+  }
+
   function getSupabase() {
     if (!_supabase) {
       if (!window.supabase)           { console.error('[Auth] Supabase CDN script not loaded'); return null; }
@@ -7554,13 +7577,18 @@
       this.updateUI();
 
       if (this.user) {
-        // Signed in: load authoritative data from Supabase
+        // Signed in on page load: push any local (pre-sign-in) data up first, then
+        // pull the authoritative cloud state. Mark the user so the onAuthStateChange
+        // SIGNED_IN event (which Supabase also fires for token refreshes) can tell
+        // this is not a fresh login and skip a redundant full reload.
+        _lastLoadedUserId = this.user.id;
+        await this.syncLocalDataToCloud();
         ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
         ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
-      } else {
-        // Not signed in: wipe all stale user data so nothing persists after sign-out
-        clearAllUserData();
       }
+      // If not signed in, leave local threads intact — the user may be running the app
+      // without an account and should keep their threads across reloads.
+      // The SIGNED_OUT event handler already calls clearAllUserData() at sign-out time.
 
       sb.auth.onAuthStateChange((event, session) => {
         this.user = session?.user ?? null;
@@ -7568,9 +7596,17 @@
         this.updateUI();
         if (event === 'SIGNED_IN') {
           AuthModal.dismiss();
-          this.syncLocalDataToCloud().catch(e => console.error('Sync failed', e));
-          ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
-          ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
+          const incomingUserId = session?.user?.id;
+          if (incomingUserId && incomingUserId === _lastLoadedUserId) {
+            // Same user — this is a token refresh, not a new login. Only update the
+            // session token; don't wipe and reload threads (would stomp active chat).
+          } else {
+            // Genuine new sign-in (different user or first load via OAuth redirect).
+            _lastLoadedUserId = incomingUserId || null;
+            this.syncLocalDataToCloud().catch(e => console.error('Sync failed', e));
+            ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
+            ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
+          }
         } else if (event === 'SIGNED_OUT') {
           _sessionToken = null;
           clearAllUserData();
@@ -7662,6 +7698,7 @@
       if (!this.user) return;
       const sb = getSupabase();
       if (!sb) return;
+      // Sync local artifacts that haven't been uploaded yet
       for (const aid of [...savedArtifactOrder]) {
         const art = savedArtifacts[aid];
         if (!art || art.cloudId) continue;
@@ -7672,6 +7709,15 @@
             persistArtifact(savedArtifacts[aid]);
           }
         } catch(e) { console.error('Sync failed for artifact', aid, e); }
+      }
+      // Sync local threads (e.g. created before sign-in) that haven't been uploaded yet
+      for (const tid of [...threadOrder]) {
+        const t = threads[tid];
+        if (!t || t._syncedToCloud || t.mode === 'studio') continue;
+        try {
+          await ThreadManager.save(t);
+          threads[tid]._syncedToCloud = true;
+        } catch(e) { console.error('Sync failed for thread', tid, e); }
       }
     }
   };
@@ -7744,7 +7790,7 @@
         papers: art.papers || [],
         tags: art.tags || []
       }).select().single();
-      if (error) { console.error('Cloud artifact save error', error); return null; }
+      if (error) { console.error('Cloud artifact save error', error); showSyncToast('Artifact save failed — check connection'); return null; }
       return data;
     },
 
@@ -7752,7 +7798,7 @@
       const sb = getSupabase();
       if (!sb || !AuthManager.user) return;
       const { data, error } = await sb.from('artifacts').select('*').order('created_at', { ascending: false });
-      if (error) { console.error('Cloud artifact load error', error); return; }
+      if (error) { console.error('Cloud artifact load error', error); showSyncToast('Could not load your artifacts — check connection'); return; }
       if (!data || !data.length) return;
       const cloudIdSet = new Set(Object.values(savedArtifacts).map(a => a.cloudId).filter(Boolean));
       let added = false;
@@ -7805,7 +7851,8 @@
         mode: thread.mode || 'chat',
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
-      if (error) console.error('Cloud thread save error', error);
+      if (error) { console.error('Cloud thread save error', error); showSyncToast('Thread save failed — check connection'); }
+      else { thread._syncedToCloud = true; }
     },
 
     async deleteFromCloud(threadId) {
@@ -7826,7 +7873,7 @@
         .neq('mode', 'studio')
         .order('updated_at', { ascending: false })
         .limit(50);
-      if (error) { console.error('Thread cloud load error', error); return; }
+      if (error) { console.error('Thread cloud load error', error); showSyncToast('Could not load your threads — check connection'); return; }
       if (!data || data.length === 0) return;
 
       threads = {};
@@ -7838,6 +7885,7 @@
           history: t.history || [],
           messagesHTML: t.messages_html || '',
           mode: t.mode || 'chat',
+          _syncedToCloud: true,
         };
         threadOrder.push(t.id);
       });
@@ -7854,12 +7902,13 @@
         localStorage.setItem('opclave-thread-order', JSON.stringify(threadOrder));
       } catch(_) {}
 
-      // If the user is currently in Studio, update the thread data silently in the
-      // background without resetting the UI — Supabase fires SIGNED_IN on token
-      // refresh (e.g. on tab switch), which would otherwise stomp Studio every time.
+      // If the user is in an active conversation (chat or studio), refresh the thread
+      // list silently without resetting the UI. This prevents token-refresh events from
+      // stomping an in-progress session.
       const inStudio = appMode === 'studio';
+      const hasActiveConversation = !!currentThreadId && conversationHistory.length > 0;
       renderThreadList();
-      if (inStudio) return;
+      if (inStudio || hasActiveConversation) return;
 
       currentThreadId = null;
       conversationHistory = [];
@@ -8188,15 +8237,11 @@
   function submitResearchPrompt() {
     const text = document.getElementById('research-prompt-input').value.trim();
     if (!text) return;
-    const format = document.getElementById('research-format-select').value;
-    const audience = document.getElementById('research-audience-select').value;
-    const extra = document.getElementById('research-context-input').value.trim();
     document.getElementById('research-prompt-input').value = '';
-    document.getElementById('research-context-input').value = '';
-    runResearch(text, '', extra, format, audience);
+    runResearch(text);
   }
 
-  async function runResearch(topic, followUpOf = '', context = '', format = 'Overview', audience = '') {
+  async function runResearch(topic, followUpOf = '') {
     const researchTopic = (topic || '').trim();
     if (!researchTopic) return;
     if (_researchSSE) { _researchSSE.abort(); _researchSSE = null; }
@@ -8248,7 +8293,7 @@
       const res = await fetch('/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({ topic: researchTopic, follow_up_of: followUpOf || '', context: context || '', format: format || 'Overview', audience: audience || '' }),
+        body: JSON.stringify({ topic: researchTopic, follow_up_of: followUpOf || '' }),
         signal: controller.signal,
       });
       if (!res.ok) {
@@ -8497,26 +8542,15 @@
               <h2 class="topic-title">${escapeHtml(topic)}</h2>
             </div>
             <div class="model-perspectives-row">
-              <span class="perspective-chip gpt pending" id="chip-gpt">Historical</span>
-              <span class="perspective-chip claude pending" id="chip-claude">Conceptual</span>
-              <span class="perspective-chip gemini pending" id="chip-gemini">Applied</span>
+              <span class="perspective-chip gpt pending" id="chip-gpt">GPT</span>
+              <span class="perspective-chip claude pending" id="chip-claude">Claude</span>
+              <span class="perspective-chip gemini pending" id="chip-gemini">Gemini</span>
             </div>
           </div>
 
           <div id="research-synthesis"><div class="diagram-loading"><div class="loading-dot"></div>Running three perspectives, then synthesizing… this can take up to a minute.</div></div>
 
           <div id="research-charts-container" class="charts-container"></div>
-
-          <div class="model-tabs-section">
-            <div class="model-tab-row">
-              <button class="model-tab active" onclick="showModelTab('gpt')">Historical</button>
-              <button class="model-tab" onclick="showModelTab('claude')">Conceptual</button>
-              <button class="model-tab" onclick="showModelTab('gemini')">Applied</button>
-            </div>
-            <div class="model-tab-content" id="model-tab-gpt"><span style="color:#545b69;font-family:var(--mono);font-size:11px">Researching…</span></div>
-            <div class="model-tab-content rx-hidden" id="model-tab-claude"><span style="color:#545b69;font-family:var(--mono);font-size:11px">Researching…</span></div>
-            <div class="model-tab-content rx-hidden" id="model-tab-gemini"><span style="color:#545b69;font-family:var(--mono);font-size:11px">Researching…</span></div>
-          </div>
 
           <div class="research-actions">
             <button class="save-research-btn" onclick="saveResearchArtifact()">
@@ -8526,17 +8560,9 @@
         </div>
 
         <div class="research-sidebar">
-          <div class="questions-card">
-            <div class="questions-header"><span class="questions-eyebrow">Explore Further</span></div>
+          <div class="questions-card" style="border:none;background:transparent;box-shadow:none;padding:0">
             <div class="questions-list" id="questions-list">
-              <div class="questions-loading" style="padding:14px 16px">Generating questions…</div>
-            </div>
-            <div class="rx-custom-input-row">
-              <input class="rx-custom-input" id="rx-custom-q" type="text" placeholder="Ask your own question…"
-                     onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();rxSubmitCustomQuestion()}"/>
-              <button class="rx-custom-send" onclick="rxSubmitCustomQuestion()" title="Explore">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              </button>
+              <div class="questions-loading" style="padding:14px 0;color:#55555a;font-size:12px">Generating questions…</div>
             </div>
           </div>
         </div>
@@ -8578,7 +8604,7 @@
       list.innerHTML = '<div class="questions-loading" style="padding:14px 16px">No questions available</div>';
       return;
     }
-    list.innerHTML = questions.map((q, idx) => `
+    list.innerHTML = questions.slice(0, 3).map((q, idx) => `
       <button class="follow-up-question" onclick="rxExploreFollowUp(${idx})">
         <span class="question-number">${idx + 1}</span>
         <span class="question-text">${escapeHtml(q)}</span>
