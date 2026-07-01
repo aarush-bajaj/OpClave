@@ -5451,7 +5451,20 @@
 
   // ── Side panel open / close / switch ─────────────────
   function toggleDeepDive(id) {
-    const data = deepDiveStore[id];
+    let data = deepDiveStore[id];
+
+    // If the store entry is missing (e.g. JSON.parse failed silently on restore),
+    // try reading the data-deepdive attribute directly from the DOM element.
+    if (!data) {
+      const ctaEl = document.getElementById(`dd-cta-${id}`);
+      if (ctaEl?.dataset.deepdive) {
+        try {
+          const parsed = JSON.parse(ctaEl.dataset.deepdive);
+          if (parsed) { data = parsed; deepDiveStore[id] = parsed; }
+        } catch(_) {}
+      }
+    }
+
     const layout = document.getElementById('voyance-layout');
     if (!layout) return;
 
@@ -5509,7 +5522,16 @@
   function renderDeepDivePanel(id) {
     const panel = document.getElementById('dd-modal');
     if (!panel) return;
-    const data = deepDiveStore[id];
+    let data = deepDiveStore[id];
+    if (!data) {
+      const ctaEl = document.getElementById(`dd-cta-${id}`);
+      if (ctaEl?.dataset.deepdive) {
+        try {
+          const parsed = JSON.parse(ctaEl.dataset.deepdive);
+          if (parsed) { data = parsed; deepDiveStore[id] = parsed; }
+        } catch(_) {}
+      }
+    }
     if (!data) return;
 
     // Find the question that produced this response
