@@ -2527,15 +2527,16 @@ def research(req: ResearchRequest, request: Request):
             "Research this topic from a practical angle. Cover how it applies in the real world today, current challenges and trends, who is working on it and what they are building, and what someone could actually do with this knowledge.",
             "Be concrete and actionable. 3-4 paragraphs. No bullet points.")
         synthesis_instructions = (
-            "Synthesize into a clear, accessible overview. Organize naturally with ## headers covering: "
-            "what it is and why it matters, how it works at a conceptual level, and where it is applied today. "
-            "Target 600-900 words. Write for a curious, intelligent reader.")
+            "Synthesize into a clear, well-structured response. Match the depth and tone to how the question "
+            "was asked — if the question signals a beginner, write accessibly with plain language and analogies; "
+            "if it signals technical depth or expertise, be rigorous and precise. "
+            "Organize naturally with ## headers. Target 600-900 words.")
 
     questions_prompt = f"""You are an intellectual guide helping someone explore a topic deeply.
 
 Topic: {topic}
 
-Generate exactly 5 follow-up questions that would genuinely deepen someone's understanding of this topic.
+Generate exactly 3 follow-up questions that would genuinely deepen someone's understanding of this topic.
 
 Rules:
 - Questions should be intellectually interesting, not obvious
@@ -2544,8 +2545,8 @@ Rules:
 - Avoid yes/no questions — each should invite deep exploration
 - Think about what a curious expert would want to explore next
 
-Return ONLY a JSON array of 5 strings. No preamble, no markdown:
-["Question one?", "Question two?", "Question three?", "Question four?", "Question five?"]"""
+Return ONLY a JSON array of 3 strings. No preamble, no markdown:
+["Question one?", "Question two?", "Question three?"]"""
 
     def generate():
         import re as _re

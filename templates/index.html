@@ -3823,34 +3823,7 @@
         </div>
 
         <div class="rfp-card">
-          <textarea class="smode-textarea" id="research-prompt-input" placeholder="What do you want to explore? Try: how neural networks learn, the causes of the 2008 financial crisis, urban planning…" spellcheck="false" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitResearchPrompt()}"></textarea>
-
-          <div class="smode-options-row">
-            <div class="smode-option-group">
-              <span class="smode-option-label">FORMAT</span>
-              <select class="smode-select" id="research-format-select">
-                <option value="Overview">Overview</option>
-                <option value="Deep dive">Deep dive</option>
-                <option value="Comparison">Comparison</option>
-                <option value="Step-by-step guide">Step-by-step guide</option>
-                <option value="Literature review">Literature review</option>
-              </select>
-            </div>
-            <div class="smode-option-group">
-              <span class="smode-option-label">AUDIENCE</span>
-              <select class="smode-select" id="research-audience-select">
-                <option value="">General</option>
-                <option value="technical">Technical</option>
-                <option value="business">Business</option>
-                <option value="beginner">Beginner-friendly</option>
-                <option value="academic">Academic</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="smode-context-row">
-            <input type="text" class="smode-context-input" id="research-context-input" placeholder="Any specific angle, focus area, or prior knowledge to consider…"/>
-          </div>
+          <textarea class="smode-textarea" id="research-prompt-input" placeholder="What do you want to explore? E.g. 'explain transformer attention simply' or 'deep technical dive into Byzantine fault tolerance'…" spellcheck="false" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();submitResearchPrompt()}"></textarea>
 
           <div class="rfp-submit-row">
             <span style="font-family:var(--mono,'JetBrains Mono',monospace);font-size:10px;color:#55555a;letter-spacing:0.06em;">GPT · Claude · Gemini</span>
@@ -7612,10 +7585,10 @@
         await this.syncLocalDataToCloud();
         ThreadManager.loadFromCloud().catch(e => console.error('Thread cloud load failed', e));
         ArtifactManager.loadFromCloud().catch(e => console.error('Cloud artifact load failed', e));
-      } else {
-        // Not signed in: wipe all stale user data so nothing persists after sign-out
-        clearAllUserData();
       }
+      // If not signed in, leave local threads intact — the user may be running the app
+      // without an account and should keep their threads across reloads.
+      // The SIGNED_OUT event handler already calls clearAllUserData() at sign-out time.
 
       sb.auth.onAuthStateChange((event, session) => {
         this.user = session?.user ?? null;
@@ -8264,15 +8237,11 @@
   function submitResearchPrompt() {
     const text = document.getElementById('research-prompt-input').value.trim();
     if (!text) return;
-    const format = document.getElementById('research-format-select').value;
-    const audience = document.getElementById('research-audience-select').value;
-    const extra = document.getElementById('research-context-input').value.trim();
     document.getElementById('research-prompt-input').value = '';
-    document.getElementById('research-context-input').value = '';
-    runResearch(text, '', extra, format, audience);
+    runResearch(text);
   }
 
-  async function runResearch(topic, followUpOf = '', context = '', format = 'Overview', audience = '') {
+  async function runResearch(topic, followUpOf = '') {
     const researchTopic = (topic || '').trim();
     if (!researchTopic) return;
     if (_researchSSE) { _researchSSE.abort(); _researchSSE = null; }
@@ -8324,7 +8293,7 @@
       const res = await fetch('/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({ topic: researchTopic, follow_up_of: followUpOf || '', context: context || '', format: format || 'Overview', audience: audience || '' }),
+        body: JSON.stringify({ topic: researchTopic, follow_up_of: followUpOf || '' }),
         signal: controller.signal,
       });
       if (!res.ok) {
@@ -8573,26 +8542,15 @@
               <h2 class="topic-title">${escapeHtml(topic)}</h2>
             </div>
             <div class="model-perspectives-row">
-              <span class="perspective-chip gpt pending" id="chip-gpt">Historical</span>
-              <span class="perspective-chip claude pending" id="chip-claude">Conceptual</span>
-              <span class="perspective-chip gemini pending" id="chip-gemini">Applied</span>
+              <span class="perspective-chip gpt pending" id="chip-gpt">GPT</span>
+              <span class="perspective-chip claude pending" id="chip-claude">Claude</span>
+              <span class="perspective-chip gemini pending" id="chip-gemini">Gemini</span>
             </div>
           </div>
 
           <div id="research-synthesis"><div class="diagram-loading"><div class="loading-dot"></div>Running three perspectives, then synthesizing… this can take up to a minute.</div></div>
 
           <div id="research-charts-container" class="charts-container"></div>
-
-          <div class="model-tabs-section">
-            <div class="model-tab-row">
-              <button class="model-tab active" onclick="showModelTab('gpt')">Historical</button>
-              <button class="model-tab" onclick="showModelTab('claude')">Conceptual</button>
-              <button class="model-tab" onclick="showModelTab('gemini')">Applied</button>
-            </div>
-            <div class="model-tab-content" id="model-tab-gpt"><span style="color:#545b69;font-family:var(--mono);font-size:11px">Researching…</span></div>
-            <div class="model-tab-content rx-hidden" id="model-tab-claude"><span style="color:#545b69;font-family:var(--mono);font-size:11px">Researching…</span></div>
-            <div class="model-tab-content rx-hidden" id="model-tab-gemini"><span style="color:#545b69;font-family:var(--mono);font-size:11px">Researching…</span></div>
-          </div>
 
           <div class="research-actions">
             <button class="save-research-btn" onclick="saveResearchArtifact()">
@@ -8602,17 +8560,9 @@
         </div>
 
         <div class="research-sidebar">
-          <div class="questions-card">
-            <div class="questions-header"><span class="questions-eyebrow">Explore Further</span></div>
+          <div class="questions-card" style="border:none;background:transparent;box-shadow:none;padding:0">
             <div class="questions-list" id="questions-list">
-              <div class="questions-loading" style="padding:14px 16px">Generating questions…</div>
-            </div>
-            <div class="rx-custom-input-row">
-              <input class="rx-custom-input" id="rx-custom-q" type="text" placeholder="Ask your own question…"
-                     onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();rxSubmitCustomQuestion()}"/>
-              <button class="rx-custom-send" onclick="rxSubmitCustomQuestion()" title="Explore">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              </button>
+              <div class="questions-loading" style="padding:14px 0;color:#55555a;font-size:12px">Generating questions…</div>
             </div>
           </div>
         </div>
@@ -8654,7 +8604,7 @@
       list.innerHTML = '<div class="questions-loading" style="padding:14px 16px">No questions available</div>';
       return;
     }
-    list.innerHTML = questions.map((q, idx) => `
+    list.innerHTML = questions.slice(0, 3).map((q, idx) => `
       <button class="follow-up-question" onclick="rxExploreFollowUp(${idx})">
         <span class="question-number">${idx + 1}</span>
         <span class="question-text">${escapeHtml(q)}</span>
