@@ -2574,7 +2574,7 @@
     html:not(.dark) #aurora{ display:none; }
     #aurora::before, #aurora::after, #aurora > i{
       content:""; position:absolute; border-radius:50%; display:block;
-      filter:blur(105px); opacity:.28; mix-blend-mode:screen; will-change:transform;
+      filter:blur(50px); opacity:.28; mix-blend-mode:screen; will-change:transform;
     }
     #aurora::before{
       width:44vw; height:44vw; left:-14vw; top:-22vh;
@@ -2619,7 +2619,7 @@
     /* ── Glass surfaces: sidebar / header / input ──────── */
     .dark #sidebar{
       background:linear-gradient(180deg,rgba(12,14,20,.74),rgba(7,8,12,.74)) !important;
-      -webkit-backdrop-filter:blur(20px) saturate(1.1); backdrop-filter:blur(20px) saturate(1.1);
+      -webkit-backdrop-filter:blur(12px) saturate(1.1); backdrop-filter:blur(12px) saturate(1.1);
       border-right:1px solid var(--line) !important;
     }
     #header{
@@ -2629,7 +2629,7 @@
     }
     .dark #input-wrap{
       background:var(--bg-glass) !important;
-      -webkit-backdrop-filter:blur(22px) saturate(1.3); backdrop-filter:blur(22px) saturate(1.3);
+      -webkit-backdrop-filter:blur(14px) saturate(1.3); backdrop-filter:blur(14px) saturate(1.3);
       border:1px solid var(--line) !important;
       box-shadow:0 22px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.05) !important;
     }
@@ -2716,7 +2716,7 @@
     .dark #artifacts-panel,
     .dark #artifact-save-modal{
       background:var(--bg-glass-2) !important;
-      -webkit-backdrop-filter:blur(26px) saturate(1.2); backdrop-filter:blur(26px) saturate(1.2);
+      -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2);
       border:1px solid var(--line) !important;
       box-shadow:0 30px 90px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05) !important;
     }
@@ -2814,7 +2814,7 @@
     #artifacts-panel{
       width:min(540px,94vw) !important;
       background:var(--bg-glass-2,rgba(9,11,15,.86)) !important;
-      -webkit-backdrop-filter:blur(28px) saturate(1.2); backdrop-filter:blur(28px) saturate(1.2);
+      -webkit-backdrop-filter:blur(14px) saturate(1.2); backdrop-filter:blur(14px) saturate(1.2);
       border-left:1px solid var(--line) !important; box-shadow:-30px 0 90px rgba(0,0,0,.6) !important;
     }
     .apanel-header{ padding:20px 18px 14px !important; border-bottom:1px solid var(--line) !important; }

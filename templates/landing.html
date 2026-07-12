@@ -106,7 +106,7 @@
       position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100;
       width: min(1180px, calc(100% - 32px));
       background: var(--bg-glass);
-      -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+      -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4);
       border: 1px solid var(--line); border-radius: 18px;
       box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 20px 50px -22px rgba(0,0,0,0.8);
       padding: 0 12px 0 20px; height: 58px;
@@ -321,7 +321,7 @@
       position: relative;
       border: 1px solid var(--line-2); border-radius: var(--r-core); overflow: hidden;
       background: var(--bg-glass-2);
-      -webkit-backdrop-filter: blur(26px) saturate(1.2); backdrop-filter: blur(26px) saturate(1.2);
+      -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
     }
     .browser::before {
@@ -472,7 +472,7 @@
 
     /* ═══════ Ambient energy + kinetic widgets ═══════ */
     .ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-    .ambient > span { position: absolute; border-radius: 50%; filter: blur(150px); will-change: transform; }
+    .ambient > span { position: absolute; border-radius: 50%; filter: blur(60px); will-change: transform; }
     .ambient .a1 { width: 52vw; height: 52vw; left: -12vw; top: 22%;  background: radial-gradient(circle, rgba(70,224,212,0.05), transparent 64%);  animation: drift1 38s var(--ease-in-out) infinite alternate; }
     .ambient .a2 { width: 56vw; height: 56vw; right: -16vw; top: 50%; background: radial-gradient(circle, rgba(201,167,122,0.05), transparent 64%); animation: drift2 46s var(--ease-in-out) infinite alternate; }
     .ambient .a3 { width: 46vw; height: 46vw; left: 28%; top: 82%;    background: radial-gradient(circle, rgba(139,124,246,0.045), transparent 64%); animation: drift3 54s var(--ease-in-out) infinite alternate; }
