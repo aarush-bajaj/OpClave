@@ -1,4 +1,21 @@
 .venv/
 __pycache__/
+*.pyc
 node_modules/
 .env
+
+# OS / editor cruft
+.DS_Store
+
+# Local query log (real user data — never commit)
+logs/*.jsonl
+
+# Claude Code / agent tooling — local dev config, not part of the app
+.claude/
+.agents/
+.playwright-mcp/
+skills-lock.json
+
+# Ad-hoc dev screenshots taken during feature work (repo root only —
+# does not affect templates/assets/*.png, which are real app assets)
+/*.png

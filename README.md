@@ -1,8 +1,14 @@
-# Voyance
+# OpClave
 
 **Four minds. One answer.**
 
-Voyance sends your question simultaneously to GPT, Claude, Gemini, and Grok. A fifth model reads all four responses and synthesizes them into a single unified answer — surfacing where the models agree, flagging where they diverge, and producing a conclusion no single model could reach alone.
+OpClave sends your question simultaneously to GPT, Claude, Gemini, and Grok. A fifth model reads all four responses and synthesizes them into a single unified answer — surfacing where the models agree, flagging where they diverge, and producing a conclusion no single model could reach alone. That's **Voyance**, the core chat experience.
+
+**Studio** is the companion workspace for heavier tasks:
+
+- **Build** — generate a working single-file app or component, then iterate on it conversationally
+- **Research** — a multi-model research explorer with live web sources, verified academic citations, and auto-generated charts
+- **Review** — three specialized agents (security / quality / performance) audit a code snippet in parallel
 
 Live at **[opclave.com](https://opclave.com)**
 
@@ -27,7 +33,8 @@ Two modes are available:
 
 - **Backend** — FastAPI + Mangum (deployed as a Vercel serverless function)
 - **Frontend** — Vanilla HTML/CSS/JS with Tailwind
-- **AI providers** — OpenAI, Anthropic, Google Gemini, xAI Grok, Perplexity (web search)
+- **AI providers** — OpenAI, Anthropic, Google Gemini, xAI Grok, Perplexity (web search + research)
+- **Auth & sync** — Supabase (email/password auth, Postgres with row-level security for threads/artifacts)
 - **Rate limiting / logging** — Upstash Redis
 - **Deployment** — Vercel
 
@@ -36,50 +43,43 @@ Two modes are available:
 ## Project structure
 
 ```
-api/index.py          # FastAPI app — all routes and model calls
+api/index.py            # FastAPI app — all routes and model calls
 templates/
-  index.html          # Main app UI
-  landing.html        # Marketing landing page
+  index.html             # Main app UI (Voyance + Studio)
+  landing.html           # Marketing landing page
+  studio.html            # Studio mode picker
+  preview_matrix.html    # Consensus matrix preview/demo page
+  privacy.html           # Privacy policy
+  assets/                # Fonts, logos, compiled Tailwind CSS
 prompts/
-  synthesis_text.txt  # Synthesis model system prompt (text)
-  synthesis_image.txt # Synthesis model system prompt (images)
-public/               # Static assets served directly
-logs/queries.jsonl    # Local query log fallback
+  synthesis_text.txt     # Synthesis model system prompt (text)
+  synthesis_image.txt    # Synthesis model system prompt (images)
+public/                  # Static landing assets served directly
+src/tailwind.css         # Tailwind source (compiled to templates/assets/tailwind.css)
+supabase_schema.sql      # Postgres schema + RLS policies for threads/artifacts
+logs/queries.jsonl       # Local query log fallback (gitignored)
 ```
 
 ---
 
 ## Running locally
 
-**Prerequisites:** Python 3.9+, API keys for OpenAI, Anthropic, Google Gemini, and xAI.
+**Prerequisites:** Python 3.9+, Node (only needed if you're editing Tailwind styles), and an API key for at least one model provider.
 
 ```bash
-# Clone and set up
-git clone https://github.com/p6oo/OpClave
-cd council
+git clone https://github.com/aarush-bajaj/OpClave.git
+cd OpClave
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Add your API keys
-cp .env.example .env   # then fill in the values
+cp .env.example .env   # then fill in the values you have
 ```
 
-Required `.env` keys:
+See [`.env.example`](.env.example) for the full list of keys. Only the model provider keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `PERPLEXITY_API_KEY`) are required — Redis rate limiting, Supabase auth/sync, feedback email, and admin protection are all optional and degrade gracefully when unset.
 
-```
-OPENAI_API_KEY=
-ANTHROPIC_API_KEY=
-GEMINI_API_KEY=
-XAI_API_KEY=
-PERPLEXITY_API_KEY=
-
-# Optional — for rate limiting and logs (Upstash Redis)
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-```
+If you want cloud-synced threads/artifacts and sign-in, run [`supabase_schema.sql`](supabase_schema.sql) in your Supabase project's SQL editor (Database → SQL Editor → New query) before setting `SUPABASE_URL` / `SUPABASE_ANON_KEY`.
 
 ```bash
-# Start the dev server
 uvicorn api.index:app --reload
 ```
 
@@ -95,7 +95,7 @@ The repo is structured for zero-config Vercel deployment. `vercel.json` rewrites
 vercel deploy
 ```
 
-Set the env vars above in your Vercel project settings.
+Set the env vars from `.env.example` in your Vercel project settings. In production, always set `ADMIN_CODE` — without it, the `/logs` admin endpoints are open to anyone.
 
 ---
 
@@ -103,11 +103,18 @@ Set the env vars above in your Vercel project settings.
 
 | Bucket | Limit |
 |---|---|
-| General queries | 15 per IP per day |
-| Intensive queries | 3 per IP per day |
+| General queries | 15 per IP (or account) per day |
+| Intensive queries | 3 per IP (or account) per day |
 | Feedback submissions | 3 per IP per hour |
+| File uploads | 10 per IP per hour |
 
 Limits are enforced via Upstash Redis. If Redis is unavailable, requests fail open.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ---
 
