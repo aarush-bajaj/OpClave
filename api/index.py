@@ -30,6 +30,28 @@ load_dotenv(dotenv_path=os.path.join(_root, '.env'))
 
 app = FastAPI()
 
+
+class _RestoreOriginalPath:
+    """Vercel rewrites every request to /api/index, so the function sees that
+    path instead of the one the visitor requested. vercel.json passes the
+    original path as ?__path=..., and this puts it back before routing."""
+
+    def __init__(self, inner):
+        self.inner = inner
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            pairs = urllib.parse.parse_qsl(scope.get("query_string", b"").decode(), keep_blank_values=True)
+            original = next((v for k, v in pairs if k == "__path"), None)
+            if original is not None:
+                path = "/" + original.lstrip("/")
+                rest = urllib.parse.urlencode([(k, v) for k, v in pairs if k != "__path"])
+                scope = dict(scope, path=path, raw_path=path.encode(), query_string=rest.encode())
+        await self.inner(scope, receive, send)
+
+
+app.add_middleware(_RestoreOriginalPath)
+
 DAILY_LIMIT = 15          # per-IP daily query limit (general mode)
 INTENSIVE_LIMIT = 3       # per-IP daily query limit (intensive/coding mode)
 _UPSTASH_URL = os.getenv("UPSTASH_REDIS_REST_URL", "")

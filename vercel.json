@@ -1,13 +1,5 @@
 {
   "rewrites": [
-    { "source": "/assets/(.*)", "destination": "/api/index" },
-    { "source": "/stream",      "destination": "/api/index" },
-    { "source": "/extract-file",       "destination": "/api/index" },
-    { "source": "/feedback",    "destination": "/api/index" },
-    { "source": "/verify-admin","destination": "/api/index" },
-    { "source": "/logs",        "destination": "/api/index" },
-    { "source": "/studio",       "destination": "/api/index" },
-    { "source": "/app",         "destination": "/api/index" },
-    { "source": "/(.*)",        "destination": "/api/index" }
+    { "source": "/(.*)", "destination": "/api/index?__path=/$1" }
   ]
 }
