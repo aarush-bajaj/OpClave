@@ -37,13 +37,13 @@ _UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
 
 
 MODELS_GENERAL = {
-    "gpt":    "gpt-6.1-sol",
+    "gpt":    "gpt-6-luna",
     "claude": "claude-sonnet-5-5",
     "gemini": "gemini-3.8-flash",
     "grok":   "grok-4.7",
 }
 MODELS_INTENSIVE = {
-    "gpt":    "gpt-6-astra",
+    "gpt":    "gpt-6.1-sol",
     "claude": "claude-opus-5-5",
     "gemini": "gemini-4-argon",
     # Grok is not available in intensive mode
@@ -200,7 +200,7 @@ _PRICING = {
     "claude-sonnet-5-5":              {"in": 2.00,  "out": 10.00},
     "claude-opus-5-5":                {"in": 4.00,  "out": 20.00},
     "gpt-6.1-sol":                    {"in": 2.00,  "out": 10.00},
-    "gpt-6-astra":                    {"in": 10.00, "out": 50.00},
+    "gpt-6-luna":                     {"in": 0.10,  "out": 0.50},
     "grok-4.7":                       {"in": 2.00,  "out": 6.00},
     # Fill in below when pricing is confirmed for these models
     "gemini-3.8-flash":               {"in": 0.0,   "out": 0.0},
