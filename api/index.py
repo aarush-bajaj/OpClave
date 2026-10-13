@@ -37,15 +37,15 @@ _UPSTASH_TOKEN = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
 
 
 MODELS_GENERAL = {
-    "gpt":    "gpt-5.4-mini-2026-03-17",
-    "claude": "claude-sonnet-4-6",
-    "gemini": "gemini-3.5-flash",
-    "grok":   "grok-4-1-fast-non-reasoning",
+    "gpt":    "gpt-6.1-sol",
+    "claude": "claude-sonnet-5-5",
+    "gemini": "gemini-3.8-flash",
+    "grok":   "grok-4.7",
 }
 MODELS_INTENSIVE = {
-    "gpt":    "gpt-5.4-2026-03-05",
-    "claude": "claude-opus-4-7",
-    "gemini": "gemini-3.1-pro-preview",
+    "gpt":    "gpt-6-astra",
+    "claude": "claude-opus-5-5",
+    "gemini": "gemini-4-argon",
     # Grok is not available in intensive mode
 }
 
@@ -196,13 +196,16 @@ SYNTHESIS_SYSTEM_IMAGE = _load_prompt("synthesis_image.txt")
 # ── Cost table (USD per 1M tokens) ───────────────────────────────────────────
 # Update input/output prices here when provider pricing changes.
 _PRICING = {
-    "claude-haiku-4-5-20251001":      {"in": 0.80,  "out": 4.00},
-    "claude-sonnet-4-6":              {"in": 3.00,  "out": 15.00},
+    "claude-haiku-5-5":               {"in": 0.10,  "out": 0.50},
+    "claude-sonnet-5-5":              {"in": 2.00,  "out": 10.00},
+    "claude-opus-5-5":                {"in": 4.00,  "out": 20.00},
+    "gpt-6.1-sol":                    {"in": 2.00,  "out": 10.00},
+    "gpt-6-astra":                    {"in": 10.00, "out": 50.00},
+    "grok-4.7":                       {"in": 2.00,  "out": 6.00},
     # Fill in below when pricing is confirmed for these models
-    "gpt-5.2-2025-12-11":             {"in": 0.0,   "out": 0.0},
-    "gemini-3.1-pro-preview":         {"in": 0.0,   "out": 0.0},
-    "gemini-3.1-flash-image-preview": {"in": 0.0,   "out": 0.0},
-    "grok-4.20-0309-non-reasoning":   {"in": 0.0,   "out": 0.0},
+    "gemini-3.8-flash":               {"in": 0.0,   "out": 0.0},
+    "gemini-4-argon":                 {"in": 0.0,   "out": 0.0},
+    "gemini-nano-banana-2.1":         {"in": 0.0,   "out": 0.0},
 }
 
 def _cost(model: str, input_tok: int, output_tok: int) -> float:
@@ -319,6 +322,8 @@ def ask_claude(question, max_tokens, history=None, model=None, system=None):
     model = model or MODELS_GENERAL["claude"]
     messages = list(history or []) + [{"role": "user", "content": question}]
     kwargs = {"model": model, "max_tokens": max_tokens, "messages": messages}
+    if model.startswith("claude-sonnet"):
+        kwargs["thinking"] = {"type": "between_tools"}  # thinking off, like Sonnet 4.6
     if system:
         kwargs["system"] = system
     for attempt in range(4):
@@ -382,6 +387,7 @@ def ask_grok(question, max_tokens, history=None, model=None, system=None):
         model=model,
         max_tokens=max_tokens,
         messages=messages,
+        reasoning_effort="low",
     )
     usage = {"model": model,
              "input_tokens": response.usage.prompt_tokens,
@@ -399,6 +405,8 @@ def synthesize_with_claude(prompt, max_tokens, history=None, system=None, model=
         "max_tokens": max_tokens,
         "messages": messages,
     }
+    if model.startswith("claude-sonnet"):
+        kwargs["thinking"] = {"type": "between_tools"}  # thinking off, like Sonnet 4.6
     if system:
         kwargs["system"] = system
     for attempt in range(4):
@@ -491,6 +499,7 @@ def synthesize_with_grok(prompt, max_tokens, history=None, system=None, model=No
         model=model,
         max_tokens=max_tokens,
         messages=messages,
+        reasoning_effort="low",
         stream=True,
     )
     for chunk in stream:
@@ -515,8 +524,9 @@ def enrich_prompt_for_imagen(question, responses):
     )
     try:
         with anthropic_client.messages.stream(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-5-5",
             max_tokens=350,
+            thinking={"type": "disabled"},
             messages=[{"role": "user", "content": meta_prompt}],
         ) as s:
             return s.get_final_text().strip()
@@ -528,7 +538,7 @@ def call_gemini_imagen(prompt):
     """Calls Gemini image generation 4 times in parallel, returns base64-encoded image strings."""
     def generate_one(_):
         response = gemini_client.models.generate_content(
-            model="gemini-3.1-flash-image-preview",
+            model="gemini-nano-banana-2.1",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE", "TEXT"],
@@ -1607,8 +1617,9 @@ async def extract_file(request: Request, file: UploadFile = File(...)):
         try:
             b64 = base64.b64encode(data).decode("utf-8")
             msg = anthropic_client.messages.create(
-                model="claude-haiku-4-5-20251001",
+                model="claude-haiku-5-5",
                 max_tokens=1000,
+                thinking={"type": "disabled"},
                 messages=[{
                     "role": "user",
                     "content": [
@@ -1617,7 +1628,7 @@ async def extract_file(request: Request, file: UploadFile = File(...)):
                     ],
                 }],
             )
-            return {"type": "image", "content": msg.content[0].text}
+            return {"type": "image", "content": next(b.text for b in msg.content if b.type == "text")}
         except Exception as e:
             return {"error": f"Image extraction failed: {str(e)}"}
 
@@ -2058,7 +2069,7 @@ def stream(req: StreamRequest, request: Request):
         try:
             synth_in  = max(1, (len(synthesis_prompt) + len(synthesis_system)) // 4)
             synth_out = max(1, len(council_text) // 4)
-            synth_mid = synth_model_id.get(actual_synth, 'claude-sonnet-4-6')
+            synth_mid = synth_model_id.get(actual_synth, MODELS_GENERAL['claude'])
             synth_cost = _cost(synth_mid, synth_in, synth_out)
 
             model_log = {}

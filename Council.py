@@ -102,7 +102,7 @@ def ask_gpt(question, progress):
     for attempt in range(3):
         try:
             response = openai_client.chat.completions.create(
-                model="gpt-5.2-2025-12-11",
+                model="gpt-6.1-sol",
                 max_completion_tokens=2000,
                 messages=[{"role": "user", "content": question}],
                 timeout=API_TIMEOUT,
@@ -122,7 +122,8 @@ def ask_claude(question, progress):
     for attempt in range(3):
         try:
             with anthropic_client.messages.stream(
-                model="claude-haiku-4-5-20251001",
+                model="claude-haiku-5-5",
+                thinking={"type": "disabled"},
                 max_tokens=2000,
                 messages=[{"role": "user", "content": question}],
                 timeout=API_TIMEOUT,
@@ -144,7 +145,7 @@ def ask_gemini(question, progress):
     for attempt in range(3):
         try:
             response = gemini_client.models.generate_content(
-                model="gemini-3-flash-preview",
+                model="gemini-3.8-flash",
                 config={"maxOutputTokens": 2000},
                 contents=question
             )
@@ -164,7 +165,8 @@ def ask_grok(question, progress):
     for attempt in range(3):
         try:
             response = grok_client.chat.completions.create(
-                model="grok-4.20-0309-non-reasoning",
+                model="grok-4.7",
+                reasoning_effort="low",
                 max_tokens=2000,
                 messages=[{"role": "user", "content": question}],
                 timeout=API_TIMEOUT,
@@ -253,7 +255,8 @@ synth_thread.start()
 for attempt in range(3):
     try:
         with anthropic_client.messages.stream(
-            model="claude-sonnet-4-6",
+            model="claude-sonnet-5-5",
+            thinking={"type": "between_tools"},
             max_tokens=6000,
             messages=[{"role": "user", "content": synthesis_prompt}],
             timeout=API_TIMEOUT * 2,
